@@ -1,5 +1,5 @@
 import MainContainer from "@/components/MainContainer";
-import React, { useId } from "react";
+import React from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // If Select exists
 import { AppDispatch, RootState } from "@/redux/store";
 import { useDispatch, useSelector } from "react-redux";
-import { Operateur, Vihicles } from "@/components/types/OperateurTypes";
+import { Vihicles } from "@/components/types/OperateurTypes";
 import { Loader } from "lucide-react";
 import { createVihicules } from "@/redux/slice/vihiculeSlice";
 import { Separator } from "@/components/ui/separator";

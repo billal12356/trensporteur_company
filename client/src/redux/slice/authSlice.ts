@@ -32,7 +32,7 @@ export const loginUser = createAsyncThunk(
     "auth/loginUser",
     async (userData: { email: string; password: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.post("http://localhost:3000/api/v1/auth/login", userData, { withCredentials: true });
+            const response = await axios.post("https://trensporteur-company.onrender.com/api/v1/auth/login", userData, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (axios.isAxiosError(error)) {
@@ -48,7 +48,7 @@ export const logout = createAsyncThunk(
     "auth/logout",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await axios.post("http://localhost:3000/api/v1/auth/logout", {}, { withCredentials: true });
+            const response = await axios.post("https://trensporteur-company.onrender.com/api/v1/auth/logout", {}, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (axios.isAxiosError(error)) {

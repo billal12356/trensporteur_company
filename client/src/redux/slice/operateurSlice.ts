@@ -85,7 +85,7 @@ export const fetchOperateurs = createAsyncThunk(
     async (params: { search: string, limit?: number; page?: number; sort?: string }, { rejectWithValue }) => {
         console.log(params.page);
         try {
-            const response = await axios.get("http://localhost:3000/api/v1/operateur-dtw/find-all", {
+            const response = await axios.get("https://trensporteur-company.onrender.com/api/v1/operateur-dtw/find-all", {
                 params,
                 withCredentials: true,
             });
@@ -114,7 +114,7 @@ export const exportOperateurs = createAsyncThunk<
     }
 
     const response = await axios.get(
-      `http://localhost:3000/api/v1/operateur-dtw/download?search=${search}`,
+      `https://trensporteur-company.onrender.com/api/v1/operateur-dtw/download?search=${search}`,
       {
         responseType: 'blob',
         withCredentials: true,
@@ -142,7 +142,7 @@ export const deleteOperateur = createAsyncThunk(
     "operateur/deleteOperateur",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.delete(`http://localhost:3000/api/v1/operateur-dtw/${id}`, { withCredentials: true });
+            const response = await axios.delete(`https://trensporteur-company.onrender.com/api/v1/operateur-dtw/${id}`, { withCredentials: true });
             console.log(response.data);
             return response.data;
         } catch (error: unknown) {
@@ -159,7 +159,7 @@ export const updateOperateur = createAsyncThunk(
     "operateurs/update",
     async ({ id, data }: { id: string; data: Partial<Operateur> }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`http://localhost:3000/api/v1/operateur-dtw/${id}`, data, { withCredentials: true });
+            const response = await axios.put(`https://trensporteur-company.onrender.com/api/v1/operateur-dtw/${id}`, data, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -179,7 +179,7 @@ export const createOperateur = createAsyncThunk<
     'operateurs/createOperateur',
     async (data, { rejectWithValue }) => {
         try {
-            const response = await axios.post<Operateur>('http://localhost:3000/api/v1/operateur-dtw/create', data, { withCredentials: true });
+            const response = await axios.post<Operateur>('https://trensporteur-company.onrender.com/api/v1/operateur-dtw/create', data, { withCredentials: true });
             toast.success("تم تسجيل المتعامل بنجاح")
             return response.data;
         } catch (error: unknown) {
@@ -236,7 +236,7 @@ const operateurSlice = createSlice({
                 state.error = null;
                 state.fileURL = null;
             })
-            .addCase(exportOperateurs.fulfilled, (state, action) => {
+            .addCase(exportOperateurs.fulfilled, (state) => {
                 state.loading = false;
                 //state.fileURL = action.payload;
             })
