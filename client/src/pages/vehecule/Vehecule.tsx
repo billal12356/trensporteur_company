@@ -51,7 +51,7 @@ const Vehecule = () => {
           </div>
         ) : (
           <div className="w-full p-4">
-            <div className="text-center text-3xl font-bold mb-4">قائمة المتعاملين</div>
+            <div className="text-center text-3xl font-bold mb-4">قائمة المركبة</div>
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-2">
                 <input
