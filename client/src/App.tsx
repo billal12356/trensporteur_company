@@ -29,7 +29,7 @@ function App() {
           <Route path="/chauffeur" element={userData ? <Chauffeur /> : <Login />} />
           <Route path="/vehecule" element={userData ? <Véhecule /> : <Login />} />
           <Route path="/create-operateur" element={userData ? <CreateOperateur /> : <Login />} />
-          <Route path="/create-vihicule" element={userData ? <CreateVihicule /> : <Login />} />
+          <Route path="/create-vehecule" element={userData ? <CreateVihicule /> : <Login />} />
           <Route path="/update-vihicule/:id" element={userData ? <UpdateVihicule /> : <Login />} />
 
 

@@ -53,7 +53,7 @@ const Navbar = () => {
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pl-4 flex flex-col space-y-3">
                                 <Link to="/create-operateur" className="hover:text-pink-400">👨‍💼 Create Operateur</Link>
                                 <Link to="/create-chauffeur" className="hover:text-pink-400">🚗 Create Chauffeur</Link>
-                                <Link to="/create-vihicule" className="hover:text-pink-400">🚛 Create Véhicule</Link>
+                                <Link to="/create-vehecule" className="hover:text-pink-400">🚛 Create Véhicule</Link>
                             </motion.div>
                         )}
                         {userData ? (
