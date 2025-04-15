@@ -19,7 +19,7 @@ interface AuthState {
 
 const initialState: AuthState = {
     user: localStorage.getItem("user")
-        ? JSON.parse(localStorage.getItem("user") as string) // ✅ فك تشفير البيانات
+        ? JSON.parse(localStorage.getItem("user") as string) 
         : null,
     token: localStorage.getItem("token") || null,
     loading: false,
@@ -35,6 +35,8 @@ export const loginUser = createAsyncThunk(
             const response = await axios.post("https://trensporteur-company.onrender.com/api/v1/auth/login", userData, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
+            console.log(error);
+            
             if (axios.isAxiosError(error)) {
                 return rejectWithValue(error.response?.data?.message ?? "حدث خطأ غير معروف");
             }
