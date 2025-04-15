@@ -21,7 +21,11 @@ export class AuthController {
   ) {
     const user = await this.authService.login(loginDto);
     const payload = { sub: user.data.id, role: user.data.role };
+    console.log(payload);
+    
     const access_token= await this.jwtService.signAsync(payload)
+    console.log(access_token);
+    
     response.cookie('jwt', access_token, {
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000,

@@ -14,6 +14,7 @@ import {
     async canActivate(context: ExecutionContext): Promise<boolean> {
       const request = context.switchToHttp().getRequest<Request>();
       const token = this.extractTokenFromCookies(request); 
+      console.log(token);
       
       if (!token) {
         throw new UnauthorizedException('🚫 غير مصرح لك بالدخول، لم يتم العثور على التوكن!');

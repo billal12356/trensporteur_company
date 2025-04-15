@@ -92,6 +92,8 @@ export const fetchOperateurs = createAsyncThunk(
             console.log("data:", response.data);
             return response.data;
         } catch (error) {
+            console.log(error);
+            
             if (axios.isAxiosError(error)) {
                 return rejectWithValue(error.response?.data?.message)
             }
