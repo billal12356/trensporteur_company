@@ -3,7 +3,7 @@ import { HydratedDocument } from 'mongoose';
 
 export type OperateurDocument = HydratedDocument<Operateur>;
 
-@Schema()
+@Schema({timestamps:true})
 export class Operateur {
   @Prop({ type: Number, required: [true, "رقم الولاية مطلوب!"] })
   num_wilaya: number;

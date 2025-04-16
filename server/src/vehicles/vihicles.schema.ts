@@ -4,7 +4,7 @@ import { HydratedDocument } from 'mongoose';
 
 export type VihiclesDocument = HydratedDocument<Vihicles>;
 
-@Schema()
+@Schema({timestamps:true})
 export class Vihicles {
     @Prop({
         type: Number,
