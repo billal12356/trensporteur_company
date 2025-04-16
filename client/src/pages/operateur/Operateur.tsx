@@ -5,13 +5,13 @@ import { HiDownload, HiTrash } from "react-icons/hi";
 import { AppDispatch, RootState } from "@/redux/store";
 import { deleteOperateur, exportOperateurs, fetchOperateurs } from "@/redux/slice/operateurSlice";
 import MainContainer from "@/components/MainContainer";
-import { logout } from "@/redux/slice/authSlice";
+//import { logout } from "@/redux/slice/authSlice";
 import type { Operateur } from "@/components/types/OperateurTypes";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Operateur = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { operateurs, loading, total, limit, error } = useSelector((state: RootState) => state.operateur);
+  const { operateurs, loading, total, limit } = useSelector((state: RootState) => state.operateur);
   const [Page, setPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -23,9 +23,9 @@ const Operateur = () => {
     dispatch(deleteOperateur(id));
   };
 
-  const handleSignout = () => {
-    dispatch(logout());
-  };
+  //const handleSignout = () => {
+    //dispatch(logout());
+  //};
 
   const handleExport = () => {
     dispatch(exportOperateurs({ search: searchQuery }));
