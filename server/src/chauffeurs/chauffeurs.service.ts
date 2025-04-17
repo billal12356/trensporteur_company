@@ -152,14 +152,14 @@ export class ChauffeursService {
       const workbook = new Workbook();
       const worksheet = workbook.addWorksheet('المركبة');
   
-      const exportDir = join(__dirname, '..', 'exports/vihicules');
+      const exportDir = join(__dirname, '..', 'exports/chauffeurs');
       if (!existsSync(exportDir)) {
         mkdirSync(exportDir, { recursive: true });
       }
   
-      const filePath = join(exportDir, 'Vihicules.xlsx');
+      const filePath = join(exportDir, 'Chauffeurs.xlsx');
   
-      const titleRow = worksheet.addRow(['قائمة المركبة']);
+      const titleRow = worksheet.addRow(['قائمة السائقين']);
       worksheet.addRow([])
       worksheet.mergeCells('A1:F1');
       titleRow.getCell(1).font = { bold: true, size: 16, color: { argb: 'FFFFFF' } };
@@ -169,7 +169,7 @@ export class ChauffeursService {
       const headerRow = worksheet.addRow([
         'المعرف (ID)', 'رقم المستخدم','رقم الطلب','تاريخ الطلب','رقم القيد للناقل','المتعامل','الخط المستغل','ترقيم المركبة'
         ,'طبيعة الخط','اسم و لقب السائق','طبيعة المستخدم','رقم التعريف الوطني NIN','رقم رخصة السياقة','تاريخ الاصدار'
-        ,'نهاية صلاحية الصنف','بلدية الاصدار','تاريخ الميلاد','العنوان','رقم شهادة الكفائة المهنية','تاريخ الحصول على شهادة الكفاءة'
+        ,'نهاية صلاحية الصنف','بلدية الاصدار','تاريخ الميلاد','مكان الميلاد','العنوان','رقم شهادة الكفائة المهنية','تاريخ الحصول على شهادة الكفاءة'
         ,'الولاية','رقم التسلسلي','رقم الانتساب الى الصندوق الوطني','المركبة (موقفة او لا)','نوع التوقف','ملاحظة'
       ]);
   

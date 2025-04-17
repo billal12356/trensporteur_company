@@ -6,7 +6,6 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { deleteOperateur, exportOperateurs, fetchOperateurs } from "@/redux/slice/operateurSlice";
 import MainContainer from "@/components/MainContainer";
 //import { logout } from "@/redux/slice/authSlice";
-import type { Operateur } from "@/components/types/OperateurTypes";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Operateur = () => {
