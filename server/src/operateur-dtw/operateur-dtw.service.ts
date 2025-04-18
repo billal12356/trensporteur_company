@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOperateurDtwDto } from './dto/create-operateur-dtw.dto';
 import { UpdateOperateurDtwDto } from './dto/update-operateur-dtw.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -9,10 +9,15 @@ import { UserQueryBuilder } from 'src/common/builder/pagination.builder';
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { Workbook } from 'exceljs';
+import { VehiclesService } from 'src/vehicles/vehicles.service';
 
 @Injectable()
 export class OperateurDtwService {
-  constructor(@InjectModel(Operateur.name) private OperateurModel: Model<Operateur>) { }
+  constructor(
+    @InjectModel(Operateur.name) private OperateurModel: Model<Operateur>,
+    @Inject(forwardRef(() => VehiclesService))
+    private readonly vihiculeService: VehiclesService,
+  ) { }
 
   async create(createOperateurDtwDto: CreateOperateurDtwDto) {
     const operateur = await this.OperateurModel.create(createOperateurDtwDto)
@@ -54,7 +59,15 @@ export class OperateurDtwService {
 
 
   async findOne(id: number) {
-    return await this.OperateurModel.findOne({ id });
+    const operateur = await this.OperateurModel.findOne({ id });
+    const vihicules = []
+    const num_docier_client = operateur?.num_docier_client;
+    const vihicle = await this.vihiculeService.findVihiculeByOperateur(num_docier_client);
+    vihicules.push(...vihicle);
+    return {
+      operateur,
+      vihicules
+    }
   }
 
   async update(id: string, updateOperateurDtwDto: UpdateOperateurDtwDto) {
@@ -124,10 +137,10 @@ export class OperateurDtwService {
       query.$or = [
         { fullName_arabe: searchRegex },
         { fullName_francais: searchRegex },
-      ]; 
+      ];
     }
     const operateurs = await this.OperateurModel.find(query).lean();
-    
+
     const workbook = new Workbook();
     const worksheet = workbook.addWorksheet('المتعاملين');
 

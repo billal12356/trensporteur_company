@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -15,15 +15,16 @@ import { Workbook } from 'exceljs';
 export class VehiclesService {
   constructor(
     @InjectModel(Vihicles.name) private VihicileModel: Model<Vihicles>,
-    private readonly operateurDtwService: OperateurDtwService
+    @Inject(forwardRef(() => OperateurDtwService)) 
+    private readonly operateurService: OperateurDtwService,
   ) { }
 
 
   async create(createVehicleDto: CreateVehicleDto) {
     const { num_docier_client, fullName_arabe, fullName_francais } = createVehicleDto
-    const operateurNum = await this.operateurDtwService.findByVihiciles({ num_docier_client })
+    const operateurNum = await this.operateurService.findByVihiciles({ num_docier_client })
     console.log(operateurNum);
-    
+
     if (!operateurNum) {
       throw new NotFoundException(
         new ResponseBuilder()
@@ -238,7 +239,7 @@ export class VehiclesService {
       const row = worksheet.addRow([
         id++, op.num_wilaya, op.num_docier_client, op.fullName_arabe, op.fullName_francais,
         op.activite, op.colonne1 || "/", op.nature_activite, op.colonne2 || "/", op.status_activite, op.colonne3 || "/",
-        op.num_bus_registration , op.circle,
+        op.num_bus_registration, op.circle,
         op.Municipality, op.Style, op.category, op.type,
         op.First_year_of_use, op.Number_of_seats, op.Energy, op.num_driving_license,
         op.driving_license_history, op.driving_license_dure, op.line_activity_start_date,
@@ -274,5 +275,11 @@ export class VehiclesService {
     await workbook.xlsx.writeFile(filePath);
 
     return filePath;
+  }
+
+  async findVihiculeByOperateur(num_docier_client: number) {
+    return this.VihicileModel
+      .find({ num_docier_client: num_docier_client })
+      .exec();
   }
 }
