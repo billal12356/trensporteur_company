@@ -26,7 +26,7 @@ export class OperateurDtwController {
   @UseGuards(AuthGuard)
   @Get('find/:id')
   findOne(@Param('id') id: string) {
-    return this.operateurDtwService.findOne(+id);
+    return this.operateurDtwService.findOne(id);
   }
 
   @UseGuards(AuthGuard)
