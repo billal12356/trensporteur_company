@@ -58,12 +58,17 @@ export class OperateurDtwService {
   }
 
 
-  async findOne(id: number) {
-    const operateur = await this.OperateurModel.findOne({ id });
+  async findOne(id: string) {
+    console.log(id);
+    
+    const operateur = await this.OperateurModel.findById( id );
     const vihicules = []
     const num_docier_client = operateur?.num_docier_client;
+    
     const vihicle = await this.vihiculeService.findVihiculeByOperateur(num_docier_client);
     vihicules.push(...vihicle);
+    console.log(vihicle);
+    
     return {
       operateur,
       vihicules

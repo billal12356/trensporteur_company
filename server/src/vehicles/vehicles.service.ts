@@ -15,7 +15,7 @@ import { Workbook } from 'exceljs';
 export class VehiclesService {
   constructor(
     @InjectModel(Vihicles.name) private VihicileModel: Model<Vihicles>,
-    @Inject(forwardRef(() => OperateurDtwService)) 
+    @Inject(forwardRef(() => OperateurDtwService))
     private readonly operateurService: OperateurDtwService,
   ) { }
 
@@ -278,8 +278,11 @@ export class VehiclesService {
   }
 
   async findVihiculeByOperateur(num_docier_client: number) {
-    return this.VihicileModel
-      .find({ num_docier_client: num_docier_client })
+    const vihicule = await this.VihicileModel
+      .find({ num_docier_client })
       .exec();
+    console.log('vi' , vihicule);
+    
+    return vihicule
   }
 }
