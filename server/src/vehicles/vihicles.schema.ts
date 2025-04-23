@@ -237,14 +237,12 @@ export class Vihicles {
 
     @Prop({
         type: Date,
-        required: true
     })
     hestoire_parked: Date
 
   
     @Prop({
         type: Date,
-        required: true
     })
     hestoire_parked_end: Date
 

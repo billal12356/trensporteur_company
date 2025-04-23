@@ -1,14 +1,20 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { AppSidebar } from "./app-sidebar"
+import { Outlet } from "react-router-dom";
+import { Sidebar } from "./app-sidebar";
+import { Navbar } from "./NavBar";
+// أو أي مكون تضعه بالأعلى
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+const Layout = () => {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <main>
-        <SidebarTrigger />
-        {children}
-      </main>
-    </SidebarProvider>
-  )
-}
+    <div className="flex ">
+      <Sidebar />
+      <div className="flex flex-col flex-1 bg-gray-100 min-h-screen">
+        <Navbar />
+        <main className="p-4 flex-1 h-[calc(100vh-64px)] overflow-y-auto">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default Layout;

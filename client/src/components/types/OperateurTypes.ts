@@ -149,3 +149,33 @@ export interface Vihicles {
 
   path:string
 }
+
+export interface Chauffeur {
+  _id: string,
+  num_chauffeur: number;
+  num_demende: number;
+  hestoire_demende: string;
+  num_enregistrement_du_transporteur: number;
+  operateur: string;
+  ligne_exploitée: string;
+  num_vehicule: number;
+  nature_ligne: string;
+  nom_prenom_chauffeur: string;
+  nature_utilisateur: string;
+  num_didentification_national_NIN: number;
+  num_permis_conduire: number;
+  date_sortie: string;
+  date_expiration_article: string;
+  municipalite_emettrice: string;
+  date_naissance: string;
+  lieu_naissance: string;
+  address: string;
+  Num_certificat_compétence_professionnelle: number;
+  date_obtention_certificat_aptitude_professionnelle: string;
+  wilaya: string;
+  num_serie: number;
+  num_membre_fonds_national: number;
+  vihicile_parked: string;
+  type_parked: string;
+  comments?: string;
+}

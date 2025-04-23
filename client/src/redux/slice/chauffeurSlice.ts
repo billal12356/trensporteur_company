@@ -126,7 +126,6 @@ export const deleteChauffeurs = createAsyncThunk(
     async (id: string, { rejectWithValue }) => {
         try {
             const response = await axios.delete(`https://trensporteur-company.onrender.com/api/v1/chauffeurs/${id}`, { withCredentials: true });
-            console.log(response.data);
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {

@@ -6,7 +6,7 @@ import { exportVihicules, fetchVihicules } from "@/redux/slice/vihiculeSlice";
 import { logout } from "@/redux/slice/authSlice";
 import { Button } from "@/components/ui/button";
 import { HiDownload, HiTrash } from "react-icons/hi";
-import { FileChartPieIcon } from "lucide-react";
+import { FileChartPieIcon, RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
 
 
@@ -191,7 +191,9 @@ const Vehecule = () => {
                             <HiTrash />
                           </Button>
                           <Button variant="default" className="cursor-pointer">
-                            <Link to={`/update-vihicule/${vihicule._id}`}><FileChartPieIcon /></Link>
+                            <Link to={`/update-vihicule/${vihicule._id}`}>
+                              <RotateCcw className="w-4 h-4" />
+                            </Link>
                           </Button>
                         </td>
                       </tr>

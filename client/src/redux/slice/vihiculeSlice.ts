@@ -84,36 +84,39 @@ interface Vihicles {
     time_depart2: string;
 
     time_depart3?: string;
-    
+
     time_depart4?: string;
 
     vihicile_parked?: string;
 
-    type_parked :string;
+    type_parked: string;
 
-    hestoire_parked:string;
+    hestoire_parked: string;
 
-    hestoire_parked_end:string;
+    hestoire_parked_end: string;
 
-    comments:string;
+    comments: string;
 
-    person_concerned:string;
+    person_concerned: string;
 
     note_chef_departement?: string;
 
-    path:string
+    path: string
 }
 
-   
+
 
 // Define State Interface
 interface VihiclesState {
     vihicules: Vihicles[];
+    vihicule: Vihicles;
     total: number;
     limit: number;
     page: number;
     loading: boolean;
     message: string;
+    messageUpdate: string;
+    messageCreated: string;
     error: string | null;
     fileURL: string | null,
     successMessage: null,
@@ -122,11 +125,14 @@ interface VihiclesState {
 // Initial State
 const initialState: VihiclesState = {
     vihicules: [],
+    vihicule: {} as Vihicles,
     total: 0,
     limit: 10,
     page: 0,
     loading: false,
     message: "",
+    messageUpdate: "",
+    messageCreated: "",
     error: null,
     fileURL: null as string | null,
     successMessage: null,
@@ -155,37 +161,37 @@ export const fetchVihicules = createAsyncThunk(
 
 // ✅ thunk لقبول string فقط
 export const exportVihicules = createAsyncThunk<
-  void,
-  { search: any },
-  { rejectValue: string }
+    void,
+    { search: any },
+    { rejectValue: string }
 >('vihicules/exportVihicules', async ({ search }, { rejectWithValue }) => {
-  try {
-    const params = new URLSearchParams();
-    if (search) {
-      params.append('search', search);
+    try {
+        const params = new URLSearchParams();
+        if (search) {
+            params.append('search', search);
+        }
+
+        const response = await axios.get(
+            `https://trensporteur-company.onrender.com/api/v1/vehicles/export?search=${search}`,
+            {
+                responseType: 'blob',
+                withCredentials: true,
+            }
+        );
+
+        const blob = new Blob([response.data], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'Operateurs.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (error) {
+        return rejectWithValue('فشل في تحميل الملف');
     }
-
-    const response = await axios.get(
-      `https://trensporteur-company.onrender.com/api/v1/vehicles/export?search=${search}`,
-      {
-        responseType: 'blob',
-        withCredentials: true,
-      }
-    );
-
-    const blob = new Blob([response.data], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'Operateurs.xlsx');
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  } catch (error) {
-    return rejectWithValue('فشل في تحميل الملف');
-  }
 });
 
 
@@ -211,7 +217,7 @@ export const updateVihicules = createAsyncThunk(
     "vihicules/update",
     async ({ id, data }: { id: string; data: Partial<Vihicles> }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`https://trensporteur-company.onrender.com/api/v1/operateur-dtw/${id}`, data, { withCredentials: true });
+            const response = await axios.patch(`https://trensporteur-company.onrender.com/api/v1/vehicles/${id}`, data, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -235,28 +241,45 @@ export const createVihicules = createAsyncThunk<
             toast.success("تم تسجيل المركبة بنجاح")
             return response.data;
         } catch (error: unknown) {
-            console.log(error);
-          
             if (axios.isAxiosError(error)) {
-              const message = error.response?.data?.message;
-          
-              // If message is an array, return the first element
-              if (Array.isArray(message)) {
-                return rejectWithValue(message[0] ?? "حدث خطأ غير معروف");
-              }
-          
-              // If message is a string, return it directly
-              if (typeof message === "string") {
-                return rejectWithValue(message);
-              }
-          
-              // If message exists but is not string or array
-              return rejectWithValue("حدث خطأ في الاستجابة من الخادم");
+                const message = error.response?.data?.message;
+
+                // If message is an array, return the first element
+                if (Array.isArray(message)) {
+                    return rejectWithValue(message[0] ?? "حدث خطأ غير معروف");
+                }
+
+                // If message is a string, return it directly
+                if (typeof message === "string") {
+                    return rejectWithValue(message);
+                }
+
+                // If message exists but is not string or array
+                return rejectWithValue("حدث خطأ في الاستجابة من الخادم");
             }
-          
+
             // If it's not an AxiosError
             return rejectWithValue("حدث خطأ غير معروف");
-          }
+        }
+    }
+);
+
+export const FindOneVihicule = createAsyncThunk(
+    "vihicule/FindOneVihicule",
+    async (id: string, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://trensporteur-company.onrender.com/api/v1/vehicles/find/${id}`, { withCredentials: true });
+            console.log(response.data);
+            
+            return response.data;
+        } catch (error: unknown) {
+
+            if (typeof error === "object" && error !== null && "response" in error) {
+                const err = error as { response?: { data?: { message?: string } } };
+                return rejectWithValue(err.response?.data?.message);
+            }
+            return rejectWithValue("حدث خطأ غير معروف");
+        }
     }
 );
 
@@ -339,7 +362,7 @@ const operateurSlice = createSlice({
 
             .addCase(updateVihicules.fulfilled, (state, action) => {
                 state.loading = false;
-                state.message = action.payload.message
+                state.messageUpdate = action.payload.message
                 toast.success(action.payload.message)
             })
 
@@ -355,15 +378,29 @@ const operateurSlice = createSlice({
                 state.error = null;
                 state.successMessage = null;
             })
-            .addCase(createVihicules.fulfilled, (state) => {
+            .addCase(createVihicules.fulfilled, (state,action) => {
                 state.loading = false;
-                //state.successMessage = action.payload
+                //state.messageCreated = action.payload
                 //state.message = action.payload.message
             })
             .addCase(createVihicules.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
                 toast.error(action.payload as string)
+            });
+
+        builder
+            .addCase(FindOneVihicule.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(FindOneVihicule.fulfilled, (state, action) => {
+                state.loading = false;
+                state.vihicule = action.payload;
+            })
+            .addCase(FindOneVihicule.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
             });
     },
 });

@@ -7,6 +7,10 @@ import { deleteOperateur, exportOperateurs, fetchOperateurs } from "@/redux/slic
 import MainContainer from "@/components/MainContainer";
 //import { logout } from "@/redux/slice/authSlice";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "react-router-dom";
+import { CgDetailsLess } from "react-icons/cg";
+import { Edit3, FileChartPieIcon, FileText, RotateCcw, Undo2, ZoomIn } from "lucide-react";
+
 
 const Operateur = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -23,7 +27,7 @@ const Operateur = () => {
   };
 
   //const handleSignout = () => {
-    //dispatch(logout());
+  //dispatch(logout());
   //};
 
   const handleExport = () => {
@@ -186,9 +190,19 @@ const Operateur = () => {
                     <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{operateur.soccupe}</td>
                     <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{operateur.note_chef_departement}</td>
 
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
+                    <td className="px-4 py-2 w-48 flex items-center gap-3 justify-center border-r border-b">
                       <Button variant="destructive" onClick={() => handleDelete(operateur._id)}>
                         <HiTrash />
+                      </Button>
+                      <Button variant="default" className="cursor-pointer">
+                        <Link to={`/details-operateur/${operateur._id}`}>
+                          <ZoomIn  className="w-4 h-4" />
+                        </Link>
+                      </Button>
+                      <Button variant="outline" className="cursor-pointer">
+                        <Link to={`/update-operateur/${operateur._id}`}>
+                          <Edit3 className="w-5 h-5 text-yellow-600" />
+                        </Link>
                       </Button>
                     </td>
                   </tr>

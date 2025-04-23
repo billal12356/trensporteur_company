@@ -10,6 +10,7 @@ import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { Workbook } from 'exceljs';
 import { VehiclesService } from 'src/vehicles/vehicles.service';
+import { ChauffeursService } from 'src/chauffeurs/chauffeurs.service';
 
 @Injectable()
 export class OperateurDtwService {
@@ -17,6 +18,8 @@ export class OperateurDtwService {
     @InjectModel(Operateur.name) private OperateurModel: Model<Operateur>,
     @Inject(forwardRef(() => VehiclesService))
     private readonly vihiculeService: VehiclesService,
+    @Inject(forwardRef(() => ChauffeursService))
+    private readonly chauffeursService: ChauffeursService,
   ) { }
 
   async create(createOperateurDtwDto: CreateOperateurDtwDto) {
@@ -58,20 +61,21 @@ export class OperateurDtwService {
   }
 
 
-  async findOne(id: string) {
-    console.log(id);
-    
+  async findOne(id: string) {    
     const operateur = await this.OperateurModel.findById( id );
     const vihicules = []
+    const chauffeurs = []
     const num_docier_client = operateur?.num_docier_client;
-    
+    const fullName_francais = operateur?.fullName_francais
     const vihicle = await this.vihiculeService.findVihiculeByOperateur(num_docier_client);
     vihicules.push(...vihicle);
-    console.log(vihicle);
+    const chauffeur = await this.chauffeursService.findChauffeurByOperateur(fullName_francais);
+    chauffeurs.push(...chauffeur);
     
     return {
       operateur,
-      vihicules
+      vihicules,
+      chauffeurs
     }
   }
 
@@ -135,7 +139,6 @@ export class OperateurDtwService {
 
   async exportUsersToExcel(filterDto: any): Promise<string> {
     const query: any = {};
-    console.log(filterDto);
 
     if (filterDto.search && filterDto.search.trim()) {
       const searchRegex = { $regex: filterDto.search, $options: 'i' };
@@ -234,9 +237,13 @@ export class OperateurDtwService {
   }
 
 
-  async findByVihiciles(query: Record<string, any>) {
-    const vihicile = await this.OperateurModel.findOne(query);
-    return vihicile;
+  async findByVihicilesandChauffer(query: Record<string, any>) {
+    console.log(query);
+    
+    const find = await this.OperateurModel.findOne(query);
+    console.log(find);
+    
+    return find;
   }
 
 

@@ -10,14 +10,17 @@ import { useDispatch, useSelector } from "react-redux";
 import { createOperateur } from "@/redux/slice/operateurSlice";
 import { Operateur } from "@/components/types/OperateurTypes";
 import { Loader } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 
 const FormOperateur: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate()
   const { loading } = useSelector((state: RootState) => state.operateur);
   const { register, handleSubmit, setValue, watch } = useForm<Operateur>();
   const onSubmit: SubmitHandler<Operateur> = async (data) => {
     await dispatch(createOperateur(data)).unwrap();
+    navigate('operateur')
   }
 
 
@@ -429,7 +432,7 @@ const FormOperateur: React.FC = () => {
           {/* Row 17 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col items-center">
-              <label className="block text-sm font-medium text-end text-gray-700">المعني بالتعيين</label>
+              <label className="block text-sm font-medium text-end text-gray-700">المعني بالتحيين</label>
               <Input type="text" {...register("soccupe")} />
             </div>
             <div>

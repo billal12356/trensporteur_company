@@ -1,3 +1,4 @@
+import { Chauffeur, Vihicles } from "@/components/types/OperateurTypes";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "sonner";
@@ -50,6 +51,7 @@ interface Operateur {
     num_telephone_client?: string,
     soccupe?: string,
     note_chef_departement?: string,
+    createdAt:string
 }
 
 
@@ -57,11 +59,15 @@ interface Operateur {
 // Define State Interface
 interface OperateurState {
     operateurs: Operateur[];
+    operateur:Operateur;
+    vihicules:Vihicles[];
+    chauffeurs:Chauffeur[];
     total: number;
     limit: number;
     page: number;
     loading: boolean;
     message: string;
+    messageUpdate:string
     error: string | null;
     fileURL: string | null,
     successMessage: null,
@@ -70,11 +76,15 @@ interface OperateurState {
 // Initial State
 const initialState: OperateurState = {
     operateurs: [],
+    operateur:{} as Operateur,
+    vihicules:[],
+    chauffeurs:[],
     total: 0,
     limit: 10,
     page: 0,
     loading: false,
     message: "",
+    messageUpdate:"",
     error: null,
     fileURL: null as string | null,
     successMessage: null,
@@ -82,14 +92,13 @@ const initialState: OperateurState = {
 
 export const fetchOperateurs = createAsyncThunk(
     "operateur/fetchOperateurs",
-    async (params: { search: string, limit?: number; page?: number; sort?: string }, { rejectWithValue }) => {
+    async (params: { search?: string, limit?: number; page?: number; sort?: string }, { rejectWithValue }) => {
         console.log(params.page);
         try {
             const response = await axios.get("https://trensporteur-company.onrender.com/api/v1/operateur-dtw/find-all", {
                 params,
                 withCredentials: true,
             });
-            console.log("data:", response.data);
             return response.data;
         } catch (error) {
             console.log(error);
@@ -145,9 +154,25 @@ export const deleteOperateur = createAsyncThunk(
     async (id: string, { rejectWithValue }) => {
         try {
             const response = await axios.delete(`https://trensporteur-company.onrender.com/api/v1/operateur-dtw/${id}`, { withCredentials: true });
-            console.log(response.data);
             return response.data;
         } catch (error: unknown) {
+            if (typeof error === "object" && error !== null && "response" in error) {
+                const err = error as { response?: { data?: { message?: string } } };
+                return rejectWithValue(err.response?.data?.message);
+            }
+            return rejectWithValue("حدث خطأ غير معروف");
+        }
+    }
+);
+
+export const FindOneOperateur = createAsyncThunk(
+    "operateur/FindOneOperateur",
+    async (id: string, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://trensporteur-company.onrender.com/api/v1/operateur-dtw/find/${id}`, { withCredentials: true });
+            return response.data;
+        } catch (error: unknown) {
+            
             if (typeof error === "object" && error !== null && "response" in error) {
                 const err = error as { response?: { data?: { message?: string } } };
                 return rejectWithValue(err.response?.data?.message);
@@ -161,7 +186,7 @@ export const updateOperateur = createAsyncThunk(
     "operateurs/update",
     async ({ id, data }: { id: string; data: Partial<Operateur> }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`https://trensporteur-company.onrender.com/api/v1/operateur-dtw/${id}`, data, { withCredentials: true });
+            const response = await axios.patch(`https://trensporteur-company.onrender.com/api/v1/operateur-dtw/${id}`, data, { withCredentials: true });            
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -263,6 +288,23 @@ const operateurSlice = createSlice({
                 state.error = action.payload as string;
             });
 
+        // find  one operateur
+        builder
+            .addCase(FindOneOperateur.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(FindOneOperateur.fulfilled, (state, action) => {
+                state.loading = false;
+                state.operateur = action.payload.operateur;
+                state.vihicules = action.payload.vihicules;
+                state.chauffeurs = action.payload.chauffeurs;
+            })
+            .addCase(FindOneOperateur.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+
         // update operateur
         builder
             .addCase(updateOperateur.pending, (state) => {
@@ -272,7 +314,7 @@ const operateurSlice = createSlice({
 
             .addCase(updateOperateur.fulfilled, (state, action) => {
                 state.loading = false;
-                state.message = action.payload.message
+                state.messageUpdate = action.payload.message
                 toast.success(action.payload.message)
             })
 
@@ -288,9 +330,10 @@ const operateurSlice = createSlice({
                 state.error = null;
                 state.successMessage = null;
             })
-            .addCase(createOperateur.fulfilled, (state) => {
+            .addCase(createOperateur.fulfilled, (state,action) => {
                 state.loading = false;
-                //state.successMessage = action.payload
+                //state.successMessage = action.payload.message
+                toast.success("تم تسجيل العميل بنجاح")
                 //state.message = action.payload.message
             })
             .addCase(createOperateur.rejected, (state, action) => {

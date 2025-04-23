@@ -22,9 +22,10 @@ export class VehiclesService {
 
   async create(createVehicleDto: CreateVehicleDto) {
     const { num_docier_client, fullName_arabe, fullName_francais } = createVehicleDto
-    const operateurNum = await this.operateurService.findByVihiciles({ num_docier_client })
-    console.log(operateurNum);
+    const operateurNum = await this.operateurService.findByVihicilesandChauffer({ num_docier_client })
 
+    console.log("ope",operateurNum);
+    
     if (!operateurNum) {
       throw new NotFoundException(
         new ResponseBuilder()
@@ -280,9 +281,18 @@ export class VehiclesService {
   async findVihiculeByOperateur(num_docier_client: number) {
     const vihicule = await this.VihicileModel
       .find({ num_docier_client })
-      .exec();
-    console.log('vi' , vihicule);
-    
+      .exec();    
     return vihicule
   }
+
+  async findVihiculeByNumBus(query: Record<string, any>) {
+    console.log(query);
+    
+    const find = await this.VihicileModel.findOne({num_bus_registration: query.num_vehicule});
+    console.log(find);
+    
+    return find;
+  }
+
+  
 }
