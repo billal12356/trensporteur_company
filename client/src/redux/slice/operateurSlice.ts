@@ -330,7 +330,7 @@ const operateurSlice = createSlice({
                 state.error = null;
                 state.successMessage = null;
             })
-            .addCase(createOperateur.fulfilled, (state,action) => {
+            .addCase(createOperateur.fulfilled, (state) => {
                 state.loading = false;
                 //state.successMessage = action.payload.message
                 toast.success("تم تسجيل العميل بنجاح")

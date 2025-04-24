@@ -8,8 +8,7 @@ import MainContainer from "@/components/MainContainer";
 //import { logout } from "@/redux/slice/authSlice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
-import { CgDetailsLess } from "react-icons/cg";
-import { Edit3, FileChartPieIcon, FileText, RotateCcw, Undo2, ZoomIn } from "lucide-react";
+import { Edit3, ZoomIn } from "lucide-react";
 
 
 const Operateur = () => {

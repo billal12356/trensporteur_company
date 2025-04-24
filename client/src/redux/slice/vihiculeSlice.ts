@@ -378,7 +378,7 @@ const operateurSlice = createSlice({
                 state.error = null;
                 state.successMessage = null;
             })
-            .addCase(createVihicules.fulfilled, (state,action) => {
+            .addCase(createVihicules.fulfilled, (state) => {
                 state.loading = false;
                 //state.messageCreated = action.payload
                 //state.message = action.payload.message

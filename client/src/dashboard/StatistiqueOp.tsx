@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -24,8 +24,8 @@ const StatistiqueOp = () => {
   const dispatch = useDispatch<AppDispatch>()
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [Page, setPage] = useState(1)
-  const [searchQuery, setSearchQuery] = useState("");
+  const [Page] = useState(1)
+  const [searchQuery] = useState("");
   useEffect(() => {
     dispatch(fetchOperateurs({ search: searchQuery, page: Page }));
   }, [dispatch, searchQuery, Page]);

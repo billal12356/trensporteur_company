@@ -6,7 +6,7 @@ import { exportVihicules, fetchVihicules } from "@/redux/slice/vihiculeSlice";
 import { logout } from "@/redux/slice/authSlice";
 import { Button } from "@/components/ui/button";
 import { HiDownload, HiTrash } from "react-icons/hi";
-import { FileChartPieIcon, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
 
 

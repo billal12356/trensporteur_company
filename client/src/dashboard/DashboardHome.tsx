@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { AppDispatch, RootState } from '@/redux/store'
 import { fetchOperateurs } from '@/redux/slice/operateurSlice'
@@ -15,8 +15,8 @@ export const DashboardHome = () => {
   const { vihicules } = useSelector((state: RootState) => state.vihicule)
   const { chauffeurs } = useSelector((state: RootState) => state.chauffeur)
   const dispatch = useDispatch<AppDispatch>()
-  const [Page, setPage] = useState()
-  const [searchQuery, setSearchQuery] = useState("");
+  const [Page] = useState()
+  const [searchQuery] = useState("");
 
   useEffect(() => {
     dispatch(fetchOperateurs({ search: searchQuery, page: Page }));
