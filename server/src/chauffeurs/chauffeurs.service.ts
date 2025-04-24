@@ -38,9 +38,7 @@ export class ChauffeursService {
       );
     }
     const vihicule = await this.vehiclesService.findVihiculeByNumBus( {num_vehicule} )
- 
-    console.log(vihicule);
-    
+     
     if (!vihicule) {
       throw new NotFoundException(
         new ResponseBuilder()

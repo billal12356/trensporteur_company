@@ -1,9 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Users } from './users.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { ResponseBuilder } from 'src/common/builder/response.builder';
 import * as bcrypt from 'bcrypt';
 
@@ -23,7 +23,7 @@ export class UsersService {
       )
     }
 
-    if(createUserDto.password !== createUserDto.passwordConfirm){
+    if (createUserDto.password !== createUserDto.passwordConfirm) {
       throw new BadRequestException(
         new ResponseBuilder()
           .setStatus(404)
@@ -36,21 +36,75 @@ export class UsersService {
     await this.usersModel.create(createUserDto)
 
     return new ResponseBuilder()
-              .setStatus(200)
-              .setMessage('User Created successfully')
-              .build()
+      .setStatus(200)
+      .setMessage('User Created successfully')
+      .build()
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll() {
+    return await this.usersModel.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException(
+        new ResponseBuilder()
+          .setStatus(400)
+          .setMessage(`المعرف ${id} غير صالح`)
+          .setErrors({ _id: 'Invalid ObjectId format' })
+          .build(),
+      );
+    }
+
+    const user = await this.usersModel.findOne({ _id: id });
+
+    if (!user) {
+      throw new NotFoundException(
+        new ResponseBuilder()
+          .setStatus(404)
+          .setMessage(`لم يتم العثور على السائق ذو المعرف #${id}`)
+          .setErrors({ _id: 'Operator not found' })
+          .build(),
+      );
+    }
+    return user
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: string, updateChauffeurDto: UpdateUserDto) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException(
+        new ResponseBuilder()
+          .setStatus(400)
+          .setMessage(`المعرف ${id} غير صالح`)
+          .setErrors({ _id: 'Invalid ObjectId format' })
+          .build(),
+      );
+    }
+
+    const operateur = await this.usersModel.findByIdAndUpdate(
+      id,
+      { $set: updateChauffeurDto },
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).exec();
+
+    if (!operateur) {
+      throw new NotFoundException(
+        new ResponseBuilder()
+          .setStatus(404)
+          .setMessage(`لم يتم العثور على السائق ذو المعرف #${id}`)
+          .setErrors({ _id: 'Operator not found' })
+          .build(),
+      );
+    }
+
+    return new ResponseBuilder()
+      .setStatus(200)
+      .setMessage('تم تحديث السائق بنجاح!')
+      .setData(operateur)
+      .build();
   }
 
   remove(id: number) {
