@@ -8,7 +8,7 @@ import MainContainer from "@/components/MainContainer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { deleteChauffeurs, exportChauffeurs, fetchChauffeurs } from "@/redux/slice/chauffeurSlice";
 
-const Chauffeur = () => {
+const Chauffeur = React.memo(() => {
   const dispatch = useDispatch<AppDispatch>();
   const { chauffeurs, loading, total, limit } = useSelector((state: RootState) => state.chauffeur);
   const [Page, setPage] = useState(1)
@@ -347,6 +347,6 @@ const Chauffeur = () => {
 
     </MainContainer >
   );
-};
+});
 
 export default Chauffeur;

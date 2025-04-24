@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 import { Edit3, ZoomIn } from "lucide-react";
 
 
-const Operateur = () => {
+const Operateur = React.memo(() => {
   const dispatch = useDispatch<AppDispatch>();
   const { operateurs, loading, total, limit } = useSelector((state: RootState) => state.operateur);
   const [Page, setPage] = useState(1)
@@ -406,6 +406,6 @@ const Operateur = () => {
 
     </MainContainer >
   );
-};
+});
 
 export default Operateur;

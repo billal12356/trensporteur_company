@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux"
 import MainContainer from "../../components/MainContainer"
 import { AppDispatch, RootState } from "@/redux/store"
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { exportVihicules, fetchVihicules } from "@/redux/slice/vihiculeSlice";
 import { logout } from "@/redux/slice/authSlice";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
 
 
-const Vehecule = () => {
+const Vehecule = React.memo(() => {
   const { vihicules, loading, total, limit, error } = useSelector((state: RootState) => state.vihicule);
   const dispatch = useDispatch<AppDispatch>()
   const [Page, setPage] = useState(1)
@@ -236,6 +236,6 @@ const Vehecule = () => {
       }
     </MainContainer>
   )
-}
+});
 
 export default Vehecule

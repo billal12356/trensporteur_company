@@ -6,9 +6,9 @@ import { fetchVihicules } from '@/redux/slice/vihiculeSlice'
 import { fetchChauffeurs } from '@/redux/slice/chauffeurSlice'
 import { StatCard } from './operateur-stats'
 import { FaBus } from "react-icons/fa";
-import { FaUserTie} from "react-icons/fa";
+import { FaUserTie } from "react-icons/fa";
 import { FaUsers } from "react-icons/fa";
-import { Chart } from './Chart'
+import Chart from './Chart'
 
 export const DashboardHome = () => {
   const { operateurs } = useSelector((state: RootState) => state.operateur)
@@ -30,7 +30,9 @@ export const DashboardHome = () => {
         <StatCard title="السائقين" value={chauffeurs.length} icon={<FaUserTie />} />
         <StatCard title="المركبات" value={vihicules.length} icon={<FaBus />} />
       </div>
-      <Chart />
+      <div className="">
+        <Chart />
+      </div>
     </div>
   )
 }

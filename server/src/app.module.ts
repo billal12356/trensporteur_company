@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { OperateurDtwModule } from './operateur-dtw/operateur-dtw.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { ChauffeursModule } from './chauffeurs/chauffeurs.module';
+import { StateModule } from './state/state.module';
 
 
 @Module({
@@ -21,7 +22,8 @@ import { ChauffeursModule } from './chauffeurs/chauffeurs.module';
     AuthModule,
     OperateurDtwModule,
     VehiclesModule,
-    ChauffeursModule
+    ChauffeursModule,
+    StateModule
   ],
 })
 export class AppModule { }
