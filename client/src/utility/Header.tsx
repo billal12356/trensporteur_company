@@ -56,6 +56,8 @@ const Navbar = () => {
                                 <Link to="/create-vehecule" className="hover:text-pink-400">🚛 Create Véhicule</Link>
                             </motion.div>
                         )}
+
+                        <Link to='dashboard' className="hover:text-pink-400">Dashboard</Link>
                         {userData ? (
                             <Button onClick={logout} color="error" className="mt-4 cursor-pointer w-full">🚪 Logout</Button>
                         ) : (
@@ -96,6 +98,7 @@ const Navbar = () => {
                     )}
                 </div>
             </div>
+            <Link to='dashboard' className="hover:text-pink-400">Dashboard</Link>
 
             {/* أزرار تسجيل الدخول والتسجيل لسطح المكتب */}
             <div className="hidden md:flex space-x-4">
