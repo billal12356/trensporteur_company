@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // If Select exists
 import { AppDispatch, RootState } from "@/redux/store";
 import { useDispatch, useSelector } from "react-redux";
-import { Chauffeur, Operateur } from "@/components/types/OperateurTypes";
+import { Chauffeur } from "@/components/types/OperateurTypes";
 import { Loader } from "lucide-react";
 import { createChauffeurs } from "@/redux/slice/chauffeurSlice";
 
