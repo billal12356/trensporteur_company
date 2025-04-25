@@ -61,8 +61,8 @@ export class OperateurDtwService {
   }
 
 
-  async findOne(id: string) {    
-    const operateur = await this.OperateurModel.findById( id );
+  async findOne(id: string) {
+    const operateur = await this.OperateurModel.findById(id);
     const vihicules = []
     const chauffeurs = []
     const num_docier_client = operateur?.num_docier_client;
@@ -71,7 +71,7 @@ export class OperateurDtwService {
     vihicules.push(...vihicle);
     const chauffeur = await this.chauffeursService.findChauffeurByOperateur(fullName_francais);
     chauffeurs.push(...chauffeur);
-    
+
     return {
       operateur,
       vihicules,
@@ -236,13 +236,50 @@ export class OperateurDtwService {
     return filePath;
   }
 
+  // احصائيات بعدد المسجلين في كل يوم بين تاريخين
+  async getRegistrationStats(start: string, end: string) {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    endDate.setHours(23, 59, 59);
+    console.log("Start Date:", startDate.toISOString());
+    console.log("End Date:", endDate.toISOString());
+    const data = await this.OperateurModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    console.log(data);
+
+    return data.map(item => ({
+      date: item._id,
+      count: item.count
+    }));
+  }
+
+
+
+
 
   async findByVihicilesandChauffer(query: Record<string, any>) {
     console.log(query);
-    
+
     const find = await this.OperateurModel.findOne(query);
     console.log(find);
-    
+
     return find;
   }
 

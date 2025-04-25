@@ -6,6 +6,7 @@ import { Users } from './users.schema';
 import { Model, Types } from 'mongoose';
 import { ResponseBuilder } from 'src/common/builder/response.builder';
 import * as bcrypt from 'bcrypt';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @Injectable()
 export class UsersService {
@@ -117,5 +118,52 @@ export class UsersService {
     console.log(em);
 
     return em
+  }
+
+  async changePassword(id: string, dto: UpdatePasswordDto): Promise<string> {
+    const { currentPassword, newPassword, confirmPassword } = dto;
+
+    const user = await this.usersModel.findById(id);
+    if (!user) {
+      throw new NotFoundException(
+        new ResponseBuilder()
+          .setStatus(404)
+          .setMessage(`لم يتم العثور على المشغل ذو المعرف #${id}`)
+          .setErrors({ _id: 'Operator not found' })
+          .build(),
+      );
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      throw new BadRequestException(
+        new ResponseBuilder()
+          .setStatus(404)
+          .setMessage('كلمة المرور الحالية غير صحيحة')
+      )
+    }
+
+    if (newPassword !== confirmPassword) {
+      throw new BadRequestException(
+        new ResponseBuilder()
+          .setStatus(404)
+          .setMessage('كلمة المرور الجديدة وتأكيدها غير متطابقين.')
+      )
+    }
+    const isSameAsOld = await bcrypt.compare(newPassword, user.password);
+    if (isSameAsOld) {
+      throw new BadRequestException(
+        new ResponseBuilder()
+          .setStatus(404)
+          .setMessage('كلمة المرور الجديدة يجب أن تختلف عن القديمة')
+      )
+    }
+
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password = hashed;
+    await user.save();
+
+    return "تم تغيير كلمة المرور بنجاح"
   }
 }

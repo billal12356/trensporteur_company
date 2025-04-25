@@ -5,11 +5,10 @@ import { UpdateOperateurDtwDto } from './dto/update-operateur-dtw.dto';
 import { AuthGuard } from 'src/common/gaurds/auth.guard';
 import * as fs from 'fs';
 import { Response } from 'express';
-import { ExportFilterDto } from './dto/ExportFilter.dto';
-
+import * as ExcelJS from 'exceljs';
 @Controller('operateur-dtw')
 export class OperateurDtwController {
-  constructor(private readonly operateurDtwService: OperateurDtwService) {}
+  constructor(private readonly operateurDtwService: OperateurDtwService) { }
 
   @UseGuards(AuthGuard)
   @Post('create')
@@ -42,7 +41,7 @@ export class OperateurDtwController {
   }
 
   @Get('download')
-  async downloadExcel(@Res() res: Response, @Query() filterDto: any) {    
+  async downloadExcel(@Res() res: Response, @Query() filterDto: any) {
     const filePath = await this.operateurDtwService.exportUsersToExcel(filterDto);
     res.download(filePath, 'Operateurs.xlsx', (err) => {
       if (err) {
@@ -52,5 +51,38 @@ export class OperateurDtwController {
     });
   }
 
+  @Get("export-stats")
+  async exportStatsToExcel(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Res() res: Response
+  ) {
+    const stats = await this.operateurDtwService.getRegistrationStats(startDate, endDate);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('إحصائيات المسجلين');
+
+    worksheet.columns = [
+      { header: 'التاريخ', key: 'date', width: 20 },
+      { header: 'عدد المسجلين', key: 'count', width: 20 },
+    ];
+
+    worksheet.addRows(stats);
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=registration_stats_${startDate}_to_${endDate}.xlsx`
+    );
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.end(buffer);
+  }
+
+
+  
 
 }

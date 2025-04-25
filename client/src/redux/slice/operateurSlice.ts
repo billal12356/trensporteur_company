@@ -51,7 +51,7 @@ interface Operateur {
     num_telephone_client?: string,
     soccupe?: string,
     note_chef_departement?: string,
-    createdAt:string
+    createdAt: string
 }
 
 
@@ -59,36 +59,74 @@ interface Operateur {
 // Define State Interface
 interface OperateurState {
     operateurs: Operateur[];
-    operateur:Operateur;
-    vihicules:Vihicles[];
-    chauffeurs:Chauffeur[];
+    operateur: Operateur;
+    vihicules: Vihicles[];
+    chauffeurs: Chauffeur[];
     total: number;
     limit: number;
     page: number;
     loading: boolean;
     message: string;
-    messageUpdate:string
+    messageUpdate: string
     error: string | null;
     fileURL: string | null,
     successMessage: null,
+    stats: StatData[];
+}
+
+export interface StatData {
+    date: string;
+    count: number;
 }
 
 // Initial State
 const initialState: OperateurState = {
     operateurs: [],
-    operateur:{} as Operateur,
-    vihicules:[],
-    chauffeurs:[],
+    operateur: {} as Operateur,
+    vihicules: [],
+    chauffeurs: [],
     total: 0,
     limit: 10,
     page: 0,
     loading: false,
     message: "",
-    messageUpdate:"",
+    messageUpdate: "",
     error: null,
     fileURL: null as string | null,
     successMessage: null,
+    stats: []
 };
+
+export const downloadRegistrationStats = createAsyncThunk<
+    void, 
+    { startDate: string; endDate: string }, 
+    { rejectValue: string }
+>(
+    'operateur/downloadRegistrationStats',
+    async ({ startDate, endDate }, { rejectWithValue }) => {
+        try {
+            const response = await fetch(
+                `https://trensporteur-company.onrender.com/api/v1/operateur-dtw/export-stats?startDate=${startDate}&endDate=${endDate}`
+            );
+
+            if (!response.ok) {
+                return rejectWithValue('فشل في تحميل الملف');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `registration_stats_${startDate}_to_${endDate}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            return rejectWithValue('حدث خطأ أثناء تحميل الملف');
+        }
+    }
+);
+
 
 export const fetchOperateurs = createAsyncThunk(
     "operateur/fetchOperateurs",
@@ -102,7 +140,7 @@ export const fetchOperateurs = createAsyncThunk(
             return response.data;
         } catch (error) {
             console.log(error);
-            
+
             if (axios.isAxiosError(error)) {
                 return rejectWithValue(error.response?.data?.message)
             }
@@ -114,37 +152,37 @@ export const fetchOperateurs = createAsyncThunk(
 
 // ✅ thunk لقبول string فقط
 export const exportOperateurs = createAsyncThunk<
-  void,
-  { search: any },
-  { rejectValue: string }
+    void,
+    { search: any },
+    { rejectValue: string }
 >('operateurs/exportOperateurs', async ({ search }, { rejectWithValue }) => {
-  try {
-    const params = new URLSearchParams();
-    if (search) {
-      params.append('search', search);
+    try {
+        const params = new URLSearchParams();
+        if (search) {
+            params.append('search', search);
+        }
+
+        const response = await axios.get(
+            `https://trensporteur-company.onrender.com/api/v1/operateur-dtw/download?search=${search}`,
+            {
+                responseType: 'blob',
+                withCredentials: true,
+            }
+        );
+
+        const blob = new Blob([response.data], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'Operateurs.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (error) {
+        return rejectWithValue('فشل في تحميل الملف');
     }
-
-    const response = await axios.get(
-      `https://trensporteur-company.onrender.com/api/v1/operateur-dtw/download?search=${search}`,
-      {
-        responseType: 'blob',
-        withCredentials: true,
-      }
-    );
-
-    const blob = new Blob([response.data], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'Operateurs.xlsx');
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  } catch (error) {
-    return rejectWithValue('فشل في تحميل الملف');
-  }
 });
 
 
@@ -172,7 +210,7 @@ export const FindOneOperateur = createAsyncThunk(
             const response = await axios.get(`https://trensporteur-company.onrender.com/api/v1/operateur-dtw/find/${id}`, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
-            
+
             if (typeof error === "object" && error !== null && "response" in error) {
                 const err = error as { response?: { data?: { message?: string } } };
                 return rejectWithValue(err.response?.data?.message);
@@ -186,7 +224,7 @@ export const updateOperateur = createAsyncThunk(
     "operateurs/update",
     async ({ id, data }: { id: string; data: Partial<Operateur> }, { rejectWithValue }) => {
         try {
-            const response = await axios.patch(`https://trensporteur-company.onrender.com/api/v1/operateur-dtw/${id}`, data, { withCredentials: true });            
+            const response = await axios.patch(`https://trensporteur-company.onrender.com/api/v1/operateur-dtw/${id}`, data, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -341,6 +379,21 @@ const operateurSlice = createSlice({
                 state.error = action.payload as string;
                 toast.error(action.payload as string)
             });
+
+        builder
+            .addCase(downloadRegistrationStats.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(downloadRegistrationStats.fulfilled, (state) => {
+                state.loading = false;
+                // لا نغيّر stats هنا لأننا لا نرجع بيانات فعلية
+            })
+            .addCase(downloadRegistrationStats.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+
     },
 });
 

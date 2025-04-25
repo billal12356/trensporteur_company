@@ -5,9 +5,12 @@ import Loading from './components/Loading';
 import { Toaster } from 'sonner';
 import { useUser } from './hooks/context/userContext/UserProvider';
 
-import Layout from './dashboard/layout';
-import { DashboardHome } from './dashboard/DashboardHome';
-import StatistiqueOp from './dashboard/StatistiqueOp';
+import StatistiqueOp from './dashboard/pages/StatistiqueOp';
+import { DashboardHome } from './dashboard/pages/DashboardHome';
+import ChangePasswordPage from './dashboard/pages/ChangePassword';
+import StatistiqueCh from './dashboard/pages/StatistiqueCh';
+import StatistiqueVh from './dashboard/pages/StatistiqueVh';
+import { UpdateUser } from './dashboard/pages/UpdateUser';
 const Home = lazy(() => import("./pages/home/Page"));
 const Login = lazy(() => import("./pages/auth/SignIn"));
 const Operateur = lazy(() => import("./pages/operateur/Operateur"));
@@ -19,6 +22,8 @@ const OperateurDetails = lazy(() => import("@/pages/operateur/DetailsOperateur")
 const UpdateOperateur = lazy(() => import("@/pages/operateur/UpdateOperateur"))
 const CreateVihicule = lazy(() => import("@/pages/vehecule/CreateVihicules"))
 const UpdateVihicule = lazy(() => import("@/pages/vehecule/UpdateVihicules"))
+const UpdateChauffeur = lazy(() => import("@/pages/chauffeur/UpdateChauffeur"))
+const Layout = lazy(()=>import("@/dashboard/layout")) 
 
 function App() {
   const { userData } = useUser()
@@ -37,6 +42,7 @@ function App() {
           <Route path="/create-vehecule" element={userData ? <CreateVihicule /> : <Login />} />
           <Route path="/update-vihicule/:id" element={userData ? <UpdateVihicule /> : <Login />} />
           <Route path="/update-operateur/:id" element={userData ? <UpdateOperateur /> : <Login />} />
+          <Route path="/update-chauffeur/:id" element={userData ? <UpdateChauffeur /> : <Login />} />
 
           <Route path="/create-chauffeur" element={userData ? <CreateChauffeur /> : <Login />} />
 
@@ -44,6 +50,10 @@ function App() {
           <Route path="/dashboard" element={<Layout />}>
             <Route index element={<DashboardHome />} />
             <Route path="statistique-op" element={<StatistiqueOp />} />
+            <Route path="statistique-ch" element={<StatistiqueCh />} />
+            <Route path="statistique-vh" element={<StatistiqueVh />} />
+            <Route path="users/:id/change-password" element={<ChangePasswordPage />} />
+            <Route path="update-user/:id" element={<UpdateUser />} />
             {/* يمكنك إضافة صفحات أخرى مثل forms, profile إلخ */}
           </Route>
 

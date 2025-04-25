@@ -102,6 +102,8 @@ interface Vihicles {
     note_chef_departement?: string;
 
     path: string
+
+    createdAt:string
 }
 
 
@@ -137,6 +139,36 @@ const initialState: VihiclesState = {
     fileURL: null as string | null,
     successMessage: null,
 };
+
+export const downloadRegistrationStats = createAsyncThunk<
+    void,
+    { startDate: string; endDate: string },
+    { rejectValue: string }
+>(
+    'operateur/downloadRegistrationStats',
+    async ({ startDate, endDate }, { rejectWithValue }) => {
+        try {
+            const response = await fetch(
+                `https://trensporteur-company.onrender.com/api/v1/vehicles/export-stats?startDate=${startDate}&endDate=${endDate}`
+            );
+
+            if (!response.ok) {
+                return rejectWithValue('فشل في تحميل الملف');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `registration_stats_${startDate}_to_${endDate}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            return rejectWithValue('حدث خطأ أثناء تحميل الملف');
+        }
+    }
+);
 
 export const fetchVihicules = createAsyncThunk(
     "operateur/fetchVihicules",
@@ -270,7 +302,7 @@ export const FindOneVihicule = createAsyncThunk(
         try {
             const response = await axios.get(`https://trensporteur-company.onrender.com/api/v1/vehicles/find/${id}`, { withCredentials: true });
             console.log(response.data);
-            
+
             return response.data;
         } catch (error: unknown) {
 
@@ -399,6 +431,20 @@ const operateurSlice = createSlice({
                 state.vihicule = action.payload;
             })
             .addCase(FindOneVihicule.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+
+        builder
+            .addCase(downloadRegistrationStats.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(downloadRegistrationStats.fulfilled, (state) => {
+                state.loading = false;
+                // لا نغيّر stats هنا لأننا لا نرجع بيانات فعلية
+            })
+            .addCase(downloadRegistrationStats.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             });

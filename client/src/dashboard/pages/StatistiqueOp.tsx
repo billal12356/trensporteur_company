@@ -2,15 +2,14 @@ import { useState, useMemo, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  LineChart,
-  Line
+  LineChart, Line
 } from "recharts";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
 import "moment/locale/ar"
 import { AppDispatch, RootState } from "@/redux/store";
-import { fetchOperateurs } from "@/redux/slice/operateurSlice";
+import { downloadRegistrationStats, fetchOperateurs } from "@/redux/slice/operateurSlice";
 
 moment.locale("ar");
 
@@ -21,14 +20,16 @@ interface ChartData {
 
 const StatistiqueOp = () => {
   const operateurs = useSelector((state: RootState) => state.operateur.operateurs);
-  const dispatch = useDispatch<AppDispatch>()
+  const dispatch = useDispatch<AppDispatch>();
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [Page] = useState(1)
+  const [Page] = useState(1);
   const [searchQuery] = useState("");
+
   useEffect(() => {
     dispatch(fetchOperateurs({ search: searchQuery, page: Page }));
   }, [dispatch, searchQuery, Page]);
+
   const filteredData = useMemo(() => {
     return operateurs.filter((op) => {
       const date = new Date(op.createdAt);
@@ -46,6 +47,18 @@ const StatistiqueOp = () => {
     date: moment(date).format("D MMMM"),
     count,
   }));
+
+  const handleDownload = () => {
+    if (!startDate || !endDate) {
+      alert("يرجى تحديد الفترة أولاً");
+      return;
+    }
+  
+    const formattedStart = moment(startDate).format("YYYY-MM-DD");
+    const formattedEnd = moment(endDate).format("YYYY-MM-DD");
+  
+    dispatch(downloadRegistrationStats({ startDate: formattedStart, endDate: formattedEnd }));
+  };
 
   return (
     <div className="p-4">
@@ -73,6 +86,12 @@ const StatistiqueOp = () => {
           dateFormat="yyyy-MM-dd"
           className="border px-3 py-2 rounded-md"
         />
+        <button
+          onClick={handleDownload}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+        >
+          تحميل النتائج
+        </button>
       </div>
 
       <div className="flex gap-3">
@@ -89,6 +108,7 @@ const StatistiqueOp = () => {
             <Bar dataKey="count" fill="#4f46e5" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
+
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -109,7 +129,6 @@ const StatistiqueOp = () => {
             />
           </LineChart>
         </ResponsiveContainer>
-
       </div>
     </div>
   );

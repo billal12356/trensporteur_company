@@ -7,6 +7,8 @@ import MainContainer from "@/components/MainContainer";
 //import { logout } from "@/redux/slice/authSlice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { deleteChauffeurs, exportChauffeurs, fetchChauffeurs } from "@/redux/slice/chauffeurSlice";
+import { Link } from "react-router-dom";
+import { Edit3 } from "lucide-react";
 
 const Chauffeur = React.memo(() => {
   const dispatch = useDispatch<AppDispatch>();
@@ -143,6 +145,11 @@ const Chauffeur = React.memo(() => {
                     <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
                       <Button variant="destructive" onClick={() => handleDelete(chauffeur._id)}>
                         <HiTrash />
+                      </Button>
+                      <Button variant="default" className="cursor-pointer">
+                        <Link to={`/update-chauffeur/${chauffeur._id}`}>
+                          <Edit3 className="w-4 h-4" />
+                        </Link>
                       </Button>
                     </td>
                   </tr>

@@ -4,11 +4,11 @@ import { AppDispatch, RootState } from '@/redux/store'
 import { fetchOperateurs } from '@/redux/slice/operateurSlice'
 import { fetchVihicules } from '@/redux/slice/vihiculeSlice'
 import { fetchChauffeurs } from '@/redux/slice/chauffeurSlice'
-import { StatCard } from './operateur-stats'
 import { FaBus } from "react-icons/fa";
 import { FaUserTie } from "react-icons/fa";
 import { FaUsers } from "react-icons/fa";
-import Chart from './Chart'
+import { StatCard } from '../operateur-stats'
+import Chart from '../Chart'
 
 export const DashboardHome = () => {
   const { operateurs } = useSelector((state: RootState) => state.operateur)

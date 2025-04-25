@@ -24,8 +24,8 @@ export class VehiclesService {
     const { num_docier_client, fullName_arabe, fullName_francais } = createVehicleDto
     const operateurNum = await this.operateurService.findByVihicilesandChauffer({ num_docier_client })
 
-    console.log("ope",operateurNum);
-    
+    console.log("ope", operateurNum);
+
     if (!operateurNum) {
       throw new NotFoundException(
         new ResponseBuilder()
@@ -278,21 +278,52 @@ export class VehiclesService {
     return filePath;
   }
 
+  async getRegistrationStats(start: string, end: string) {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    endDate.setHours(23, 59, 59);
+    const data = await this.VihicileModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    console.log(data);
+
+    return data.map(item => ({
+      date: item._id,
+      count: item.count
+    }));
+  }
+
   async findVihiculeByOperateur(num_docier_client: number) {
     const vihicule = await this.VihicileModel
       .find({ num_docier_client })
-      .exec();    
+      .exec();
     return vihicule
   }
 
   async findVihiculeByNumBus(query: Record<string, any>) {
     console.log(query);
-    
-    const find = await this.VihicileModel.findOne({num_bus_registration: query.num_vehicule});
+
+    const find = await this.VihicileModel.findOne({ num_bus_registration: query.num_vehicule });
     console.log(find);
-    
+
     return find;
   }
 
-  
+
 }

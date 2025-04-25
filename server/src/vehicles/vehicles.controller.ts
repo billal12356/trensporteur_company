@@ -4,6 +4,7 @@ import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { Response } from 'express';
 import * as fs from 'fs';
+import * as ExcelJS from 'exceljs';
 
 @Controller('vehicles')
 export class VehiclesController {
@@ -41,8 +42,39 @@ export class VehiclesController {
       if (err) {
         console.error('خطأ أثناء تحميل الملف:', err);
       }
-      fs.unlinkSync(filePath); 
+      fs.unlinkSync(filePath);
     });
+  }
+
+  @Get("export-stats")
+  async exportStatsToExcel(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Res() res: Response
+  ) {
+    const stats = await this.vehiclesService.getRegistrationStats(startDate, endDate);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('إحصائيات المركبات');
+
+    worksheet.columns = [
+      { header: 'التاريخ', key: 'date', width: 20 },
+      { header: 'عدد المسجلين', key: 'count', width: 20 },
+    ];
+
+    worksheet.addRows(stats);
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=registration_stats_${startDate}_to_${endDate}.xlsx`
+    );
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.end(buffer);
   }
 
 }

@@ -30,14 +30,16 @@ export interface Chauffeur {
     vihicile_parked: string;
     type_parked: string;
     comments?: string;
-  }
-  
+    createdAt: string
+}
 
-   
+
+
 
 // Define State Interface
 interface ChauffeurState {
     chauffeurs: Chauffeur[];
+    chauffeur: Chauffeur;
     total: number;
     limit: number;
     page: number;
@@ -46,11 +48,13 @@ interface ChauffeurState {
     error: string | null;
     fileURL: string | null,
     successMessage: null,
+    messageUpdate: string
 }
 
 // Initial State
 const initialState: ChauffeurState = {
     chauffeurs: [],
+    chauffeur: {} as Chauffeur,
     total: 0,
     limit: 10,
     page: 0,
@@ -59,7 +63,55 @@ const initialState: ChauffeurState = {
     error: null,
     fileURL: null as string | null,
     successMessage: null,
+    messageUpdate: ""
+
 };
+
+export const FindOneChauffeur = createAsyncThunk(
+    "chauffer/FindOneChauffeur",
+    async (id: string, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://trensporteur-company.onrender.com/api/v1/chauffeurs/find/${id}`, { withCredentials: true });
+            return response.data;
+        } catch (error: unknown) {
+            if (typeof error === "object" && error !== null && "response" in error) {
+                const err = error as { response?: { data?: { message?: string } } };
+                return rejectWithValue(err.response?.data?.message);
+            }
+            return rejectWithValue("حدث خطأ غير معروف");
+        }
+    }
+);
+
+export const downloadRegistrationStats = createAsyncThunk<
+    void,
+    { startDate: string; endDate: string },
+    { rejectValue: string }
+>(
+    'operateur/downloadRegistrationStats',
+    async ({ startDate, endDate }, { rejectWithValue }) => {
+        try {
+            const response = await fetch(
+                `https://trensporteur-company.onrender.com/api/v1/chauffeurs/export-stats?startDate=${startDate}&endDate=${endDate}`
+            );
+
+            if (!response.ok) {
+                return rejectWithValue('فشل في تحميل الملف');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `registration_stats_${startDate}_to_${endDate}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            return rejectWithValue('حدث خطأ أثناء تحميل الملف');
+        }
+    }
+);
 
 export const fetchChauffeurs = createAsyncThunk(
     "chauffeur/fetchChauffeurs",
@@ -70,7 +122,7 @@ export const fetchChauffeurs = createAsyncThunk(
                 params,
                 withCredentials: true,
             });
-            
+
             return response.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -84,39 +136,39 @@ export const fetchChauffeurs = createAsyncThunk(
 
 // ✅ thunk لقبول string فقط
 export const exportChauffeurs = createAsyncThunk<
-  void,
-  { search: any },
-  { rejectValue: string }
+    void,
+    { search: any },
+    { rejectValue: string }
 >('chauffeurs/exportChauffeurs', async ({ search }, { rejectWithValue }) => {
-  try {
-    const params = new URLSearchParams();
-    if (search) {
-      params.append('search', search);
+    try {
+        const params = new URLSearchParams();
+        if (search) {
+            params.append('search', search);
+        }
+
+        const response = await axios.get(
+            `https://trensporteur-company.onrender.com/api/v1/chauffeurs/export?search=${search}`,
+            {
+                responseType: 'blob',
+                withCredentials: true,
+            }
+        );
+
+        const blob = new Blob([response.data], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        console.log(blob);
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'Operateurs.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (error) {
+        return rejectWithValue('فشل في تحميل الملف');
     }
-
-    const response = await axios.get(
-      `https://trensporteur-company.onrender.com/api/v1/chauffeurs/export?search=${search}`,
-      {
-        responseType: 'blob',
-        withCredentials: true,
-      }
-    );
-
-    const blob = new Blob([response.data], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    });
-    console.log(blob);
-    
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'Operateurs.xlsx');
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  } catch (error) {
-    return rejectWithValue('فشل في تحميل الملف');
-  }
 });
 
 
@@ -141,7 +193,7 @@ export const updateChauffeurs = createAsyncThunk(
     "chauffeurs/update",
     async ({ id, data }: { id: string; data: Partial<Chauffeur> }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`https://trensporteur-company.onrender.com/api/v1/chauffeurs/${id}`, data, { withCredentials: true });
+            const response = await axios.patch(`https://trensporteur-company.onrender.com/api/v1/chauffeurs/update/${id}`, data, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -166,27 +218,27 @@ export const createChauffeurs = createAsyncThunk<
             return response.data;
         } catch (error: unknown) {
             console.log(error);
-          
+
             if (axios.isAxiosError(error)) {
-              const message = error.response?.data?.message;
-          
-              // If message is an array, return the first element
-              if (Array.isArray(message)) {
-                return rejectWithValue(message[0] ?? "حدث خطأ غير معروف");
-              }
-          
-              // If message is a string, return it directly
-              if (typeof message === "string") {
-                return rejectWithValue(message);
-              }
-          
-              // If message exists but is not string or array
-              return rejectWithValue("حدث خطأ في الاستجابة من الخادم");
+                const message = error.response?.data?.message;
+
+                // If message is an array, return the first element
+                if (Array.isArray(message)) {
+                    return rejectWithValue(message[0] ?? "حدث خطأ غير معروف");
+                }
+
+                // If message is a string, return it directly
+                if (typeof message === "string") {
+                    return rejectWithValue(message);
+                }
+
+                // If message exists but is not string or array
+                return rejectWithValue("حدث خطأ في الاستجابة من الخادم");
             }
-          
+
             // If it's not an AxiosError
             return rejectWithValue("حدث خطأ غير معروف");
-          }
+        }
     }
 );
 
@@ -208,6 +260,19 @@ const operateurSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
+        builder
+            .addCase(FindOneChauffeur.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(FindOneChauffeur.fulfilled, (state, action) => {
+                state.loading = false;
+                state.chauffeur = action.payload;
+            })
+            .addCase(FindOneChauffeur.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
         builder
             .addCase(fetchChauffeurs.pending, (state) => {
                 state.loading = true;
@@ -269,7 +334,7 @@ const operateurSlice = createSlice({
 
             .addCase(updateChauffeurs.fulfilled, (state, action) => {
                 state.loading = false;
-                state.message = action.payload.message
+                state.messageUpdate = action.payload.message
                 toast.success(action.payload.message)
             })
 
@@ -294,6 +359,20 @@ const operateurSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload as string;
                 toast.error(action.payload as string)
+            });
+
+        builder
+            .addCase(downloadRegistrationStats.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(downloadRegistrationStats.fulfilled, (state) => {
+                state.loading = false;
+                // لا نغيّر stats هنا لأننا لا نرجع بيانات فعلية
+            })
+            .addCase(downloadRegistrationStats.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
             });
     },
 });

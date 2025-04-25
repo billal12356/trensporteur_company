@@ -37,8 +37,8 @@ export class ChauffeursService {
           .build(),
       );
     }
-    const vihicule = await this.vehiclesService.findVihiculeByNumBus( {num_vehicule} )
-     
+    const vihicule = await this.vehiclesService.findVihiculeByNumBus({ num_vehicule })
+
     if (!vihicule) {
       throw new NotFoundException(
         new ResponseBuilder()
@@ -255,12 +255,41 @@ export class ChauffeursService {
     return filePath;
   }
 
+  async getRegistrationStats(start: string, end: string) {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    endDate.setHours(23, 59, 59);
+    const data = await this.ChauffeurModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    console.log(data);
+
+    return data.map(item => ({
+      date: item._id,
+      count: item.count
+    }));
+  }
+
   async findChauffeurByOperateur(fullName_francais: string) {
     const chauffeur = await this.ChauffeurModel
-      .find({ operateur:fullName_francais })
+      .find({ operateur: fullName_francais })
       .exec();
-    console.log("ch",chauffeur);
-    
     return chauffeur
   }
 }
