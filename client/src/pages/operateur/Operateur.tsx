@@ -358,7 +358,7 @@ const Operateur = React.memo(() => {
                             <Skeleton className="w-[200px] h-[40px] rounded" />
                           </td>
                           <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b ">
-                            <Skeleton className="w-[200px] h-[40px] rounded" /> dada
+                            <Skeleton className="w-[200px] h-[40px] rounded" /> 
                           </td>
 
                           <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b ">
