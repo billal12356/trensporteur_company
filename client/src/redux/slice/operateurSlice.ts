@@ -106,7 +106,7 @@ export const downloadRegistrationStats = createAsyncThunk<
     async ({ startDate, endDate }, { rejectWithValue }) => {
         try {
             const response = await fetch(
-                `https://trensporteur-company.onrender.com/api/v1/operateur-dtw/export-stats?startDate=${startDate}&endDate=${endDate}`
+                `https://trensporteur-company.onrender.comapi/v1/operateur-dtw/export-stats?startDate=${startDate}&endDate=${endDate}`
             );
 
             if (!response.ok) {
@@ -133,7 +133,7 @@ export const fetchOperateurs = createAsyncThunk(
     async (params: { search?: string, limit?: number; page?: number; sort?: string }, { rejectWithValue }) => {
         console.log(params.page);
         try {
-            const response = await axios.get("https://trensporteur-company.onrender.com/api/v1/operateur-dtw/find-all", {
+            const response = await axios.get("https://trensporteur-company.onrender.comapi/v1/operateur-dtw/find-all", {
                 params,
                 withCredentials: true,
             });
@@ -163,7 +163,7 @@ export const exportOperateurs = createAsyncThunk<
         }
 
         const response = await axios.get(
-            `https://trensporteur-company.onrender.com/api/v1/operateur-dtw/download?search=${search}`,
+            `https://trensporteur-company.onrender.comapi/v1/operateur-dtw/download?search=${search}`,
             {
                 responseType: 'blob',
                 withCredentials: true,
@@ -191,7 +191,7 @@ export const deleteOperateur = createAsyncThunk(
     "operateur/deleteOperateur",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.delete(`https://trensporteur-company.onrender.com/api/v1/operateur-dtw/${id}`, { withCredentials: true });
+            const response = await axios.delete(`https://trensporteur-company.onrender.comapi/v1/operateur-dtw/${id}`, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -207,7 +207,7 @@ export const FindOneOperateur = createAsyncThunk(
     "operateur/FindOneOperateur",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://trensporteur-company.onrender.com/api/v1/operateur-dtw/find/${id}`, { withCredentials: true });
+            const response = await axios.get(`https://trensporteur-company.onrender.comapi/v1/operateur-dtw/find/${id}`, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
 
@@ -224,7 +224,7 @@ export const updateOperateur = createAsyncThunk(
     "operateurs/update",
     async ({ id, data }: { id: string; data: Partial<Operateur> }, { rejectWithValue }) => {
         try {
-            const response = await axios.patch(`https://trensporteur-company.onrender.com/api/v1/operateur-dtw/${id}`, data, { withCredentials: true });
+            const response = await axios.patch(`https://trensporteur-company.onrender.comapi/v1/operateur-dtw/${id}`, data, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -244,7 +244,7 @@ export const createOperateur = createAsyncThunk<
     'operateurs/createOperateur',
     async (data, { rejectWithValue }) => {
         try {
-            const response = await axios.post<Operateur>('https://trensporteur-company.onrender.com/api/v1/operateur-dtw/create', data, { withCredentials: true });
+            const response = await axios.post<Operateur>('https://trensporteur-company.onrender.comapi/v1/operateur-dtw/create', data, { withCredentials: true });
             toast.success("تم تسجيل المتعامل بنجاح")
             return response.data;
         } catch (error: unknown) {

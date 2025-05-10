@@ -34,4 +34,722 @@ export class StateService {
 
     return { operateurs, chauffeurs, vehicules };
   }
+
+  async getInter_communal(startDate?: Date, endDate?: Date) {
+    const matchConditions: any = {
+      font_type: 'بين البلديات',
+    };
+
+    if (startDate && endDate) {
+      matchConditions.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    }
+
+    return this.vehiculeModel.aggregate([
+      {
+        $addFields: {
+          uniqueTrafficPoints: {
+            $setUnion: [
+              [],
+              [
+                '$point_Traffic1',
+                '$point_Traffic2',
+                '$point_Traffic3',
+                '$point_Traffic4',
+                '$point_Traffic5',
+              ],
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          trafficPointsCount: {
+            $size: {
+              $filter: {
+                input: '$uniqueTrafficPoints',
+                as: 'point',
+                cond: { $ne: ['$$point', ''] },
+              },
+            },
+          },
+          vehicleAge: {
+            $subtract: [
+              { $year: new Date() },
+              {
+                $convert: {
+                  input: '$First_year_of_use',
+                  to: 'int',
+                  onError: 0,
+                  onNull: 0,
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        $match: matchConditions,
+      },
+      {
+        $group: {
+          _id: '$font_type',
+          nbVehicules: { $sum: 1 },
+          nbPlaces: { $sum: '$Number_of_seats' },
+          uniqueClients: { $addToSet: '$num_docier_client' },
+          totalAge: { $sum: '$vehicleAge' },
+          en_activite: {
+            $sum: {
+              $cond: [{ $eq: ['$vihicile_parked', 'في الخدمة'] }, 1, 0],
+            },
+          },
+          arret: {
+            $sum: {
+              $cond: [{ $eq: ['$vihicile_parked', 'موقفة'] }, 1, 0],
+            },
+          },
+          totalTrajets: { $sum: '$trafficPointsCount' },
+          age_0_5: {
+            $sum: {
+              $cond: [{ $lte: ['$vehicleAge', 5] }, 1, 0],
+            },
+          },
+          age_6_10: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 5] }, { $lte: ['$vehicleAge', 10] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_11_15: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 10] }, { $lte: ['$vehicleAge', 15] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_15_20: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 15] }, { $lte: ['$vehicleAge', 20] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_plus_20: {
+            $sum: {
+              $cond: [{ $gt: ['$vehicleAge', 20] }, 1, 0],
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          type: '$_id',
+          nbVehicules: 1,
+          nbPlaces: 1,
+          nbOperators: { $size: '$uniqueClients' },
+          avgAge: {
+            $cond: [
+              { $eq: ['$nbVehicules', 0] },
+              0,
+              { $divide: ['$totalAge', '$nbVehicules'] },
+            ],
+          },
+          en_activite: 1,
+          arret: 1,
+          totalTrajets: 1,
+          age_0_5: 1,
+          age_6_10: 1,
+          age_11_15: 1,
+          age_15_20: 1,
+          age_plus_20: 1,
+          _id: 0,
+        },
+      },
+    ]);
+  }
+
+
+
+
+
+  async getInter_wilaya(startDate, endDate) {
+    const matchConditions: any = {
+      font_type: 'بين الولايات',
+    };
+
+    if (startDate && endDate) {
+      matchConditions.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    }
+
+    return this.vehiculeModel.aggregate([
+      {
+        $addFields: {
+          uniqueTrafficPoints: {
+            $setUnion: [
+              [],
+              [
+                '$point_Traffic1',
+                '$point_Traffic2',
+                '$point_Traffic3',
+                '$point_Traffic4',
+                '$point_Traffic5',
+              ],
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          trafficPointsCount: {
+            $size: {
+              $filter: {
+                input: '$uniqueTrafficPoints',
+                as: 'point',
+                cond: { $ne: ['$$point', ''] },
+              },
+            },
+          },
+        },
+      },
+      {
+        $match: matchConditions
+      },
+      {
+        $group: {
+          _id: '$font_type',
+          nbVehicules: { $sum: 1 },
+          nbPlaces: { $sum: '$Number_of_seats' },
+          uniqueClients: { $addToSet: '$num_docier_client' },
+          totalAge: {
+            $sum: {
+              $subtract: [
+                { $year: new Date() },
+                {
+                  $convert: {
+                    input: '$First_year_of_use',
+                    to: 'int',
+                    onError: 0,
+                    onNull: 0,
+                  },
+                },
+              ],
+            },
+          },
+          en_activite: {
+            $sum: {
+              $cond: [{ $eq: ['$vihicile_parked', 'في الخدمة'] }, 1, 0],
+            },
+          },
+          arret: {
+            $sum: {
+              $cond: [{ $eq: ['$vihicile_parked', 'موقفة'] }, 1, 0],
+            },
+          },
+          totalTrajets: { $sum: '$trafficPointsCount' },
+          age_0_5: {
+            $sum: {
+              $cond: [{ $lte: ['$vehicleAge', 5] }, 1, 0],
+            },
+          },
+          age_6_10: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 5] }, { $lte: ['$vehicleAge', 10] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_11_15: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 10] }, { $lte: ['$vehicleAge', 15] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_15_20: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 15] }, { $lte: ['$vehicleAge', 20] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_plus_20: {
+            $sum: {
+              $cond: [{ $gt: ['$vehicleAge', 20] }, 1, 0],
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          type: '$_id',
+          nbVehicules: 1,
+          nbPlaces: 1,
+          nbOperators: { $size: '$uniqueClients' },
+          avgAge: {
+            $cond: [
+              { $eq: ['$nbVehicules', 0] },
+              0,
+              { $divide: ['$totalAge', '$nbVehicules'] },
+            ],
+          },
+          en_activite: 1,
+          arret: 1,
+          totalTrajets: 1,
+          age_0_5: 1,
+          age_6_10: 1,
+          age_11_15: 1,
+          age_15_20: 1,
+          age_plus_20: 1,
+          _id: 0,
+        },
+      },
+    ]);
+  }
+
+
+  async getInter_rural(startDate, endDate) {
+    const matchConditions: any = {
+      font_type: 'ريفي',
+    };
+
+    if (startDate && endDate) {
+      matchConditions.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    }
+    return this.vehiculeModel.aggregate([
+      {
+        $addFields: {
+          uniqueTrafficPoints: {
+            $setUnion: [
+              [],
+              [
+                '$point_Traffic1',
+                '$point_Traffic2',
+                '$point_Traffic3',
+                '$point_Traffic4',
+                '$point_Traffic5',
+              ],
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          trafficPointsCount: {
+            $size: {
+              $filter: {
+                input: '$uniqueTrafficPoints',
+                as: 'point',
+                cond: { $ne: ['$$point', ''] },
+              },
+            },
+          },
+        },
+      },
+      {
+        $match: matchConditions
+      },
+      {
+        $group: {
+          _id: '$font_type',
+          nbVehicules: { $sum: 1 },
+          nbPlaces: { $sum: '$Number_of_seats' },
+          uniqueClients: { $addToSet: '$num_docier_client' },
+          totalAge: {
+            $sum: {
+              $subtract: [
+                { $year: new Date() },
+                {
+                  $convert: {
+                    input: '$First_year_of_use',
+                    to: 'int',
+                    onError: 0,
+                    onNull: 0,
+                  },
+                },
+              ],
+            },
+          },
+          en_activite: {
+            $sum: {
+              $cond: [{ $eq: ['$vihicile_parked', 'في الخدمة'] }, 1, 0],
+            },
+          },
+          arret: {
+            $sum: {
+              $cond: [{ $eq: ['$vihicile_parked', 'موقفة'] }, 1, 0],
+            },
+          },
+          totalTrajets: { $sum: '$trafficPointsCount' },
+          age_0_5: {
+            $sum: {
+              $cond: [{ $lte: ['$vehicleAge', 5] }, 1, 0],
+            },
+          },
+          age_6_10: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 5] }, { $lte: ['$vehicleAge', 10] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_11_15: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 10] }, { $lte: ['$vehicleAge', 15] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_15_20: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 15] }, { $lte: ['$vehicleAge', 20] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_plus_20: {
+            $sum: {
+              $cond: [{ $gt: ['$vehicleAge', 20] }, 1, 0],
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          type: '$_id',
+          nbVehicules: 1,
+          nbPlaces: 1,
+          nbOperators: { $size: '$uniqueClients' },
+          avgAge: {
+            $cond: [
+              { $eq: ['$nbVehicules', 0] },
+              0,
+              { $divide: ['$totalAge', '$nbVehicules'] },
+            ],
+          },
+          en_activite: 1,
+          arret: 1,
+          totalTrajets: 1,
+          age_0_5: 1,
+          age_6_10: 1,
+          age_11_15: 1,
+          age_15_20: 1,
+          age_plus_20: 1,
+          _id: 0,
+        },
+      },
+    ]);
+  }
+
+
+  async getInter_urbain(startDate, endDate) {
+    const matchConditions: any = {
+      font_type: 'نقل العمال',
+    };
+
+    if (startDate && endDate) {
+      matchConditions.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    }
+    return this.vehiculeModel.aggregate([
+      {
+        $addFields: {
+          uniqueTrafficPoints: {
+            $setUnion: [
+              [],
+              [
+                '$point_Traffic1',
+                '$point_Traffic2',
+                '$point_Traffic3',
+                '$point_Traffic4',
+                '$point_Traffic5',
+              ],
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          trafficPointsCount: {
+            $size: {
+              $filter: {
+                input: '$uniqueTrafficPoints',
+                as: 'point',
+                cond: { $ne: ['$$point', ''] },
+              },
+            },
+          },
+        },
+      },
+      {
+        $match: matchConditions
+      },
+      {
+        $group: {
+          _id: '$font_type',
+          nbVehicules: { $sum: 1 },
+          nbPlaces: { $sum: '$Number_of_seats' },
+          uniqueClients: { $addToSet: '$num_docier_client' },
+          totalAge: {
+            $sum: {
+              $subtract: [
+                { $year: new Date() },
+                {
+                  $convert: {
+                    input: '$First_year_of_use',
+                    to: 'int',
+                    onError: 0,
+                    onNull: 0,
+                  },
+                },
+              ],
+            },
+          },
+          en_activite: {
+            $sum: {
+              $cond: [{ $eq: ['$vihicile_parked', 'في الخدمة'] }, 1, 0],
+            },
+          },
+          arret: {
+            $sum: {
+              $cond: [{ $eq: ['$vihicile_parked', 'موقفة'] }, 1, 0],
+            },
+          },
+          totalTrajets: { $sum: '$trafficPointsCount' },
+          age_0_5: {
+            $sum: {
+              $cond: [{ $lte: ['$vehicleAge', 5] }, 1, 0],
+            },
+          },
+          age_6_10: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 5] }, { $lte: ['$vehicleAge', 10] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_11_15: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 10] }, { $lte: ['$vehicleAge', 15] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_15_20: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 15] }, { $lte: ['$vehicleAge', 20] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_plus_20: {
+            $sum: {
+              $cond: [{ $gt: ['$vehicleAge', 20] }, 1, 0],
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          type: '$_id',
+          nbVehicules: 1,
+          nbPlaces: 1,
+          nbOperators: { $size: '$uniqueClients' },
+          avgAge: {
+            $cond: [
+              { $eq: ['$nbVehicules', 0] },
+              0,
+              { $divide: ['$totalAge', '$nbVehicules'] },
+            ],
+          },
+          en_activite: 1,
+          arret: 1,
+          totalTrajets: 1,
+          age_0_5: 1,
+          age_6_10: 1,
+          age_11_15: 1,
+          age_15_20: 1,
+          age_plus_20: 1,
+          _id: 0,
+        },
+      },
+    ]);
+  }
+
+  async getInter_scolaire(startDate, endDate) {
+    const matchConditions: any = {
+      font_type: 'نقل مدرسي',
+    };
+
+    if (startDate && endDate) {
+      matchConditions.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    }
+    return this.vehiculeModel.aggregate([
+      {
+        $addFields: {
+          uniqueTrafficPoints: {
+            $setUnion: [
+              [],
+              [
+                '$point_Traffic1',
+                '$point_Traffic2',
+                '$point_Traffic3',
+                '$point_Traffic4',
+                '$point_Traffic5',
+              ],
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          trafficPointsCount: {
+            $size: {
+              $filter: {
+                input: '$uniqueTrafficPoints',
+                as: 'point',
+                cond: { $ne: ['$$point', ''] },
+              },
+            },
+          },
+        },
+      },
+      {
+        $match: matchConditions
+      },
+      {
+        $group: {
+          _id: '$font_type',
+          nbVehicules: { $sum: 1 },
+          nbPlaces: { $sum: '$Number_of_seats' },
+          uniqueClients: { $addToSet: '$num_docier_client' },
+          totalAge: {
+            $sum: {
+              $subtract: [
+                { $year: new Date() },
+                {
+                  $convert: {
+                    input: '$First_year_of_use',
+                    to: 'int',
+                    onError: 0,
+                    onNull: 0,
+                  },
+                },
+              ],
+            },
+          },
+          en_activite: {
+            $sum: {
+              $cond: [{ $eq: ['$vihicile_parked', 'في الخدمة'] }, 1, 0],
+            },
+          },
+          arret: {
+            $sum: {
+              $cond: [{ $eq: ['$vihicile_parked', 'موقفة'] }, 1, 0],
+            },
+          },
+          totalTrajets: { $sum: '$trafficPointsCount' },
+          age_0_5: {
+            $sum: {
+              $cond: [{ $lte: ['$vehicleAge', 5] }, 1, 0],
+            },
+          },
+          age_6_10: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 5] }, { $lte: ['$vehicleAge', 10] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_11_15: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 10] }, { $lte: ['$vehicleAge', 15] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_15_20: {
+            $sum: {
+              $cond: [
+                { $and: [{ $gt: ['$vehicleAge', 15] }, { $lte: ['$vehicleAge', 20] }] },
+                1,
+                0,
+              ],
+            },
+          },
+          age_plus_20: {
+            $sum: {
+              $cond: [{ $gt: ['$vehicleAge', 20] }, 1, 0],
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          type: '$_id',
+          nbVehicules: 1,
+          nbPlaces: 1,
+          nbOperators: { $size: '$uniqueClients' },
+          avgAge: {
+            $cond: [
+              { $eq: ['$nbVehicules', 0] },
+              0,
+              { $divide: ['$totalAge', '$nbVehicules'] },
+            ],
+          },
+          en_activite: 1,
+          arret: 1,
+          totalTrajets: 1,
+          age_0_5: 1,
+          age_6_10: 1,
+          age_11_15: 1,
+          age_15_20: 1,
+          age_plus_20: 1,
+          _id: 0,
+        },
+      },
+    ]);
+  }
+
 }

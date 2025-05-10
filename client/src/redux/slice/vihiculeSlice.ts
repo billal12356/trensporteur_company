@@ -149,7 +149,7 @@ export const downloadRegistrationStats = createAsyncThunk<
     async ({ startDate, endDate }, { rejectWithValue }) => {
         try {
             const response = await fetch(
-                `https://trensporteur-company.onrender.com/api/v1/vehicles/export-stats?startDate=${startDate}&endDate=${endDate}`
+                `https://trensporteur-company.onrender.comapi/v1/vehicles/export-stats?startDate=${startDate}&endDate=${endDate}`
             );
 
             if (!response.ok) {
@@ -175,7 +175,7 @@ export const fetchVihicules = createAsyncThunk(
     async (params: { search: string, limit?: number; page?: number; sort?: string }, { rejectWithValue }) => {
         console.log(params.page);
         try {
-            const response = await axios.get("https://trensporteur-company.onrender.com/api/v1/vehicles/find-all", {
+            const response = await axios.get("https://trensporteur-company.onrender.comapi/v1/vehicles/find-all", {
                 params,
                 withCredentials: true,
             });
@@ -204,7 +204,7 @@ export const exportVihicules = createAsyncThunk<
         }
 
         const response = await axios.get(
-            `https://trensporteur-company.onrender.com/api/v1/vehicles/export?search=${search}`,
+            `https://trensporteur-company.onrender.comapi/v1/vehicles/export?search=${search}`,
             {
                 responseType: 'blob',
                 withCredentials: true,
@@ -232,7 +232,7 @@ export const deleteVihicules = createAsyncThunk(
     "operateur/deleteVihicules",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.delete(`https://trensporteur-company.onrender.com/api/v1/operateur-dtw/${id}`, { withCredentials: true });
+            const response = await axios.delete(`https://trensporteur-company.onrender.comapi/v1/operateur-dtw/${id}`, { withCredentials: true });
             console.log(response.data);
             return response.data;
         } catch (error: unknown) {
@@ -249,7 +249,7 @@ export const updateVihicules = createAsyncThunk(
     "vihicules/update",
     async ({ id, data }: { id: string; data: Partial<Vihicles> }, { rejectWithValue }) => {
         try {
-            const response = await axios.patch(`https://trensporteur-company.onrender.com/api/v1/vehicles/${id}`, data, { withCredentials: true });
+            const response = await axios.patch(`https://trensporteur-company.onrender.comapi/v1/vehicles/${id}`, data, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -269,7 +269,7 @@ export const createVihicules = createAsyncThunk<
     'vihicules/createVihicules',
     async (data, { rejectWithValue }) => {
         try {
-            const response = await axios.post<Vihicles>('https://trensporteur-company.onrender.com/api/v1/vehicles/create', data, { withCredentials: true });
+            const response = await axios.post<Vihicles>('https://trensporteur-company.onrender.comapi/v1/vehicles/create', data, { withCredentials: true });
             toast.success("تم تسجيل المركبة بنجاح")
             return response.data;
         } catch (error: unknown) {
@@ -300,7 +300,7 @@ export const FindOneVihicule = createAsyncThunk(
     "vihicule/FindOneVihicule",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://trensporteur-company.onrender.com/api/v1/vehicles/find/${id}`, { withCredentials: true });
+            const response = await axios.get(`https://trensporteur-company.onrender.comapi/v1/vehicles/find/${id}`, { withCredentials: true });
             console.log(response.data);
 
             return response.data;

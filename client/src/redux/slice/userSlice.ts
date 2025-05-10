@@ -28,7 +28,7 @@ export const fetchUserById = createAsyncThunk(
     "user/fetchById",
     async (id: string, { rejectWithValue }) => {
         try {
-            const res = await axios.get(`https://trensporteur-company.onrender.com/api/v1/users/${id}`);
+            const res = await axios.get(`https://trensporteur-company.onrender.comapi/v1/users/${id}`);
             return res.data;
         } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || "خطأ في تحميل بيانات المستخدم");
@@ -46,7 +46,7 @@ export const updateUser = createAsyncThunk(
         try {
             console.log(data);
             
-            const res = await axios.patch(`https://trensporteur-company.onrender.com/api/v1/users/${id}`, data);
+            const res = await axios.patch(`https://trensporteur-company.onrender.comapi/v1/users/${id}`, data);
             console.log(res.data);
             
             return res.data;
@@ -79,7 +79,7 @@ export const changePassword = createAsyncThunk(
     ) => {
         try {
             const res = await axios.patch(
-                `https://trensporteur-company.onrender.com/api/v1/users/${id}/change-password`,
+                `https://trensporteur-company.onrender.comapi/v1/users/${id}/change-password`,
                 { currentPassword, newPassword, confirmPassword }
             );
             return res.data;

@@ -11,6 +11,8 @@ import ChangePasswordPage from './dashboard/pages/ChangePassword';
 import StatistiqueCh from './dashboard/pages/StatistiqueCh';
 import StatistiqueVh from './dashboard/pages/StatistiqueVh';
 import { UpdateUser } from './dashboard/pages/UpdateUser';
+import Statistique from './pages/statistique/Statistique';
+import { State } from './pages/statistique/State';
 const Home = lazy(() => import("./pages/home/Page"));
 const Login = lazy(() => import("./pages/auth/SignIn"));
 const Operateur = lazy(() => import("./pages/operateur/Operateur"));
@@ -23,6 +25,7 @@ const UpdateOperateur = lazy(() => import("@/pages/operateur/UpdateOperateur"))
 const CreateVihicule = lazy(() => import("@/pages/vehecule/CreateVihicules"))
 const UpdateVihicule = lazy(() => import("@/pages/vehecule/UpdateVihicules"))
 const UpdateChauffeur = lazy(() => import("@/pages/chauffeur/UpdateChauffeur"))
+// const Statistique = lazy(() => import("@/pages/statistique/Statistique"))
 const Layout = lazy(()=>import("@/dashboard/layout")) 
 
 function App() {
@@ -43,6 +46,7 @@ function App() {
           <Route path="/update-vihicule/:id" element={userData ? <UpdateVihicule /> : <Login />} />
           <Route path="/update-operateur/:id" element={userData ? <UpdateOperateur /> : <Login />} />
           <Route path="/update-chauffeur/:id" element={userData ? <UpdateChauffeur /> : <Login />} />
+          <Route path="/statistique" element={userData ? <State /> : <Login />} />
 
           <Route path="/create-chauffeur" element={userData ? <CreateChauffeur /> : <Login />} />
 
