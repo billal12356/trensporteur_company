@@ -11,7 +11,6 @@ import ChangePasswordPage from './dashboard/pages/ChangePassword';
 import StatistiqueCh from './dashboard/pages/StatistiqueCh';
 import StatistiqueVh from './dashboard/pages/StatistiqueVh';
 import { UpdateUser } from './dashboard/pages/UpdateUser';
-import Statistique from './pages/statistique/Statistique';
 import { State } from './pages/statistique/State';
 const Home = lazy(() => import("./pages/home/Page"));
 const Login = lazy(() => import("./pages/auth/SignIn"));
