@@ -48,7 +48,9 @@ export const fetchAllStats = createAsyncThunk(
   "stats/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axios.get("https://trensporteur-company.onrender.comapi/v1/state/all");
+      const res = await axios.get("http://localhost:3000/api/v1/state/all");
+      console.log(res);
+      
       return res.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch stats");
@@ -59,7 +61,7 @@ export const fetchAllStats = createAsyncThunk(
 export const fetchInterCommuneStats = createAsyncThunk(
   'stats/fetchInterCommune',
   async ({ startDate, endDate }: { startDate?: string; endDate?: string }) => {
-    let url = 'https://trensporteur-company.onrender.comapi/v1/state/statsInterCommunal';
+    let url = 'http://localhost:3000/api/v1/state/statsInterCommunal';
     if (startDate && endDate) url += `?startDate=${startDate}&endDate=${endDate}`;
     const response = await axios.get(url);
     return response.data[0];
@@ -69,7 +71,7 @@ export const fetchInterCommuneStats = createAsyncThunk(
 export const fetchInterWilayaStats = createAsyncThunk(
   'stats/fetchInterWilaya',
   async ({ startDate, endDate }: { startDate?: string; endDate?: string }) => {
-    let url = 'https://trensporteur-company.onrender.comapi/v1/state/statsInterWilaya';
+    let url = 'http://localhost:3000/api/v1/state/statsInterWilaya';
     if (startDate && endDate) url += `?startDate=${startDate}&endDate=${endDate}`;
     const response = await axios.get(url);
     return response.data[0];
@@ -79,7 +81,7 @@ export const fetchInterWilayaStats = createAsyncThunk(
 export const fetchRuralStats = createAsyncThunk(
   'stats/fetchRural',
   async ({ startDate, endDate }: { startDate?: string; endDate?: string }) => {
-    let url = 'https://trensporteur-company.onrender.comapi/v1/state/statsInterRural';
+    let url = 'http://localhost:3000/api/v1/state/statsInterRural';
     if (startDate && endDate) url += `?startDate=${startDate}&endDate=${endDate}`;
     const response = await axios.get(url);
     return response.data[0];
@@ -89,7 +91,7 @@ export const fetchRuralStats = createAsyncThunk(
 export const fetchUrbainStats = createAsyncThunk(
   'stats/fetchUrbain',
   async ({ startDate, endDate }: { startDate?: string; endDate?: string }) => {
-    let url = 'https://trensporteur-company.onrender.comapi/v1/state/statsInterUrbain';
+    let url = 'http://localhost:3000/api/v1/state/statsInterUrbain';
     if (startDate && endDate) url += `?startDate=${startDate}&endDate=${endDate}`;
     const response = await axios.get(url);
     return response.data[0];
@@ -99,7 +101,7 @@ export const fetchUrbainStats = createAsyncThunk(
 export const fetchScolaireStats = createAsyncThunk(
   'stats/fetchScolaire',
   async ({ startDate, endDate }: { startDate?: string; endDate?: string }) => {
-    let url = 'https://trensporteur-company.onrender.comapi/v1/state/statsInterScolaire';
+    let url = 'http://localhost:3000/api/v1/state/statsInterScolaire';
     if (startDate && endDate) url += `?startDate=${startDate}&endDate=${endDate}`;
     const response = await axios.get(url);
     return response.data[0];

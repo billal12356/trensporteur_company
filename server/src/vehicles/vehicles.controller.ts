@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res, NotFoundException } from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { Response } from 'express';
 import * as fs from 'fs';
 import * as ExcelJS from 'exceljs';
+import * as vihicules from '../seed/data/vihicule.json';
 
 @Controller('vehicles')
 export class VehiclesController {
@@ -75,6 +76,15 @@ export class VehiclesController {
 
     const buffer = await workbook.xlsx.writeBuffer();
     res.end(buffer);
+  }
+
+
+  @Post('import-vihicule')
+  async createVihc() {
+    // const filePath = path.join(process.cwd(), 'src', 'import-operateur', 'data.json');
+
+    // const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));    
+    return await this.vehiclesService.importExcel(vihicules);
   }
 
 }

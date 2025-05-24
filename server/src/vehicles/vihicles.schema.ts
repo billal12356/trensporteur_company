@@ -43,10 +43,10 @@ export class Vihicles {
     colonne3: string;
 
     @Prop({
-        type: Number,
+        type: String,
         required: true
     })
-    num_bus_registration: number
+    num_bus_registration: string
 
 
     @Prop({
@@ -80,20 +80,18 @@ export class Vihicles {
     type: string
 
     @Prop({
-        type: String,
+        type: Number,
         required: true
     })
-    First_year_of_use: string
+    First_year_of_use: number
 
     @Prop({
         type: Number,
-        required: true
     })
     Number_of_seats: number
 
     @Prop({
         type: String,
-        required: true
     })
     Energy: string
 
@@ -105,19 +103,16 @@ export class Vihicles {
 
     @Prop({
         type: Date,
-        required: true
     })
     driving_license_history: Date
 
     @Prop({
         type: String,
-        required: true
     })
     driving_license_dure: string
 
     @Prop({
         type: Date,
-        required: true
     })
     line_activity_start_date: Date
 
@@ -129,7 +124,6 @@ export class Vihicles {
 
     @Prop({
         type: String,
-        required: true
     })
     font_type: string
 
@@ -159,73 +153,61 @@ export class Vihicles {
 
     @Prop({
         type: String,
-        required: true
     })
     point_Traffic1: string
 
     @Prop({
         type: String,
-        required: true
     })
     point_Traffic2: string
 
     @Prop({
         type: String,
-        required: true
     })
     point_Traffic3: string
 
     @Prop({
         type: String,
-        required: true
     })
     point_Traffic4: string
 
     @Prop({
         type: String,
-        required: true
     })
     point_Traffic5: string
 
     @Prop({
         type: String,
-        required: true
     })
     line_start_time: string
 
     @Prop({
         type: String,
-        required: true
     })
     line_end_time: string
 
     @Prop({
         type: String,
-        required: true
     })
     Pace_per_minute: string
 
     @Prop({
         type: String,
-        required: true
     })
     time_depart1: string
 
     @Prop({
         type: String,
-        required: true
     })
     time_depart2: string
 
     @Prop({
         type: String,
-        required: true
     })
     time_depart3: string
 
     @Prop({
         type: String,
-        required: true
     })
     time_depart4: string
 

@@ -1,6 +1,7 @@
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { StringDecoder } from 'string_decoder';
 
 export type ChauffeurDocument = HydratedDocument<Chauffeur>;
 
@@ -8,13 +9,12 @@ export type ChauffeurDocument = HydratedDocument<Chauffeur>;
 export class Chauffeur {
   @Prop({
     type: Number,
-    required: true
+    //required: true
   })
   num_chauffeur: number;
 
   @Prop({
     type: Number,
-    required: true
   })
   num_demende: number;
 
@@ -35,19 +35,17 @@ export class Chauffeur {
 
   @Prop({
     type: String,
-    required: true
   })
   ligne_exploitée: string;
 
   @Prop({
-    type: Number,
+    type: String,
     required: true
   })
-  num_vehicule: number;
+  num_vehicule: string;
 
   @Prop({
     type: String,
-    required: true
   })
   nature_ligne: string;
 
@@ -59,33 +57,31 @@ export class Chauffeur {
 
   @Prop({
     type: String,
-    required: true
   })
   nature_utilisateur: string;
 
-  @Prop({ type: Number, required: [true, "رقم التعريف الوطني مطلوب!"] })
+  @Prop({ type: Number})
   num_didentification_national_NIN: number;
-
-  @Prop({
-    type: Number,
-    required: true
-  })
-  num_permis_conduire: number;
-
-  @Prop({ type: Date, required: true })
-  date_sortie: Date;
-
-
-  @Prop({ type: Date, required: true })
-  date_expiration_article: Date;
 
   @Prop({
     type: String,
     required: true
   })
+  num_permis_conduire: string;
+
+  @Prop({ type: Date})
+  date_sortie: Date;
+
+
+  @Prop({ type: Date })
+  date_expiration_article: Date;
+
+  @Prop({
+    type: String,
+  })
   municipalite_emettrice: string;
 
-  @Prop({ type: Date, required: true })
+  @Prop({ type: Date})
   date_naissance: Date;
 
   @Prop({
@@ -96,41 +92,36 @@ export class Chauffeur {
 
   @Prop({
     type: String,
-    required: true
   })
   address: string;
 
   @Prop({
     type: Number,
-    required: true
   })
   Num_certificat_compétence_professionnelle: number;
 
-  @Prop({ type: Date, required: true })
+  @Prop({ type: Date })
   date_obtention_certificat_aptitude_professionnelle: Date;
 
   @Prop({
     type: String,
-    required: true
   })
   wilaya: string;
 
   @Prop({
     type: Number,
-    required: true
   })
   num_serie: number;
 
   @Prop({
     type: Number,
-    required: true
   })
   num_membre_fonds_national: number;
 
-  @Prop({ type: String, enum: ['موقفة', 'لا'] })
+  @Prop({ type: String})
   vihicile_parked: string;
 
-  @Prop({ type: String, enum: ['مؤقت', 'نهائي'] })
+  @Prop({ type: String })
   type_parked: string;
 
   @Prop({ type: String })

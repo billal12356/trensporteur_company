@@ -1,11 +1,12 @@
-import { ReactNode, useContext, useEffect, useState } from "react";
+// UserProvider.tsx
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { UserContext } from "./UserContext";
 import { AppDispatch, RootState } from "@/redux/store";
 import { logout } from "@/redux/slice/authSlice";
+import { fetchUserById } from "@/redux/slice/userSlice";
 
-// استيراد نوع المستخدم
+// تعريف النوع
 interface User {
   _id: string;
   fullName: string;
@@ -14,16 +15,30 @@ interface User {
   role: string;
 }
 
-// مكون مزود السياق
+interface UserContextType {
+  userData: User | null;
+  logout: () => void;
+  setUserData: (user: User | null) => void;
+}
+
+export const UserContext = createContext<UserContextType | null>(null);
+
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
+  console.log(user);
+  
+  const id = user?.data._id
+
   const [userData, setUserData] = useState<User | null>(user?.data || null);
   const navigate = useNavigate();
 
   useEffect(() => {
     setUserData(user?.data || null);
-  }, [user, userData]);
+    if (id) {
+      dispatch(fetchUserById(id));
+    }
+  }, [user,id,dispatch]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -31,13 +46,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <UserContext.Provider value={{ userData, logout: handleLogout }}>
+    <UserContext.Provider value={{ userData, setUserData, logout: handleLogout }}>
       {children}
     </UserContext.Provider>
   );
 };
 
-// هوك مخصص لاستخدام السياق
 export const useUser = () => {
   const context = useContext(UserContext);
   if (!context) {

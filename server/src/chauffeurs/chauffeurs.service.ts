@@ -292,4 +292,65 @@ export class ChauffeursService {
       .exec();
     return chauffeur
   }
+
+  async importExcel(filePath: any): Promise<void> {
+    return new Promise((resolve) => {
+      const saveNext = (index: number) => {
+        if (index >= filePath.length) {
+          console.log("✅ تم استيراد السجلات بنجاح!");
+          return resolve();
+        }
+
+        const rawData = filePath[index];
+        console.log("row", rawData);
+
+        const cleanedData = {
+          ...rawData,
+          // معالجة التواريخ
+          date_sortie: parseDate(rawData.date_sortie),
+          date_naissance: parseDate(rawData.date_naissance),
+          date_expiration: parseDate(rawData.date_expiration),
+          date_prévue: parseDate(rawData.date_prévue),
+          modifier_hestoire_registre_commerce: parseDate(rawData.modifier_hestoire_registre_commerce),
+          date_debut_activite: parseDate(rawData.date_debut_activite),
+          date_arret_activite_temporaire: parseDate(rawData.date_arret_activite_temporaire),
+          date_arret_activite_permanent: parseDate(rawData.date_arret_activite_permanent),
+          date_obtention_certificat_aptitude_professionnelle: parseDateFromText(rawData.date_obtention_certificat_aptitude_professionnelle),
+
+          // معالجة الحقول المطلوبة إن لم تكن موجودة
+          num_chauffeur: rawData.num_chauffeur || null,
+        };
+
+        const doc = new this.ChauffeurModel(cleanedData);
+        doc.save()
+          .then(() => saveNext(index + 1))
+          .catch((error) => {
+            console.error(`❌ خطأ أثناء الحفظ في السطر ${index + 1}:`, error.message);
+            saveNext(index + 1); // متابعة رغم الخطأ
+          });
+      };
+
+      saveNext(0);
+    });
+  }
+}
+
+function parseDate(dateStr: string): Date | null {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+
+  const [day, month, year] = dateStr.split('/').map(Number);
+  if (!day || !month || !year) return null;
+
+  return new Date(year, month - 1, day);
+}
+
+// استخراج التاريخ من نص يحتوي على تاريخ بصيغة "DD/MM/YYYY"
+function parseDateFromText(text: any): Date | null {
+  if (typeof text !== 'string') return null;
+
+  const match = text.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (!match) return null;
+
+  const [_, day, month, year] = match;
+  return new Date(+year, +month - 1, +day);
 }

@@ -5,6 +5,7 @@ import { UpdateChauffeurDto } from './dto/update-chauffeur.dto';
 import { Response } from 'express';
 import * as fs from 'fs';
 import * as ExcelJS from 'exceljs';
+import * as chauffeurs from '../seed/data/chauffeur.json';
 
 @Controller('chauffeurs')
 export class ChauffeursController {
@@ -75,5 +76,13 @@ export class ChauffeursController {
 
     const buffer = await workbook.xlsx.writeBuffer();
     res.end(buffer);
+  }
+
+  @Post('import-chauffeur')
+  async createVihc() {
+    // const filePath = path.join(process.cwd(), 'src', 'import-operateur', 'data.json');
+
+    // const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));    
+    return await this.chauffeursService.importExcel(chauffeurs);
   }
 }

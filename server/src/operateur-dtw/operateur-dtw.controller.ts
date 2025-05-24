@@ -28,6 +28,14 @@ export class OperateurDtwController {
     return this.operateurDtwService.findOne(id);
   }
 
+  @Get(':id/pdf')
+  async generatePDF(@Param('id') id: string, @Res() res: Response) {
+
+    const filePath = await this.operateurDtwService.generatePDF(id);
+
+    res.download(filePath);
+  }
+
   @UseGuards(AuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateOperateurDtwDto: UpdateOperateurDtwDto) {
@@ -83,6 +91,6 @@ export class OperateurDtwController {
   }
 
 
-  
+
 
 }

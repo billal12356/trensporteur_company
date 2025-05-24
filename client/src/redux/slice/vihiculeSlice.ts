@@ -103,7 +103,7 @@ interface Vihicles {
 
     path: string
 
-    createdAt:string
+    createdAt: string
 }
 
 
@@ -112,7 +112,7 @@ interface Vihicles {
 interface VihiclesState {
     vihicules: Vihicles[];
     vihicule: Vihicles;
-    total: number;
+    totalVc: number;
     limit: number;
     page: number;
     loading: boolean;
@@ -128,7 +128,7 @@ interface VihiclesState {
 const initialState: VihiclesState = {
     vihicules: [],
     vihicule: {} as Vihicles,
-    total: 0,
+    totalVc: 0,
     limit: 10,
     page: 0,
     loading: false,
@@ -149,7 +149,7 @@ export const downloadRegistrationStats = createAsyncThunk<
     async ({ startDate, endDate }, { rejectWithValue }) => {
         try {
             const response = await fetch(
-                `https://trensporteur-company.onrender.comapi/v1/vehicles/export-stats?startDate=${startDate}&endDate=${endDate}`
+                `http://localhost:3000/api/v1/vehicles/export-stats?startDate=${startDate}&endDate=${endDate}`
             );
 
             if (!response.ok) {
@@ -175,7 +175,7 @@ export const fetchVihicules = createAsyncThunk(
     async (params: { search: string, limit?: number; page?: number; sort?: string }, { rejectWithValue }) => {
         console.log(params.page);
         try {
-            const response = await axios.get("https://trensporteur-company.onrender.comapi/v1/vehicles/find-all", {
+            const response = await axios.get("http://localhost:3000/api/v1/vehicles/find-all", {
                 params,
                 withCredentials: true,
             });
@@ -204,7 +204,7 @@ export const exportVihicules = createAsyncThunk<
         }
 
         const response = await axios.get(
-            `https://trensporteur-company.onrender.comapi/v1/vehicles/export?search=${search}`,
+            `http://localhost:3000/api/v1/vehicles/export?search=${search}`,
             {
                 responseType: 'blob',
                 withCredentials: true,
@@ -232,7 +232,7 @@ export const deleteVihicules = createAsyncThunk(
     "operateur/deleteVihicules",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.delete(`https://trensporteur-company.onrender.comapi/v1/operateur-dtw/${id}`, { withCredentials: true });
+            const response = await axios.delete(`http://localhost:3000/api/v1/operateur-dtw/${id}`, { withCredentials: true });
             console.log(response.data);
             return response.data;
         } catch (error: unknown) {
@@ -249,7 +249,7 @@ export const updateVihicules = createAsyncThunk(
     "vihicules/update",
     async ({ id, data }: { id: string; data: Partial<Vihicles> }, { rejectWithValue }) => {
         try {
-            const response = await axios.patch(`https://trensporteur-company.onrender.comapi/v1/vehicles/${id}`, data, { withCredentials: true });
+            const response = await axios.patch(`http://localhost:3000/api/v1/vehicles/${id}`, data, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -269,7 +269,7 @@ export const createVihicules = createAsyncThunk<
     'vihicules/createVihicules',
     async (data, { rejectWithValue }) => {
         try {
-            const response = await axios.post<Vihicles>('https://trensporteur-company.onrender.comapi/v1/vehicles/create', data, { withCredentials: true });
+            const response = await axios.post<Vihicles>('http://localhost:3000/api/v1/vehicles/create', data, { withCredentials: true });
             toast.success("تم تسجيل المركبة بنجاح")
             return response.data;
         } catch (error: unknown) {
@@ -300,7 +300,7 @@ export const FindOneVihicule = createAsyncThunk(
     "vihicule/FindOneVihicule",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://trensporteur-company.onrender.comapi/v1/vehicles/find/${id}`, { withCredentials: true });
+            const response = await axios.get(`http://localhost:3000/api/v1/vehicles/find/${id}`, { withCredentials: true });
             console.log(response.data);
 
             return response.data;
@@ -314,6 +314,31 @@ export const FindOneVihicule = createAsyncThunk(
         }
     }
 );
+
+export const DownloadOperateurPDF = createAsyncThunk<
+    void,
+    string,
+    { rejectValue: string }
+>("operateur/downloadPDF", async (id, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(`http://localhost:3000/api/v1/operateur-dtw/${id}/pdf`, {
+            responseType: "blob",
+        });
+
+        const blob = new Blob([response.data], { type: "application/pdf" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "operateur.pdf";
+        a.click();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.log(error);
+        
+        return rejectWithValue("فشل تحميل الملف");
+    }
+});
+
 
 // Create Slice
 const operateurSlice = createSlice({
@@ -341,7 +366,7 @@ const operateurSlice = createSlice({
             .addCase(fetchVihicules.fulfilled, (state, action) => {
                 state.loading = false;
                 state.vihicules = action.payload.data;
-                state.total = action.payload.total;
+                state.totalVc = action.payload.total;
                 state.limit = action.payload.limit;
                 state.page = action.payload.skip;
                 state.message = "تم تحميل البيانات بنجاح";
@@ -448,6 +473,21 @@ const operateurSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload as string;
             });
+        builder
+            .addCase(DownloadOperateurPDF.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(DownloadOperateurPDF.fulfilled, (state) => {
+                state.loading = false;
+                toast.success("تم تحميل الملف بنجاح");
+            })
+            .addCase(DownloadOperateurPDF.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+                toast.error(action.payload as string);
+            });
+
     },
 });
 

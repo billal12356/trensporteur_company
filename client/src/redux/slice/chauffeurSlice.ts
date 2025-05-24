@@ -40,7 +40,7 @@ export interface Chauffeur {
 interface ChauffeurState {
     chauffeurs: Chauffeur[];
     chauffeur: Chauffeur;
-    total: number;
+    totalCh: number;
     limit: number;
     page: number;
     loading: boolean;
@@ -55,7 +55,7 @@ interface ChauffeurState {
 const initialState: ChauffeurState = {
     chauffeurs: [],
     chauffeur: {} as Chauffeur,
-    total: 0,
+    totalCh: 0,
     limit: 10,
     page: 0,
     loading: false,
@@ -71,7 +71,7 @@ export const FindOneChauffeur = createAsyncThunk(
     "chauffer/FindOneChauffeur",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://trensporteur-company.onrender.comapi/v1/chauffeurs/find/${id}`, { withCredentials: true });
+            const response = await axios.get(`http://localhost:3000/api/v1/chauffeurs/find/${id}`, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -92,7 +92,7 @@ export const downloadRegistrationStats = createAsyncThunk<
     async ({ startDate, endDate }, { rejectWithValue }) => {
         try {
             const response = await fetch(
-                `https://trensporteur-company.onrender.comapi/v1/chauffeurs/export-stats?startDate=${startDate}&endDate=${endDate}`
+                `http://localhost:3000/api/v1/chauffeurs/export-stats?startDate=${startDate}&endDate=${endDate}`
             );
 
             if (!response.ok) {
@@ -118,7 +118,7 @@ export const fetchChauffeurs = createAsyncThunk(
     async (params: { search: string, limit?: number; page?: number; sort?: string }, { rejectWithValue }) => {
         console.log(params.page);
         try {
-            const response = await axios.get("https://trensporteur-company.onrender.comapi/v1/chauffeurs/find-all", {
+            const response = await axios.get("http://localhost:3000/api/v1/chauffeurs/find-all", {
                 params,
                 withCredentials: true,
             });
@@ -147,7 +147,7 @@ export const exportChauffeurs = createAsyncThunk<
         }
 
         const response = await axios.get(
-            `https://trensporteur-company.onrender.comapi/v1/chauffeurs/export?search=${search}`,
+            `http://localhost:3000/api/v1/chauffeurs/export?search=${search}`,
             {
                 responseType: 'blob',
                 withCredentials: true,
@@ -177,7 +177,7 @@ export const deleteChauffeurs = createAsyncThunk(
     "operateur/deleteChauffeurs",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.delete(`https://trensporteur-company.onrender.comapi/v1/chauffeurs/${id}`, { withCredentials: true });
+            const response = await axios.delete(`http://localhost:3000/api/v1/chauffeurs/${id}`, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -193,7 +193,7 @@ export const updateChauffeurs = createAsyncThunk(
     "chauffeurs/update",
     async ({ id, data }: { id: string; data: Partial<Chauffeur> }, { rejectWithValue }) => {
         try {
-            const response = await axios.patch(`https://trensporteur-company.onrender.comapi/v1/chauffeurs/update/${id}`, data, { withCredentials: true });
+            const response = await axios.patch(`http://localhost:3000/api/v1/chauffeurs/update/${id}`, data, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -213,7 +213,7 @@ export const createChauffeurs = createAsyncThunk<
     'chauffeurs/createChauffeurs',
     async (data, { rejectWithValue }) => {
         try {
-            const response = await axios.post<Chauffeur>('https://trensporteur-company.onrender.comapi/v1/chauffeurs/create', data, { withCredentials: true });
+            const response = await axios.post<Chauffeur>('http://localhost:3000/api/v1/chauffeurs/create', data, { withCredentials: true });
             toast.success("تم تسجيل المركبة بنجاح")
             return response.data;
         } catch (error: unknown) {
@@ -282,7 +282,7 @@ const operateurSlice = createSlice({
                 state.loading = false;
                 state.chauffeurs = action.payload.data;
                 //console.log("data:", action.payload.data);
-                state.total = action.payload.total;
+                state.totalCh = action.payload.total;
                 state.limit = action.payload.limit;
                 state.page = action.payload.skip;
                 state.message = "تم تحميل البيانات بنجاح";

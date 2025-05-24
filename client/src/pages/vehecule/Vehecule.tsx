@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 
 
 const Vehecule = React.memo(() => {
-  const { vihicules, loading, total, limit, error } = useSelector((state: RootState) => state.vihicule);
+  const { vihicules, totalVc,loading, limit, error } = useSelector((state: RootState) => state.vihicule);
   const dispatch = useDispatch<AppDispatch>()
   const [Page, setPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,7 +33,7 @@ const Vehecule = React.memo(() => {
     }
   }
   const handleNext = () => {
-    if (Page !== Math.ceil(total / limit)) {
+    if (Page !== Math.ceil(totalVc / limit)) {
       setPage(Page + 1)
     }
   }
@@ -211,7 +211,7 @@ const Vehecule = React.memo(() => {
 
 
             <div className="flex justify-between items-center py-4">
-              <span className="text-sm">صفحة {Page} من {Math.ceil(total / limit)}</span>
+              <span className="text-sm">صفحة {Page} من {Math.ceil(totalVc / limit)}</span>
               <div className="space-x-2">
                 <Button
                   variant="outline"
@@ -225,7 +225,7 @@ const Vehecule = React.memo(() => {
                   variant="outline"
                   size="sm"
                   onClick={handleNext}
-                  disabled={Page >= Math.ceil(total / limit)}
+                  disabled={Page >= Math.ceil(totalVc / limit)}
                 >
                   التالي
                 </Button>

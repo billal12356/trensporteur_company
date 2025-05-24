@@ -10,6 +10,13 @@ import { UserQueryBuilder } from 'src/common/builder/pagination.builder';
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { Workbook } from 'exceljs';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { ruralCoordinates } from 'src/constants/rural-coordinates';
+const fontkit = require('@pdf-lib/fontkit')
+import { getVisualString } from 'bidi-js';
+const arabicReshaper = require('arabic-reshaper');
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class VehiclesService {
@@ -323,6 +330,50 @@ export class VehiclesService {
     console.log(find);
 
     return find;
+  }
+
+
+  importExcel(filePath: any[]): Promise<void> {
+    return new Promise((resolve) => {
+      const saveNext = (index: number) => {
+        if (index >= filePath.length) {
+          console.log("✅ تم استيراد جميع المركبات بنجاح!");
+          return resolve();
+        }
+
+        const rawData = filePath[index];
+        console.log("🚐 Vihicle Row:", rawData);
+
+        const cleanedData = {
+          ...rawData,
+          Vehicle_activity_start_date: rawData.Vehicle_activity_start_date
+            ? new Date(rawData.Vehicle_activity_start_date)
+            : null,
+          driving_license_history: rawData.driving_license_history
+            ? new Date(rawData.driving_license_history)
+            : null,
+          line_activity_start_date: rawData.line_activity_start_date
+            ? new Date(rawData.line_activity_start_date)
+            : null,
+          hestoire_parked: rawData.hestoire_parked
+            ? new Date(rawData.hestoire_parked)
+            : null,
+          hestoire_parked_end: rawData.hestoire_parked_end
+            ? new Date(rawData.hestoire_parked_end)
+            : null,
+        };
+
+        const doc = new this.VihicileModel(cleanedData);
+        doc.save()
+          .then(() => saveNext(index + 1))
+          .catch((error) => {
+            console.error(`❌ خطأ أثناء الحفظ في السطر ${index + 1}:`, error.message);
+            saveNext(index + 1); // تابع رغم الخطأ
+          });
+      };
+
+      saveNext(0);
+    });
   }
 
 

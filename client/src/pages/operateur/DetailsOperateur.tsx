@@ -7,6 +7,7 @@ import { FindOneOperateur } from "@/redux/slice/operateurSlice";
 import MainContainer from "@/components/MainContainer";
 import { Button } from "@/components/ui/button";
 import { IoCaretBackSharp, IoCaretForwardSharp } from "react-icons/io5";
+import { DownloadOperateurPDF } from "@/redux/slice/vihiculeSlice";
 
 
 
@@ -14,6 +15,8 @@ export default function OperateurDetails() {
     const { operateur, vihicules, chauffeurs } = useSelector((state: RootState) => state.operateur)
     const dispatch = useDispatch<AppDispatch>()
     const { id } = useParams();
+
+    console.log(vihicules);
 
     useEffect(() => {
         if (id) {
@@ -37,6 +40,9 @@ export default function OperateurDetails() {
     return (
         <MainContainer>
             <div className="p-6 space-y-6">
+                <Button onClick={() => dispatch(DownloadOperateurPDF(id!))} className="mt-4">
+                    تحميل PDF
+                </Button>
                 <Card className="shadow-lg">
                     <CardContent className="space-y-6">
                         {/* Header */}
@@ -233,76 +239,66 @@ export default function OperateurDetails() {
                         </thead>
                         <tbody>
                             {vihicules.length ? (
-                                <tr key={vihicules[index]._id} className="flex">
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].num_wilaya}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].num_docier_client}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].fullName_arabe}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].fullName_francais}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].activite}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].colonne1 || ''}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].nature_activite}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].colonne2 || ''}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].status_activite}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].colonne3 || ''}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].num_bus_registration}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].circle || ''}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].Municipality || ''}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].Style || ''}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].category}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].type}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].First_year_of_use}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].Number_of_seats}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].Energy}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].num_driving_license}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                                        {new Date(vihicules[index].driving_license_history).toLocaleDateString('fr-FR')}
-                                    </td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].driving_license_dure}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                                        {new Date(vihicules[index].line_activity_start_date).toLocaleDateString('fr-FR')}
-                                    </td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                                        {new Date(vihicules[index].Vehicle_activity_start_date).toLocaleDateString('fr-FR')}
-
-                                    </td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].font_type}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].colonne4}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].font_symbol}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].point_depart}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].point_arrive}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].point_Traffic1}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].point_Traffic2}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].point_Traffic3}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].point_Traffic4}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].point_Traffic5}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].line_start_time || ''}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].line_end_time || ''}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].Pace_per_minute || ''}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].time_depart1}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].time_depart2}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].time_depart3 || ''}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].time_depart4 || ''}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].vihicile_parked || ''}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].type_parked}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                                        {new Date(vihicules[index].hestoire_parked).toLocaleDateString('fr-FR')}
-                                    </td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                                        {new Date(vihicules[index].hestoire_parked_end).toLocaleDateString('fr-FR')}
-                                    </td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].comments}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].person_concerned}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].note_chef_departement || ''}</td>
-                                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vihicules[index].path}</td>
-
-                                </tr>
-
+                                vihicules.map((vehicule) => (
+                                    <tr key={vehicule._id} className="flex">
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.num_wilaya}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.num_docier_client}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.fullName_arabe}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.fullName_francais}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.activite}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.colonne1 || ''}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.nature_activite}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.colonne2 || ''}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.status_activite}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.colonne3 || ''}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.num_bus_registration}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.circle || ''}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.Municipality || ''}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.Style || ''}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.category}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.type}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.First_year_of_use}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.Number_of_seats}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.Energy}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.num_driving_license}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{new Date(vehicule.driving_license_history).toLocaleDateString('fr-FR')}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.driving_license_dure}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{new Date(vehicule.line_activity_start_date).toLocaleDateString('fr-FR')}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{new Date(vehicule.Vehicle_activity_start_date).toLocaleDateString('fr-FR')}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.font_type}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.colonne4}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.font_symbol}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.point_depart}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.point_arrive}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.point_Traffic1}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.point_Traffic2}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.point_Traffic3}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.point_Traffic4}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.point_Traffic5}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.line_start_time || ''}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.line_end_time || ''}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.Pace_per_minute || ''}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.time_depart1}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.time_depart2}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.time_depart3 || ''}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.time_depart4 || ''}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.vihicile_parked || ''}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.type_parked}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{new Date(vehicule.hestoire_parked).toLocaleDateString('fr-FR')}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{new Date(vehicule.hestoire_parked_end).toLocaleDateString('fr-FR')}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.comments}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.person_concerned}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.note_chef_departement || ''}</td>
+                                        <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{vehicule.path}</td>
+                                    </tr>
+                                ))
                             ) : (
                                 <tr>
                                     <td colSpan={40} className="px-4 py-2 text-center">لا توجد نتائج.</td>
                                 </tr>
                             )}
                         </tbody>
+
                     </table>
                 </div>
             </div>

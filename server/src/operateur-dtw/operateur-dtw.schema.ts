@@ -104,11 +104,11 @@ export class Operateur {
   @Prop({ type: String, required: [true, "بلدية العنوان بالفرنسية مطلوب!"] })
   address_municipalité_francais: string;
 
-  @Prop({ type: Number, required: [true, "رقم السجل التجاري مطلوب!"] })
-  num_registre_commerce: number;
+  @Prop({ type: String, required: [true, "رقم السجل التجاري مطلوب!"] })
+  num_registre_commerce: string;
 
-  @Prop({ type: Number, required: [true, "رقم السجل التجاري الفرعي مطلوب!"] })
-  num_registre_commerce_n5: number;
+  @Prop({ type: String, required: [true, "رقم السجل التجاري الفرعي مطلوب!"] })
+  num_registre_commerce_n5: string;
 
   @Prop({ type: Date, required: [true, "تاريخ تسجيل السجل التجاري مطلوب!"] })
   hestoire_registre_commerce: Date;

@@ -1,4 +1,4 @@
-import { IsEmail, IsMobilePhone, IsNotEmpty, IsString, MinLength } from "class-validator";
+import { IsEmail, IsMobilePhone, IsNotEmpty, IsOptional, IsString, MinLength } from "class-validator";
 
 export class CreateUserDto {
     @IsNotEmpty({message:"FullName is required."})
@@ -17,6 +17,8 @@ export class CreateUserDto {
     @MinLength(3,{message:"password confirmation is 3"})
     passwordConfirm:string;
 
+    
+    @IsOptional()
     @IsMobilePhone("ar-DZ")
     phone:string
 }

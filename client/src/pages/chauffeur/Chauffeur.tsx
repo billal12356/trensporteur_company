@@ -12,7 +12,7 @@ import { Edit3 } from "lucide-react";
 
 const Chauffeur = React.memo(() => {
   const dispatch = useDispatch<AppDispatch>();
-  const { chauffeurs, loading, total, limit } = useSelector((state: RootState) => state.chauffeur);
+  const { chauffeurs, loading, totalCh, limit } = useSelector((state: RootState) => state.chauffeur);
   const [Page, setPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -39,7 +39,7 @@ const Chauffeur = React.memo(() => {
     }
   }
   const handleNext = () => {
-    if (Page !== Math.ceil(total / limit)) {
+    if (Page !== Math.ceil(totalCh / limit)) {
       setPage(Page + 1)
     }
   }
@@ -329,7 +329,7 @@ const Chauffeur = React.memo(() => {
 
 
         <div className="flex justify-between items-center py-4">
-          <span className="text-sm">صفحة {Page} من {Math.ceil(total / limit)}</span>
+          <span className="text-sm">صفحة {Page} من {Math.ceil(totalCh / limit)}</span>
           <div className="space-x-2">
             <Button
               variant="outline"
@@ -343,7 +343,7 @@ const Chauffeur = React.memo(() => {
               variant="outline"
               size="sm"
               onClick={handleNext}
-              disabled={Page >= Math.ceil(total / limit)}
+              disabled={Page >= Math.ceil(totalCh / limit)}
             >
               التالي
             </Button>

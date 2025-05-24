@@ -35,6 +35,8 @@ const Statistique = () => {
     const { interCommune, interWilaya, rural, urbain, scolaire, loading, error } = useSelector(
         (state: RootState) => state.stats
     );
+    console.log(interWilaya);
+    
 
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
@@ -137,19 +139,20 @@ const Statistique = () => {
     return (
         <MainContainer>
             <div className="p-4">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold">Tableau des Transports</h2>
+                <div className="flex md:w-[50%] justify-between items-center mb-4">
                     <button
                         onClick={handlePrint}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm"
+                        className="bg-blue-600 hover:bg-blue-700 cursor-pointer text-white px-4 py-2 rounded text-sm"
                     >
-                        Imprimer
+                        طباعة
                     </button>
+                    <h2 className="text-xl text-center font-bold">الاحصائيات العامة</h2>
+                    
                 </div>
 
-                <div className="flex items-end gap-4 mb-4">
+                <div className="flex flex-col md:flex-row justify-center items-center md:items-end w-[100%] mg:justify-end gap-4 mb-4">
                     <div>
-                        <label className="block text-sm font-medium">Date début</label>
+                        <label className="block text-sm font-medium">تاريخ البداية</label>
                         <input
                             type="date"
                             value={startDate}
@@ -158,7 +161,7 @@ const Statistique = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium">Date fin</label>
+                        <label className="block text-sm font-medium">تاريخ النهاية</label>
                         <input
                             type="date"
                             value={endDate}
@@ -168,9 +171,9 @@ const Statistique = () => {
                     </div>
                     <button
                         onClick={fetchAllStats}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+                        className="bg-green-600 cursor-pointer hover:bg-green-700 text-white px-4 py-2 rounded"
                     >
-                        Filtrer
+                        تصفية
                     </button>
                 </div>
 
@@ -179,95 +182,73 @@ const Statistique = () => {
                 ) : error ? (
                     <p className="text-red-500">Erreur: {error}</p>
                 ) : (
-                    <div ref={tableRef} className="overflow-auto">
-                        <table className="w-full border border-gray-300 text-sm">
-                            <thead className="bg-gray-100 h-[20px]">
+                    <div ref={tableRef} className="overflow-auto mt-6 mb-6 rounded shadow-md">
+                        <table className="w-full border border-gray-300 text-sm table-auto">
+                            <thead className="bg-gray-100">
                                 <tr>
-                                    <th rowSpan={2}>Transport</th>
-                                    <th rowSpan={2}>Nb Véhicules</th>
-                                    <th rowSpan={2}>Nb Opérateurs</th>
-                                    <th rowSpan={2}>Nb Sièges</th>
-                                    <th colSpan={5}>Tranche d'âge des véhicules</th>
-                                    <th rowSpan={2}>En Activité</th>
-                                    <th rowSpan={2}>Arrêt</th>
-                                    <th rowSpan={2}>Âge Moyen</th>
-                                    <th rowSpan={2}>Nb Lignes</th>
-                                    <th rowSpan={2}>Remarques</th>
+                                    <th rowSpan={2} className="p-3">Transport</th>
+                                    <th rowSpan={2} className="p-3">Nb Véhicules</th>
+                                    <th rowSpan={2} className="p-3">Nb Opérateurs</th>
+                                    <th rowSpan={2} className="p-3">Nb Sièges</th>
+                                    <th colSpan={5} className="p-3">Tranche d'âge des véhicules</th>
+                                    <th rowSpan={2} className="p-3">En Activité</th>
+                                    <th rowSpan={2} className="p-3">Arrêt</th>
+                                    <th rowSpan={2} className="p-3">Âge Moyen</th>
+                                    <th rowSpan={2} className="p-3">Nb Lignes</th>
+                                    <th rowSpan={2} className="p-3">abs</th>
                                 </tr>
                                 <tr>
-                                    <th>0-5</th>
-                                    <th>6-10</th>
-                                    <th>11-15</th>
-                                    <th>15-20</th>
-                                    <th>+20</th>
+                                    <th className="p-3">0-5</th>
+                                    <th className="p-3">6-10</th>
+                                    <th className="p-3">11-15</th>
+                                    <th className="p-3">15-20</th>
+                                    <th className="p-3">+20</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200 p-4">
-                                {/* ✅ صف الـ TOTAL سيتم إضافته مباشرة قبل صف الـ Urbain */}
+                            <tbody className="bg-white divide-y divide-gray-200">
                                 {data.map((row, index) => {
                                     if (row.type === "Urbain") {
                                         return (
                                             <>
-                                                {/* صف الـ Total */}
-                                                <tr className="bg-blue-100 text-blue-800 font-bold h-4 p-3">
-                                                    <td>{totalRow.type}</td>
-                                                    <td>{totalRow.nbVehicules}</td>
-                                                    <td>{totalRow.nbOperators}</td>
-                                                    <td>{totalRow.nbPlaces}</td>
-                                                    <td>{totalRow.tranche_0_5}</td>
-                                                    <td>{totalRow.tranche_6_10}</td>
-                                                    <td>{totalRow.tranche_11_15}</td>
-                                                    <td>{totalRow.tranche_15_20}</td>
-                                                    <td>{totalRow.tranche_plus_20}</td>
-                                                    <td>{totalRow.en_activite}</td>
-                                                    <td>{totalRow.arret}</td>
-                                                    <td>{totalRow.avgAge} ans</td>
-                                                    <td>{totalRow.nbLignes}</td>
-                                                    <td>/</td>
+                                                <tr className="bg-blue-100 text-blue-800 font-bold">
+                                                    <td className="p-3">{totalRow.type}</td>
+                                                    <td className="p-3">{totalRow.nbVehicules}</td>
+                                                    <td className="p-3">{totalRow.nbOperators}</td>
+                                                    <td className="p-3">{totalRow.nbPlaces}</td>
+                                                    <td className="p-3">{totalRow.tranche_0_5}</td>
+                                                    <td className="p-3">{totalRow.tranche_6_10}</td>
+                                                    <td className="p-3">{totalRow.tranche_11_15}</td>
+                                                    <td className="p-3">{totalRow.tranche_15_20}</td>
+                                                    <td className="p-3">{totalRow.tranche_plus_20}</td>
+                                                    <td className="p-3">{totalRow.en_activite}</td>
+                                                    <td className="p-3">{totalRow.arret}</td>
+                                                    <td className="p-3">{totalRow.avgAge} ans</td>
+                                                    <td className="p-3">{totalRow.nbLignes}</td>
+                                                    <td className="p-3">/</td>
                                                 </tr>
-
-                                                {/* صف Urbain بعد صف الـ Total */}
                                                 <tr key={index}>
-                                                    <td>{row.type}</td>
-                                                    <td>{row.nbVehicules}</td>
-                                                    <td>{row.nbOperators}</td>
-                                                    <td>{row.nbPlaces}</td>
-                                                    <td>{row.tranche_0_5}</td>
-                                                    <td>{row.tranche_6_10}</td>
-                                                    <td>{row.tranche_11_15}</td>
-                                                    <td>{row.tranche_15_20}</td>
-                                                    <td>{row.tranche_plus_20}</td>
-                                                    <td>{row.en_activite}</td>
-                                                    <td>{row.arret}</td>
-                                                    <td>{row.avgAge} ans</td>
-                                                    <td>{row.nbLignes}</td>
-                                                    <td>/</td>
+                                                    {Object.values(row).map((value, i) => (
+                                                        <td key={i} className="p-3">{typeof value === 'number' ? value : `${value}`}</td>
+                                                    ))}
+                                                    <td className="p-3">/</td>
                                                 </tr>
                                             </>
                                         );
                                     }
+
                                     return (
-                                        <tr key={index} className="p-3">
-                                            <td>{row.type}</td>
-                                            <td>{row.nbVehicules}</td>
-                                            <td>{row.nbOperators}</td>
-                                            <td>{row.nbPlaces}</td>
-                                            <td>{row.tranche_0_5}</td>
-                                            <td>{row.tranche_6_10}</td>
-                                            <td>{row.tranche_11_15}</td>
-                                            <td>{row.tranche_15_20}</td>
-                                            <td>{row.tranche_plus_20}</td>
-                                            <td>{row.en_activite}</td>
-                                            <td>{row.arret}</td>
-                                            <td>{row.avgAge} ans</td>
-                                            <td>{row.nbLignes}</td>
-                                            <td>/</td>
+                                        <tr key={index}>
+                                            {Object.values(row).map((value, i) => (
+                                                <td key={i} className="p-3">{typeof value === 'number' ? value : `${value}`}</td>
+                                            ))}
+                                            <td className="p-3">/</td>
                                         </tr>
                                     );
                                 })}
                             </tbody>
                         </table>
                     </div>
+
                 )}
             </div>
         </MainContainer>

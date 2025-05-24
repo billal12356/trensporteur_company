@@ -72,6 +72,8 @@ export class UsersService {
   }
 
   async update(id: string, updateChauffeurDto: UpdateUserDto) {
+    console.log(id);
+    
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(
         new ResponseBuilder()

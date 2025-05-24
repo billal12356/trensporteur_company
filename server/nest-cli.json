@@ -3,6 +3,24 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "assets": [
+      {
+        "include": "scripts/**/*",
+        "outDir": "dist/scripts"
+      },
+      {
+        "include": "uploads/**/*",
+        "outDir": "dist/uploads"
+      },
+      {
+        "include": "assets/**/*",
+        "outDir": "dist"
+      },
+      {
+        "include": "src/import-operateur/*.json",
+        "outDir": "dist/seed/data"
+      }
+    ]    
   }
 }
