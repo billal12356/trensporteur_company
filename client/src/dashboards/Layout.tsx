@@ -1,8 +1,8 @@
-import { useCallback, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useCallback, useState } from "react";
+import { Link } from "react-router-dom";
 import { Model, TabNode, IJsonModel, Actions, Layout as FlexLayout, DockLocation } from "flexlayout-react";
 import "flexlayout-react/style/light.css";
-import { Key, LogOut, LucideLayoutDashboard, Settings, User } from "lucide-react";
+import { Key, LucideLayoutDashboard, Settings, User } from "lucide-react";
 import OperatorStats from "./components/OperatorStats";
 import VehicleStats from "./pages/VehicleStats";
 import DriverStats from "./pages/DriverStats";
@@ -47,7 +47,7 @@ const FlexDashboardLayout = () => {
   const [model, setModel] = useState(() => Model.fromJson(layoutConfig));
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState<string | null>(null); // حالة لتتبع الزر المختار
-  const clickTimeout = useRef<NodeJS.Timeout | null>(null);
+  // const clickTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const factory = (node: TabNode) => {
     const comp = node.getComponent();
@@ -95,11 +95,11 @@ const FlexDashboardLayout = () => {
     [model]
   );
 
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
+  // const navigate = useNavigate();
+  // const handleLogout = () => {
+  //   localStorage.removeItem("token");
+  //   navigate("/login");
+  // };
 
   return (
     <div className="w-full h-screen flex flex-col bg-gray-100">
