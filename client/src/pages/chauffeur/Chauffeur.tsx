@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { deleteChauffeurs, exportChauffeurs, fetchChauffeurs } from "@/redux/slice/chauffeurSlice";
 import { Link } from "react-router-dom";
 import { Edit3 } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 const Chauffeur = React.memo(() => {
   const dispatch = useDispatch<AppDispatch>();
@@ -50,7 +51,11 @@ const Chauffeur = React.memo(() => {
 
   return (
     <MainContainer>
-
+      <Helmet>
+        <title>قائمة السائقين</title>
+        <meta name="description" content="مرحبا بك في Finissio" />
+        <link rel="icon" type="image/png" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOT8Kacun1rrtYYQIG2h6Iq-N0s3DdiuoNFQ&s" />
+      </Helmet>
 
       <div className="w-full p-4">
         <div className="text-center text-3xl font-bold mb-4">قائمة السائقين</div>
@@ -88,6 +93,7 @@ const Chauffeur = React.memo(() => {
                 <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">نهاية صلاحية الصنف</th>
                 <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">بلدية الاصدار</th>
                 <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">تاريخ الميلاد</th>
+                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">مكان الميلاد</th>
                 <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">العنوان</th>
                 <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">رقم شهادة الكفائة المهنية</th>
                 <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">تاريخ الحصول على شهادة الكفاءة</th>
@@ -111,6 +117,7 @@ const Chauffeur = React.memo(() => {
                     <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
                       {new Date(chauffeur.hestoire_demende).toLocaleDateString('fr-FR')}
                     </td>
+                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{chauffeur.num_enregistrement_du_transporteur}</td>
                     <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{chauffeur.operateur}</td>
                     <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{chauffeur.ligne_exploitée}</td>
                     <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{chauffeur.num_vehicule}</td>
@@ -306,7 +313,7 @@ const Chauffeur = React.memo(() => {
                             <Skeleton className="w-[200px] h-[40px] rounded" />
                           </td>
                           <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b ">
-                            <Skeleton className="w-[200px] h-[40px] rounded" /> 
+                            <Skeleton className="w-[200px] h-[40px] rounded" />
                           </td>
 
                           <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b ">

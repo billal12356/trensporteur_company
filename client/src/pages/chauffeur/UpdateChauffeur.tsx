@@ -12,6 +12,7 @@ import { useForm } from "react-hook-form";
 
 import { FindOneChauffeur, updateChauffeurs } from "@/redux/slice/chauffeurSlice";
 import MainContainer from "@/components/MainContainer";
+import { Helmet } from "react-helmet-async";
 
 const EditChauffeur = () => {
     const { id } = useParams<{ id: string }>();
@@ -44,6 +45,11 @@ const EditChauffeur = () => {
     const depnd = watch("vihicile_parked");
     return (
         <MainContainer>
+            <Helmet>
+                <title>تعديل السائق</title>
+                <meta name="description" content="مرحبا بك في Finissio" />
+                <link rel="icon" type="image/png" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOT8Kacun1rrtYYQIG2h6Iq-N0s3DdiuoNFQ&s" />
+            </Helmet>
             <div className="max-w-4xl mx-auto p-6 bg-white shadow rounded mt-10">
                 <h2 className="text-2xl font-bold mb-6 text-center">✏️ تعديل بيانات المركبة</h2>
                 <form className="space-y-10">

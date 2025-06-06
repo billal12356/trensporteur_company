@@ -11,6 +11,7 @@ import { createOperateur } from "@/redux/slice/operateurSlice";
 import { Operateur } from "@/components/types/OperateurTypes";
 import { Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 
 
 const FormOperateur: React.FC = () => {
@@ -20,7 +21,7 @@ const FormOperateur: React.FC = () => {
   const { register, handleSubmit, setValue, watch } = useForm<Operateur>();
   const onSubmit: SubmitHandler<Operateur> = async (data) => {
     await dispatch(createOperateur(data)).unwrap();
-    navigate('operateur')
+    navigate("/operateur")
   }
 
 
@@ -29,6 +30,11 @@ const FormOperateur: React.FC = () => {
 
   return (
     <MainContainer>
+      <Helmet>
+        <title>اضافة المتعامل</title>
+        <meta name="description" content="مرحبا بك في Finissio" />
+        <link rel="icon" type="image/png" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOT8Kacun1rrtYYQIG2h6Iq-N0s3DdiuoNFQ&s" />
+      </Helmet>
       <div className="w-full max-w-5xl mx-auto p-8 bg-white shadow-lg rounded-lg mt-10">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
           📝 تسجيل المتعامل
@@ -339,17 +345,17 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">رقم التسجيل التجاري 5</label>
-              <Input type="number"
+              <Input type="text"
                 {...register("num_registre_commerce_n5", {
-                  setValueAs: (v) => v === "" ? undefined : Number(v)
+                  setValueAs: (v) => v === "" ? undefined : String(v)
                 })}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">رقم التسجيل التجاري</label>
-              <Input type="number"
+              <Input type="text"
                 {...register("num_registre_commerce", {
-                  setValueAs: (v) => v === "" ? undefined : Number(v)
+                  setValueAs: (v) => v === "" ? undefined : String(v)
                 })}
               />
             </div>
@@ -392,7 +398,7 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">رقم الانتساب للصندوق الوطني للعمال غير الاجراء</label>
-              <Input type="number" 
+              <Input type="number"
                 {...register("num_adherent_caise_national_non_salaire", {
                   setValueAs: (v) => v === "" ? undefined : Number(v)
                 })}
@@ -454,7 +460,7 @@ const FormOperateur: React.FC = () => {
           {/* Submit Button */}
           <Button type="submit" disabled={loading} onClick={handleSubmit(onSubmit)} className="w-full">
             {
-              loading ? <Loader/> : "إرسال البيانات"
+              loading ? <Loader /> : "إرسال البيانات"
             }
           </Button>
         </form>

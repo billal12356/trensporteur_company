@@ -9,6 +9,7 @@ import MainContainer from "@/components/MainContainer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { Edit3, ZoomIn } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 
 const Operateur = React.memo(() => {
@@ -51,7 +52,11 @@ const Operateur = React.memo(() => {
 
   return (
     <MainContainer>
-
+      <Helmet>
+        <title>قائمة المتعاملين</title>
+        <meta name="description" content="مرحبا بك في Finissio" />
+        <link rel="icon" type="image/png" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOT8Kacun1rrtYYQIG2h6Iq-N0s3DdiuoNFQ&s" />
+      </Helmet>
 
       <div className="w-full p-4">
         <div className="text-center text-3xl font-bold mb-4">قائمة المتعاملين</div>
@@ -171,8 +176,12 @@ const Operateur = React.memo(() => {
                     <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{operateur.address_municipalité_francais}</td>
                     <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{operateur.num_registre_commerce}</td>
                     <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{operateur.num_registre_commerce_n5}</td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{operateur.hestoire_registre_commerce}</td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">{operateur.modifier_hestoire_registre_commerce}</td>
+                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
+                      {new Date(operateur.hestoire_registre_commerce).toLocaleDateString('fr-FR')}
+                    </td>
+                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
+                      {new Date(operateur.modifier_hestoire_registre_commerce).toLocaleDateString('fr-FR')}
+                    </td>
                     <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
                       {new Date(operateur.date_debut_activite).toLocaleDateString('fr-FR')}
                     </td>
@@ -195,7 +204,7 @@ const Operateur = React.memo(() => {
                       </Button>
                       <Button variant="default" className="cursor-pointer">
                         <Link to={`/details-operateur/${operateur._id}`}>
-                          <ZoomIn  className="w-4 h-4" />
+                          <ZoomIn className="w-4 h-4" />
                         </Link>
                       </Button>
                       <Button variant="outline" className="cursor-pointer">
@@ -358,7 +367,7 @@ const Operateur = React.memo(() => {
                             <Skeleton className="w-[200px] h-[40px] rounded" />
                           </td>
                           <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b ">
-                            <Skeleton className="w-[200px] h-[40px] rounded" /> 
+                            <Skeleton className="w-[200px] h-[40px] rounded" />
                           </td>
 
                           <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b ">

@@ -1,5 +1,5 @@
 import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { CreateOperateurDtwDto } from './dto/create-operateur-dtw.dto';
+import { CreateOperateurDto } from './dto/create-operateur-dtw.dto';
 import { UpdateOperateurDtwDto } from './dto/update-operateur-dtw.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Operateur } from './operateur-dtw.schema';
@@ -60,7 +60,7 @@ export class OperateurDtwService {
     private readonly chauffeursService: ChauffeursService,
   ) { }
 
-  async create(createOperateurDtwDto: CreateOperateurDtwDto) {
+  async create(createOperateurDtwDto: CreateOperateurDto) {
     const operateur = await this.OperateurModel.create(createOperateurDtwDto)
     return new ResponseBuilder()
       .setStatus(201)

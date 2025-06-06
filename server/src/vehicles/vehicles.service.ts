@@ -1,5 +1,5 @@
 import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { CreateVehicleDto } from './dto/create-vehicle.dto';
+import { CreateVihicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Vihicles } from './vihicles.schema';
@@ -27,7 +27,7 @@ export class VehiclesService {
   ) { }
 
 
-  async create(createVehicleDto: CreateVehicleDto) {
+  async create(createVehicleDto: CreateVihicleDto) {
     const { num_docier_client, fullName_arabe, fullName_francais } = createVehicleDto
     const operateurNum = await this.operateurService.findByVihicilesandChauffer({ num_docier_client })
 

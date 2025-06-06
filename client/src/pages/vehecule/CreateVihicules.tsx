@@ -11,14 +11,18 @@ import { Vihicles } from "@/components/types/OperateurTypes";
 import { Loader } from "lucide-react";
 import { createVihicules } from "@/redux/slice/vihiculeSlice";
 import { Separator } from "@/components/ui/separator";
+import { Helmet } from "react-helmet-async";
+import { useNavigate } from "react-router-dom";
 
 
 const FormOperateur: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate =useNavigate();
   const { loading } = useSelector((state: RootState) => state.vihicule);
   const { register, handleSubmit, setValue, watch } = useForm<Vihicles>();
   const onSubmit: SubmitHandler<Vihicles> = async (data) => {
     await dispatch(createVihicules(data)).unwrap();
+    navigate('/Véhecule')
   }
 
 
@@ -27,6 +31,11 @@ const FormOperateur: React.FC = () => {
 
   return (
     <MainContainer>
+      <Helmet>
+        <title>اضافة مركبة</title>
+        <meta name="description" content="مرحبا بك في Finissio" />
+        <link rel="icon" type="image/png" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOT8Kacun1rrtYYQIG2h6Iq-N0s3DdiuoNFQ&s" />
+      </Helmet>
       <div className="w-full max-w-5xl mx-auto p-8 bg-white shadow-lg rounded-lg mt-10">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
           📝 تسجيل المركبة
@@ -116,8 +125,9 @@ const FormOperateur: React.FC = () => {
                   <SelectValue placeholder="اختر" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="عمومي للمسافرين">عمومي للمسافرين</SelectItem>
-                  <SelectItem value="خاص للمسافرين">خاص للمسافرين</SelectItem>
+                  <SelectItem value="PRIVE">PRIVE</SelectItem>
+                  <SelectItem value="PUBLICE">PUBLICE</SelectItem>
+
                 </SelectContent>
               </Select>
             </div>
@@ -133,8 +143,8 @@ const FormOperateur: React.FC = () => {
                   <SelectValue placeholder="اختر" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Privé">Privé</SelectItem>
-                  <SelectItem value="Publique">Publique</SelectItem>
+                  <SelectItem value="عمومي للمسافرين">عمومي للمسافرين</SelectItem>
+                  <SelectItem value="خاص للمسافرين">خاص للمسافرين</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -442,7 +452,7 @@ const FormOperateur: React.FC = () => {
               <label className="block text-sm font-medium text-end text-gray-700">تاريخ التوقيف</label>
               <Input type="date" disabled={depnd === "لا"} {...register("hestoire_parked")} />
             </div>
-            
+
           </div>
 
 
@@ -452,12 +462,12 @@ const FormOperateur: React.FC = () => {
               <label className="block text-sm font-medium text-end text-gray-700">المسار</label>
               <Input type="text" {...register("path")} />
             </div>
-            
+
             <div className="flex flex-col ">
               <label className="block text-sm font-medium text-end text-gray-700">المعني بالتعيين</label>
               <Input type="text" {...register("person_concerned")} />
             </div>
-            
+
           </div>
 
 

@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { HiDownload, HiTrash } from "react-icons/hi";
 import { RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 
 
 const Vehecule = React.memo(() => {
-  const { vihicules, totalVc,loading, limit, error } = useSelector((state: RootState) => state.vihicule);
+  const { vihicules, totalVc, loading, limit, error } = useSelector((state: RootState) => state.vihicule);
   const dispatch = useDispatch<AppDispatch>()
   const [Page, setPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,6 +45,11 @@ const Vehecule = React.memo(() => {
 
   return (
     <MainContainer>
+      <Helmet>
+        <title>قائمة المركبات</title>
+        <meta name="description" content="مرحبا بك في Finissio" />
+        <link rel="icon" type="image/png" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOT8Kacun1rrtYYQIG2h6Iq-N0s3DdiuoNFQ&s" />
+      </Helmet>
       {
         error ? (
           <div className="flex justify-center items-center h-screen">

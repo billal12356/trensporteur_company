@@ -10,14 +10,18 @@ import { useDispatch, useSelector } from "react-redux";
 import { Chauffeur } from "@/components/types/OperateurTypes";
 import { Loader } from "lucide-react";
 import { createChauffeurs } from "@/redux/slice/chauffeurSlice";
+import { Helmet } from "react-helmet-async";
+import { useNavigate } from "react-router-dom";
 
 
 const FormChauffeur: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { loading } = useSelector((state: RootState) => state.chauffeur);
   const { register, handleSubmit, setValue, watch } = useForm<Chauffeur>();
   const onSubmit: SubmitHandler<Chauffeur> = async (data) => {
     await dispatch(createChauffeurs(data)).unwrap();
+    navigate('/chauffeur')
   }
 
 
@@ -26,6 +30,11 @@ const FormChauffeur: React.FC = () => {
 
   return (
     <MainContainer>
+      <Helmet>
+        <title>اضاقة السائق</title>
+        <meta name="description" content="مرحبا بك في Finissio" />
+        <link rel="icon" type="image/png" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOT8Kacun1rrtYYQIG2h6Iq-N0s3DdiuoNFQ&s" />
+      </Helmet>
       <div className="w-full max-w-5xl mx-auto p-8 bg-white shadow-lg rounded-lg mt-10">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
           📝 تسجيل السائق
@@ -111,9 +120,9 @@ const FormChauffeur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">ترقيم المركبة</label>
-              <Input type="number"
+              <Input type="text"
                 {...register("num_vehicule", {
-                  setValueAs: (v) => v === "" ? undefined : Number(v)
+                  setValueAs: (v) => v === "" ? undefined : String(v)
                 })}
               />
             </div>
@@ -163,9 +172,9 @@ const FormChauffeur: React.FC = () => {
 
             <div className="flex flex-col gap-2">
               <label className="block text-sm text-end font-medium text-gray-700">رقم رخصة السياقة </label>
-              <Input type="number"
+              <Input type="text"
                 {...register("num_permis_conduire", {
-                  setValueAs: (v) => v === "" ? undefined : Number(v)
+                  setValueAs: (v) => v === "" ? undefined : String(v)
                 })}
               />
             </div>
@@ -256,9 +265,9 @@ const FormChauffeur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <label className="block text-sm font-medium text-end text-gray-700">نوع التوقف</label>
-              <Select 
-                 onValueChange={(value) => setValue("type_parked", value)}
-                 disabled={depnd === "لا"}
+              <Select
+                onValueChange={(value) => setValue("type_parked", value)}
+                disabled={depnd === "لا"}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="اختر" />

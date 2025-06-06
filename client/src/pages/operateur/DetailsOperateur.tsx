@@ -8,6 +8,7 @@ import MainContainer from "@/components/MainContainer";
 import { Button } from "@/components/ui/button";
 import { IoCaretBackSharp, IoCaretForwardSharp } from "react-icons/io5";
 import { DownloadOperateurPDF } from "@/redux/slice/vihiculeSlice";
+import { Helmet } from "react-helmet-async";
 
 
 
@@ -39,6 +40,11 @@ export default function OperateurDetails() {
 
     return (
         <MainContainer>
+            <Helmet>
+                <title>تفاصيل المتعامل</title>
+                <meta name="description" content="مرحبا بك في Finissio" />
+                <link rel="icon" type="image/png" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOT8Kacun1rrtYYQIG2h6Iq-N0s3DdiuoNFQ&s" />
+            </Helmet>
             <div className="p-6 space-y-6">
                 <Button onClick={() => dispatch(DownloadOperateurPDF(id!))} className="mt-4">
                     تحميل PDF

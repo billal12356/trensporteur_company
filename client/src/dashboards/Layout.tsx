@@ -12,6 +12,7 @@ import { EditProfile } from "./pages/EditProfile";
 import { Separator } from "@/components/ui/separator";
 import { useUser } from "@/hooks/context/userContext/UserProvider";
 import { CreateAdmin } from "./pages/CreateAdmin";
+import { Helmet } from "react-helmet-async";
 
 const createTab = (label: string, component: string) => ({
   type: "tab",
@@ -103,6 +104,11 @@ const FlexDashboardLayout = () => {
 
   return (
     <div className="w-full h-screen flex flex-col bg-gray-100">
+      <Helmet>
+        <title>لوحة التحكم</title>
+        <meta name="description" content="مرحبا بك في Finissio" />
+        <link rel="icon" type="image/png" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOT8Kacun1rrtYYQIG2h6Iq-N0s3DdiuoNFQ&s" />
+      </Helmet>
       {/* ✅ Navbar */}
       <nav className="shadow md:flex md:justify-between p-4 bg-black sticky top-0 z-50">
         <div className="flex justify-between items-center">

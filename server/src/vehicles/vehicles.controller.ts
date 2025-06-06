@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res, NotFoundException } from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
-import { CreateVehicleDto } from './dto/create-vehicle.dto';
+import { CreateVihicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { Response } from 'express';
 import * as fs from 'fs';
@@ -12,7 +12,7 @@ export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) { }
 
   @Post('create')
-  async create(@Body() createVehicleDto: CreateVehicleDto) {
+  async create(@Body() createVehicleDto: CreateVihicleDto) {
     return await this.vehiclesService.create(createVehicleDto);
   }
 

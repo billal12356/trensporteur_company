@@ -1,10 +1,9 @@
 import {
   IsString,
+  IsOptional,
   IsNumber,
   IsDate,
-  IsOptional,
-  IsEnum,
-  IsNotEmpty,
+  IsNotEmpty
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -25,7 +24,6 @@ export class CreateChauffeurDto {
   num_enregistrement_du_transporteur: number;
 
   @IsString()
-  @IsNotEmpty()
   operateur: string;
 
   @IsOptional()
@@ -33,7 +31,6 @@ export class CreateChauffeurDto {
   ligne_exploitée?: string;
 
   @IsString()
-  @IsNotEmpty()
   num_vehicule: string;
 
   @IsOptional()
@@ -41,7 +38,6 @@ export class CreateChauffeurDto {
   nature_ligne?: string;
 
   @IsString()
-  @IsNotEmpty()
   nom_prenom_chauffeur: string;
 
   @IsOptional()
@@ -53,7 +49,6 @@ export class CreateChauffeurDto {
   num_didentification_national_NIN?: number;
 
   @IsString()
-  @IsNotEmpty()
   num_permis_conduire: string;
 
   @IsOptional()
@@ -76,7 +71,6 @@ export class CreateChauffeurDto {
   date_naissance?: Date;
 
   @IsString()
-  @IsNotEmpty()
   lieu_naissance: string;
 
   @IsOptional()

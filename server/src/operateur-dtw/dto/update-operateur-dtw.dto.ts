@@ -1,4 +1,4 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { CreateOperateurDtwDto } from './create-operateur-dtw.dto';
+import { CreateOperateurDto } from './create-operateur-dtw.dto';
 
-export class UpdateOperateurDtwDto extends PartialType(CreateOperateurDtwDto) {}
+export class UpdateOperateurDtwDto extends PartialType(CreateOperateurDto) {}

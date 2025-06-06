@@ -9,6 +9,7 @@ import {
 } from "@/redux/slice/stateSlice";
 import { RootState } from "@/redux/store";
 import MainContainer from "@/components/MainContainer";
+import { Helmet } from "react-helmet-async";
 
 function formatData(type: string, stats: any) {
     return {
@@ -36,7 +37,7 @@ const Statistique = () => {
         (state: RootState) => state.stats
     );
     console.log(interWilaya);
-    
+
 
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
@@ -138,6 +139,11 @@ const Statistique = () => {
 
     return (
         <MainContainer>
+            <Helmet>
+                <title>احصائيات</title>
+                <meta name="description" content="مرحبا بك في Finissio" />
+                <link rel="icon" type="image/png" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOT8Kacun1rrtYYQIG2h6Iq-N0s3DdiuoNFQ&s" />
+            </Helmet>
             <div className="p-4">
                 <div className="flex md:w-[50%] justify-between items-center mb-4">
                     <button
@@ -147,7 +153,7 @@ const Statistique = () => {
                         طباعة
                     </button>
                     <h2 className="text-xl text-center font-bold">الاحصائيات العامة</h2>
-                    
+
                 </div>
 
                 <div className="flex flex-col md:flex-row justify-center items-center md:items-end w-[100%] mg:justify-end gap-4 mb-4">

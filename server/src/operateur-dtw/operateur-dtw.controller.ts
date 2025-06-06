@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Res } from '@nestjs/common';
 import { OperateurDtwService } from './operateur-dtw.service';
-import { CreateOperateurDtwDto } from './dto/create-operateur-dtw.dto';
+import { CreateOperateurDto } from './dto/create-operateur-dtw.dto';
 import { UpdateOperateurDtwDto } from './dto/update-operateur-dtw.dto';
 import { AuthGuard } from 'src/common/gaurds/auth.guard';
 import * as fs from 'fs';
@@ -12,7 +12,7 @@ export class OperateurDtwController {
 
   @UseGuards(AuthGuard)
   @Post('create')
-  create(@Body() createOperateurDtwDto: CreateOperateurDtwDto) {
+  create(@Body() createOperateurDtwDto: CreateOperateurDto) {
     return this.operateurDtwService.create(createOperateurDtwDto);
   }
 
