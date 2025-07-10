@@ -62,6 +62,7 @@ export class ChauffeursService {
       .setSort(params.sort || 'asc')
       .setFullNameArabe(params.fullName_arabe)
       .setFullNameFrancais(params.fullName_francais)
+      .setnom_prenom_chauffeur(params.nom_prenom_chauffeur)
       .setSearch(params.search);
 
     const { query, limit, skip, sort } = queryBuilder.build();

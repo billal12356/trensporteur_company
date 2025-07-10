@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "sonner";
+import { API_URL } from "../contants";
 
 export interface Chauffeur {
     _id: string,
@@ -71,7 +72,7 @@ export const FindOneChauffeur = createAsyncThunk(
     "chauffer/FindOneChauffeur",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`http://localhost:3000/api/v1/chauffeurs/find/${id}`, { withCredentials: true });
+            const response = await axios.get(`${API_URL}/api/v1/chauffeurs/find/${id}`, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -92,7 +93,7 @@ export const downloadRegistrationStats = createAsyncThunk<
     async ({ startDate, endDate }, { rejectWithValue }) => {
         try {
             const response = await fetch(
-                `http://localhost:3000/api/v1/chauffeurs/export-stats?startDate=${startDate}&endDate=${endDate}`
+                `${API_URL}/api/v1/chauffeurs/export-stats?startDate=${startDate}&endDate=${endDate}`
             );
 
             if (!response.ok) {
@@ -118,7 +119,7 @@ export const fetchChauffeurs = createAsyncThunk(
     async (params: { search: string, limit?: number; page?: number; sort?: string }, { rejectWithValue }) => {
         console.log(params.page);
         try {
-            const response = await axios.get("http://localhost:3000/api/v1/chauffeurs/find-all", {
+            const response = await axios.get(`${API_URL}/api/v1/chauffeurs/find-all`, {
                 params,
                 withCredentials: true,
             });
@@ -147,7 +148,7 @@ export const exportChauffeurs = createAsyncThunk<
         }
 
         const response = await axios.get(
-            `http://localhost:3000/api/v1/chauffeurs/export?search=${search}`,
+            `${API_URL}/api/v1/chauffeurs/export?search=${search}`,
             {
                 responseType: 'blob',
                 withCredentials: true,
@@ -177,7 +178,7 @@ export const deleteChauffeurs = createAsyncThunk(
     "operateur/deleteChauffeurs",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.delete(`http://localhost:3000/api/v1/chauffeurs/${id}`, { withCredentials: true });
+            const response = await axios.delete(`${API_URL}/api/v1/chauffeurs/${id}`, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -193,7 +194,7 @@ export const updateChauffeurs = createAsyncThunk(
     "chauffeurs/update",
     async ({ id, data }: { id: string; data: Partial<Chauffeur> }, { rejectWithValue }) => {
         try {
-            const response = await axios.patch(`http://localhost:3000/api/v1/chauffeurs/update/${id}`, data, { withCredentials: true });
+            const response = await axios.patch(`${API_URL}/api/v1/chauffeurs/update/${id}`, data, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -213,7 +214,7 @@ export const createChauffeurs = createAsyncThunk<
     'chauffeurs/createChauffeurs',
     async (data, { rejectWithValue }) => {
         try {
-            const response = await axios.post<Chauffeur>('http://localhost:3000/api/v1/chauffeurs/create', data, { withCredentials: true });
+            const response = await axios.post<Chauffeur>(`${API_URL}/api/v1/chauffeurs/create`, data, { withCredentials: true });
             toast.success("تم تسجيل المركبة بنجاح")
             return response.data;
         } catch (error: unknown) {
