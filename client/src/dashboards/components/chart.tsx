@@ -2,10 +2,9 @@
 
 import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { TrendingUp, Users, Car, UserCheck, BarChart3 } from "lucide-react"
+import { TrendingUp, Users, BarChart3 } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Bar,
@@ -273,7 +272,7 @@ export default function EnhancedChart() {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {pieChartData.map((entry, index) => (
+                    {pieChartData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
