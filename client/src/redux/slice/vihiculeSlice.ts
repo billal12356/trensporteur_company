@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "sonner";
+import { API_URL } from "../contants";
 
 interface Vihicles {
     _id: string;
@@ -149,7 +150,7 @@ export const downloadRegistrationStats = createAsyncThunk<
     async ({ startDate, endDate }, { rejectWithValue }) => {
         try {
             const response = await fetch(
-                `http://localhost:3000/api/v1/vehicles/export-stats?startDate=${startDate}&endDate=${endDate}`
+                `${API_URL}/api/v1/vehicles/export-stats?startDate=${startDate}&endDate=${endDate}`
             );
 
             if (!response.ok) {
@@ -175,7 +176,7 @@ export const fetchVihicules = createAsyncThunk(
     async (params: { search: string, limit?: number; page?: number; sort?: string }, { rejectWithValue }) => {
         console.log(params.page);
         try {
-            const response = await axios.get("http://localhost:3000/api/v1/vehicles/find-all", {
+            const response = await axios.get(`${API_URL}/api/v1/vehicles/find-all`, {
                 params,
                 withCredentials: true,
             });
@@ -204,7 +205,7 @@ export const exportVihicules = createAsyncThunk<
         }
 
         const response = await axios.get(
-            `http://localhost:3000/api/v1/vehicles/export?search=${search}`,
+            `${API_URL}/api/v1/vehicles/export?search=${search}`,
             {
                 responseType: 'blob',
                 withCredentials: true,
@@ -232,7 +233,7 @@ export const deleteVihicules = createAsyncThunk(
     "operateur/deleteVihicules",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.delete(`http://localhost:3000/api/v1/operateur-dtw/${id}`, { withCredentials: true });
+            const response = await axios.delete(`${API_URL}/api/v1/operateur-dtw/${id}`, { withCredentials: true });
             console.log(response.data);
             return response.data;
         } catch (error: unknown) {
@@ -249,7 +250,7 @@ export const updateVihicules = createAsyncThunk(
     "vihicules/update",
     async ({ id, data }: { id: string; data: Partial<Vihicles> }, { rejectWithValue }) => {
         try {
-            const response = await axios.patch(`http://localhost:3000/api/v1/vehicles/${id}`, data, { withCredentials: true });
+            const response = await axios.patch(`${API_URL}/api/v1/vehicles/${id}`, data, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -269,7 +270,7 @@ export const createVihicules = createAsyncThunk<
     'vihicules/createVihicules',
     async (data, { rejectWithValue }) => {
         try {
-            const response = await axios.post<Vihicles>('http://localhost:3000/api/v1/vehicles/create', data, { withCredentials: true });
+            const response = await axios.post<Vihicles>(`${API_URL}/api/v1/vehicles/create`, data, { withCredentials: true });
             toast.success("تم تسجيل المركبة بنجاح")
             return response.data;
         } catch (error: unknown) {
@@ -300,7 +301,7 @@ export const FindOneVihicule = createAsyncThunk(
     "vihicule/FindOneVihicule",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`http://localhost:3000/api/v1/vehicles/find/${id}`, { withCredentials: true });
+            const response = await axios.get(`${API_URL}/api/v1/vehicles/find/${id}`, { withCredentials: true });
             console.log(response.data);
 
             return response.data;
@@ -321,7 +322,7 @@ export const DownloadOperateurPDF = createAsyncThunk<
     { rejectValue: string }
 >("operateur/downloadPDF", async (id, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`http://localhost:3000/api/v1/operateur-dtw/${id}/pdf`, {
+        const response = await axios.get(`${API_URL}/api/v1/operateur-dtw/${id}/pdf`, {
             responseType: "blob",
         });
 

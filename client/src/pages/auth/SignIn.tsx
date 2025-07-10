@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-
+import { Helmet } from "react-helmet-async";
+import logo from '@/assets/images.png'
 interface FormData {
   email: string;
   password: string;
@@ -53,6 +54,11 @@ const SignIn: React.FC = () => {
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
+      <Helmet>
+        <title>تسجيل الدخول</title>
+        <meta name="description" content="مرحبا بك في Dtw Aindefla" />
+        <link rel="icon" type="image/png" href={logo} />
+      </Helmet>
       <Card className="w-full max-w-md p-6 shadow-md">
         <CardContent>
           <h2 className="text-2xl font-bold text-center mb-4">تسجيل الدخول</h2>

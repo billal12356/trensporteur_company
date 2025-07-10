@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "sonner";
+import { API_URL } from "../contants";
 
 export interface User {
   _id: string;
@@ -29,7 +30,7 @@ export const createUser = createAsyncThunk(
   "user/create",
   async (userData: Omit<User, "_id"> & { password: string; passwordConfirm: string }, { rejectWithValue }) => {
     try {
-      const res = await axios.post("http://localhost:3000/api/v1/users/create", userData);
+      const res = await axios.post(`${API_URL}/api/v1/users/create`, userData);
       return res.data;
     } catch (err: any) {
         console.log(err);
@@ -44,7 +45,7 @@ export const fetchUserById = createAsyncThunk(
   "user/fetchById",
   async (id: string, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`http://localhost:3000/api/v1/users/${id}`);
+      const res = await axios.get(`${API_URL}/api/v1/users/${id}`);
       return res.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || "خطأ في تحميل بيانات المستخدم");
@@ -60,7 +61,7 @@ export const updateUser = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const res = await axios.patch(`http://localhost:3000/api/v1/users/${id}`, data);
+      const res = await axios.patch(`${API_URL}/api/v1/users/${id}`, data);
       return res.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || "فشل تحديث بيانات المستخدم");
@@ -87,7 +88,7 @@ export const changePassword = createAsyncThunk(
   ) => {
     try {
       const res = await axios.patch(
-        `http://localhost:3000/api/v1/users/${id}/change-password`,
+        `${API_URL}/api/v1/users/${id}/change-password`,
         { currentPassword, newPassword, confirmPassword }
       );
       return res.data.message;

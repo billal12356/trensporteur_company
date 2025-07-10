@@ -398,9 +398,9 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">رقم الانتساب للصندوق الوطني للعمال غير الاجراء</label>
-              <Input type="number"
+              <Input type="text"
                 {...register("num_adherent_caise_national_non_salaire", {
-                  setValueAs: (v) => v === "" ? undefined : Number(v)
+                  setValueAs: (v) => v === "" ? undefined : String(v)
                 })}
               />
             </div>

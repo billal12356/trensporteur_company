@@ -42,6 +42,13 @@ export class UserQueryBuilder {
         }
         return this;
     }
+    setnom_prenom_chauffeur(nom_prenom_chauffeur?: string): UserQueryBuilder {
+        if (nom_prenom_chauffeur) {
+            this.query.nom_prenom_chauffeur = new RegExp(nom_prenom_chauffeur, 'i');
+        }
+        return this;
+    }
+
 
     setSearch(search?: string): UserQueryBuilder {
         if (search) {
@@ -49,6 +56,10 @@ export class UserQueryBuilder {
                 { fullName_arabe: new RegExp(search, 'i') },
                 { fullName_francais: new RegExp(search, 'i') },
                 { activite: new RegExp(search, 'i') },
+                { nom_prenom_chauffeur: new RegExp(search, 'i') },
+                { num_chauffeur: new RegExp(search, 'i') },
+                { num_wilaya: new RegExp(search, 'i') },
+                { num_docier_client: new RegExp(search, 'i') },
             ];
         }
         return this;
@@ -62,5 +73,5 @@ export class UserQueryBuilder {
             sort: { createdAt: this.sort }, // Use a single field for stable sorting
         };
     }
-    
+
 }

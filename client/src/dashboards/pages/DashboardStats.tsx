@@ -32,7 +32,7 @@ export const DashboardStats = () => {
         <StatCard title="السائقين" value={totalCh} icon={<FaUserTie />} />
         <StatCard title="المركبات" value={totalVc} icon={<FaBus />} />
       </div>
-      <div className="">
+      <div className="mt-12">
         <Chart />
       </div>
     </div>

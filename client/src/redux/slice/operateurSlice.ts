@@ -2,6 +2,7 @@ import { Chauffeur, Vihicles } from "@/components/types/OperateurTypes";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "sonner";
+import { API_URL } from "../contants";
 
 interface Operateur {
     _id: string,
@@ -106,7 +107,7 @@ export const downloadRegistrationStats = createAsyncThunk<
     async ({ startDate, endDate }, { rejectWithValue }) => {
         try {
             const response = await fetch(
-                `http://localhost:3000/api/v1/operateur-dtw/export-stats?startDate=${startDate}&endDate=${endDate}`
+                `${API_URL}/api/v1/operateur-dtw/export-stats?startDate=${startDate}&endDate=${endDate}`
             );
 
             if (!response.ok) {
@@ -131,9 +132,8 @@ export const downloadRegistrationStats = createAsyncThunk<
 export const fetchOperateurs = createAsyncThunk(
     "operateur/fetchOperateurs",
     async (params: { search?: string, limit?: number; page?: number; sort?: string }, { rejectWithValue }) => {
-        console.log(params.page);
         try {
-            const response = await axios.get("http://localhost:3000/api/v1/operateur-dtw/find-all", {
+            const response = await axios.get(`${API_URL}/api/v1/operateur-dtw/find-all`, {
                 params,
                 withCredentials: true,
             });
@@ -153,7 +153,7 @@ export const fetchOperateurs = createAsyncThunk(
 // ✅ thunk لقبول string فقط
 export const exportOperateurs = createAsyncThunk<
     void,
-    { search: any },
+        { search: any },
     { rejectValue: string }
 >('operateurs/exportOperateurs', async ({ search }, { rejectWithValue }) => {
     try {
@@ -163,7 +163,7 @@ export const exportOperateurs = createAsyncThunk<
         }
 
         const response = await axios.get(
-            `http://localhost:3000/api/v1/operateur-dtw/download?search=${search}`,
+            `${API_URL}/api/v1/operateur-dtw/download?search=${search}`,
             {
                 responseType: 'blob',
                 withCredentials: true,
@@ -191,7 +191,7 @@ export const deleteOperateur = createAsyncThunk(
     "operateur/deleteOperateur",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.delete(`http://localhost:3000/api/v1/operateur-dtw/${id}`, { withCredentials: true });
+            const response = await axios.delete(`${API_URL}/api/v1/operateur-dtw/${id}`, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -207,7 +207,7 @@ export const FindOneOperateur = createAsyncThunk(
     "operateur/FindOneOperateur",
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`http://localhost:3000/api/v1/operateur-dtw/find/${id}`, { withCredentials: true });
+            const response = await axios.get(`${API_URL}/api/v1/operateur-dtw/find/${id}`, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
 
@@ -224,7 +224,7 @@ export const updateOperateur = createAsyncThunk(
     "operateurs/update",
     async ({ id, data }: { id: string; data: Partial<Operateur> }, { rejectWithValue }) => {
         try {
-            const response = await axios.patch(`http://localhost:3000/api/v1/operateur-dtw/${id}`, data, { withCredentials: true });
+            const response = await axios.patch(`${API_URL}/api/v1/operateur-dtw/${id}`, data, { withCredentials: true });
             return response.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
@@ -244,7 +244,7 @@ export const createOperateur = createAsyncThunk<
     'operateurs/createOperateur',
     async (data, { rejectWithValue }) => {
         try {
-            const response = await axios.post<Operateur>('http://localhost:3000/api/v1/operateur-dtw/create', data, { withCredentials: true });
+            const response = await axios.post<Operateur>(`${API_URL}/api/v1/operateur-dtw/create`, data, { withCredentials: true });
             toast.success("تم تسجيل المتعامل بنجاح")
             return response.data;
         } catch (error: unknown) {
