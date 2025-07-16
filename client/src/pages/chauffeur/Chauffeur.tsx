@@ -328,11 +328,6 @@ const EnhancedChauffeur = React.memo((): ReactElement => {
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
-                                  <Button variant="default" size="sm" className="p-2" asChild>
-                                    <Link to={`/details-chauffeur/${chauffeur._id}`}>
-                                      <Eye className="w-4 h-4" />
-                                    </Link>
-                                  </Button>
                                   <Button variant="outline" size="sm" className="p-2 bg-transparent" asChild>
                                     <Link to={`/update-chauffeur/${chauffeur._id}`}>
                                       <Edit3 className="w-4 h-4 text-yellow-600" />

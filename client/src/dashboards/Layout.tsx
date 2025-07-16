@@ -56,10 +56,10 @@ const tabItems: TabItem[] = [
   },
   {
     id: "operators",
-    label: "إحصائيات المشغلين",
+    label: "إحصائيات المتعاملين",
     component: "operators",
     icon: Users,
-    description: "تتبع وإدارة المشغلين",
+    description: "تتبع وإدارة المتعاملين",
   },
   {
     id: "vehicles",

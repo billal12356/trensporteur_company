@@ -56,10 +56,10 @@ const navigationItems: NavItem[] = [
     icon: BarChart3,
     children: [
       {
-        label: "المشغلين",
+        label: "المعاملين",
         href: "/operateur",
         icon: Users,
-        description: "إدارة وعرض بيانات المشغلين",
+        description: "إدارة وعرض بيانات المعاملين",
       },
       {
         label: "السائقين",

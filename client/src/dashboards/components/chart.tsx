@@ -98,19 +98,19 @@ export default function EnhancedChart() {
   const barChartData = [
     {
       period: "اليوم",
-      المشغلين: data.operateurs.today,
+      المتعاملين: data.operateurs.today,
       السائقين: data.chauffeurs.today,
       المركبات: data.vehicules.today,
     },
     {
       period: "الشهر",
-      المشغلين: data.operateurs.thisMonth,
+      المتعاملين: data.operateurs.thisMonth,
       السائقين: data.chauffeurs.thisMonth,
       المركبات: data.vehicules.thisMonth,
     },
     {
       period: "السنة",
-      المشغلين: data.operateurs.thisYear,
+      المتعاملين: data.operateurs.thisYear,
       السائقين: data.chauffeurs.thisYear,
       المركبات: data.vehicules.thisYear,
     },
@@ -120,7 +120,7 @@ export default function EnhancedChart() {
 
   const pieChartData = [
     {
-      name: "المشغلين",
+      name: "المتعاملين",
       value: data.operateurs.thisMonth,
       color: COLORS[0],
       total: totalThisMonth,
@@ -176,7 +176,7 @@ export default function EnhancedChart() {
                 مقارنة الإحصائيات
               </CardTitle>
               <CardDescription className="text-blue-600 text-base">
-                مقارنة أعداد المشغلين والسائقين والمركبات عبر الفترات الزمنية
+                مقارنة أعداد المتعاملين والسائقين والمركبات عبر الفترات الزمنية
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
@@ -187,7 +187,7 @@ export default function EnhancedChart() {
                   <YAxis tick={{ fontSize: 14, fill: "#6b7280" }} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
-                  <Bar dataKey="المشغلين" fill={COLORS[0]} radius={[6, 6, 0, 0]} name="المشغلين" />
+                  <Bar dataKey="المتعاملين" fill={COLORS[0]} radius={[6, 6, 0, 0]} name="المتعاملين" />
                   <Bar dataKey="السائقين" fill={COLORS[1]} radius={[6, 6, 0, 0]} name="السائقين" />
                   <Bar dataKey="المركبات" fill={COLORS[2]} radius={[6, 6, 0, 0]} name="المركبات" />
                 </BarChart>
@@ -217,12 +217,12 @@ export default function EnhancedChart() {
                   <Legend />
                   <Line
                     type="monotone"
-                    dataKey="المشغلين"
+                    dataKey="المتعاملين"
                     stroke={COLORS[0]}
                     strokeWidth={4}
                     dot={{ r: 6, fill: COLORS[0], strokeWidth: 2, stroke: "#fff" }}
                     activeDot={{ r: 8, fill: COLORS[0], strokeWidth: 2, stroke: "#fff" }}
-                    name="المشغلين"
+                    name="المتعاملين"
                   />
                   <Line
                     type="monotone"

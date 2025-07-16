@@ -184,7 +184,10 @@ const Statistique = () => {
                 </div>
 
                 {loading ? (
-                    <p>Chargement...</p>
+                    <div className="flex justify-center items-center flex-col mt-72 space-x-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <span className="text-lg">جاري التحميل...</span>
+                    </div>
                 ) : error ? (
                     <p className="text-red-500">Erreur: {error}</p>
                 ) : (

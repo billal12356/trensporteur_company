@@ -189,7 +189,7 @@ export default function EnhancedDriverStats() {
                       selectsStart
                       startDate={startDate}
                       endDate={endDate}
-                      placeholderText="من تاريخ"
+                      placeholderText="     من تاريخ"
                       dateFormat="yyyy-MM-dd"
                       className="w-[280px] px-4 py-3 text-left font-medium border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-md transition-all duration-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                     />
@@ -204,7 +204,7 @@ export default function EnhancedDriverStats() {
                       startDate={startDate}
                       endDate={endDate}
                       minDate={startDate}
-                      placeholderText="إلى تاريخ"
+                      placeholderText="     إلى تاريخ"
                       dateFormat="yyyy-MM-dd"
                       className="w-[280px] px-4 py-3 text-left font-medium border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-md transition-all duration-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                     />
