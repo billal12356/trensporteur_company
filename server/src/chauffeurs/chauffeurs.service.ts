@@ -11,6 +11,7 @@ import { join } from 'path';
 import { Workbook } from 'exceljs';
 import { OperateurDtwService } from 'src/operateur-dtw/operateur-dtw.service';
 import { VehiclesService } from 'src/vehicles/vehicles.service';
+import { ChauffeurQueryBuilder } from 'src/common/builder/ChauffeurQueryBuilder';
 
 @Injectable()
 export class ChauffeursService {
@@ -56,21 +57,19 @@ export class ChauffeursService {
   }
 
   async findAll(params: any) {
-    const queryBuilder = new UserQueryBuilder()
-      .setLimit(Number(params.limit) || 10)
-      .setSkip(Number(params.page) || 1)
+    const page = Number(params.page) || 1;
+    const limit = Number(params.limit) || 10;
+
+    const queryBuilder = new ChauffeurQueryBuilder()
+      .setLimit(limit)
+      .setSkip(page)
       .setSort(params.sort || 'asc')
-      .setFullNameArabe(params.fullName_arabe)
-      .setFullNameFrancais(params.fullName_francais)
-      .setnom_prenom_chauffeur(params.nom_prenom_chauffeur)
       .setSearch(params.search);
 
-    const { query, limit, skip, sort } = queryBuilder.build();
-
-    console.log({ query, limit, skip, sort });
+    const { query, limit: finalLimit, skip, sort } = queryBuilder.build();
 
     const data = await this.ChauffeurModel.find(query)
-      .limit(limit)
+      .limit(finalLimit)
       .skip(skip)
       .sort(sort)
       .exec();
@@ -79,8 +78,8 @@ export class ChauffeursService {
 
     return {
       total,
-      limit,
-      page: params.page || 1,
+      limit: finalLimit,
+      page,
       data,
     };
   }

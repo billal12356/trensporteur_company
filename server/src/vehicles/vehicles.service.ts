@@ -17,6 +17,7 @@ import { getVisualString } from 'bidi-js';
 const arabicReshaper = require('arabic-reshaper');
 import * as fs from 'fs';
 import * as path from 'path';
+import { VihiclesQueryBuilder } from 'src/common/builder/VihiclesQueryBuilder';
 
 @Injectable()
 export class VehiclesService {
@@ -73,20 +74,19 @@ export class VehiclesService {
   }
 
   async findAll(params: any) {
-    const queryBuilder = new UserQueryBuilder()
-      .setLimit(Number(params.limit) || 10)
-      .setSkip(Number(params.page) || 1)
+    const page = Number(params.page) || 1;
+    const limit = Number(params.limit) || 10;
+
+    const queryBuilder = new VihiclesQueryBuilder()
+      .setLimit(limit)
+      .setSkip(page)
       .setSort(params.sort || 'asc')
-      .setFullNameArabe(params.fullName_arabe)
-      .setFullNameFrancais(params.fullName_francais)
       .setSearch(params.search);
 
-    const { query, limit, skip, sort } = queryBuilder.build();
-
-    console.log({ query, limit, skip, sort });
+    const { query, limit: finalLimit, skip, sort } = queryBuilder.build();
 
     const data = await this.VihicileModel.find(query)
-      .limit(limit)
+      .limit(finalLimit)
       .skip(skip)
       .sort(sort)
       .exec();
@@ -95,8 +95,8 @@ export class VehiclesService {
 
     return {
       total,
-      limit,
-      page: params.page || 1,
+      limit: finalLimit,
+      page,
       data,
     };
   }
