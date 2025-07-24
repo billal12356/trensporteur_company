@@ -335,10 +335,48 @@ export const DownloadOperateurPDF = createAsyncThunk<
         window.URL.revokeObjectURL(url);
     } catch (error) {
         console.log(error);
-        
+
         return rejectWithValue("فشل تحميل الملف");
     }
 });
+
+
+export const ExportLines = createAsyncThunk<
+    void,
+    { search: any },
+    { rejectValue: string }
+>('vihicules/exportLineVihicules', async ({ search }, { rejectWithValue }) => {
+    try {
+        const params = new URLSearchParams();
+        if (search) {
+            params.append('search', search);
+        }
+
+        const response = await axios.post(
+            `http://localhost:3000/api/v1/vehicles/export-line?search=${search}`,
+            {}, // جسم الطلب فاضي لأنه POST بدون بيانات
+            {
+                responseType: 'blob',
+                withCredentials: true,
+            }
+        );
+
+        const blob = new Blob([response.data], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'line-report.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (error) {
+        console.log(error);
+        return rejectWithValue('فشل في تحميل الملف');
+    }
+});
+
 
 
 // Create Slice
@@ -489,6 +527,20 @@ const operateurSlice = createSlice({
                 toast.error(action.payload as string);
             });
 
+        builder
+            .addCase(ExportLines.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+                state.fileURL = null;
+            })
+            .addCase(ExportLines.fulfilled, (state) => {
+                state.loading = false;
+                //state.fileURL = action.payload;
+            })
+            .addCase(ExportLines.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
     },
 });
 

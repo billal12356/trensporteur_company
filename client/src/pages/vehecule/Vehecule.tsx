@@ -27,7 +27,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { AppDispatch, RootState } from "@/redux/store"
-import { exportVihicules, fetchVihicules } from "@/redux/slice/vihiculeSlice"
+import { ExportLines, exportVihicules, fetchVihicules } from "@/redux/slice/vihiculeSlice"
 import { logout } from "@/redux/slice/authSlice"
 import MainContainer from "@/components/MainContainer"
 
@@ -36,7 +36,9 @@ const EnhancedVehicle = React.memo((): ReactElement => {
   const { vihicules, totalVc, loading, limit, error } = useSelector((state: RootState) => state.vihicule)
   const [page, setPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("")
-  const [isExporting, setIsExporting] = useState(false)
+  const [searchQueryLine, setSearchQueryLine] = useState("")
+  const [isExporting, setIsExporting] = useState(false);
+  const [isExportingLine, setIsExportingLine] = useState(false);
 
   useEffect(() => {
     dispatch(fetchVihicules({ search: searchQuery, page, limit: 10 }))
@@ -52,6 +54,17 @@ const EnhancedVehicle = React.memo((): ReactElement => {
       await dispatch(exportVihicules({ search: searchQuery }))
     } finally {
       setIsExporting(false)
+    }
+  }
+
+  const handleExportLine = async () => {
+    setIsExporting(true)
+    try {
+      await dispatch(ExportLines({ search: searchQueryLine }))
+      setSearchQueryLine('')
+    } finally {
+      setIsExportingLine(false)
+      setSearchQueryLine('')
     }
   }
 
@@ -175,6 +188,33 @@ const EnhancedVehicle = React.memo((): ReactElement => {
                     >
                       <Download className="w-4 h-4" />
                       {isExporting ? "جاري التصدير..." : "تصدير Excel"}
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                  {/* Search Section */}
+                  <div className="flex-1 max-w-md">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <Input
+                        type="text"
+                        placeholder="البحث في ..."
+                        value={searchQueryLine}
+                        onChange={(e) => setSearchQueryLine(e.target.value)}
+                        className="pl-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg text-right"
+                      />
+                    </div>
+                  </div>
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-3 mt-4">
+                    
+                    <Button
+                      onClick={handleExportLine}
+                      disabled={isExportingLine}
+                      className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                    >
+                      <Download className="w-4 h-4" />
+                      {isExportingLine ? "جاري التصدير..." : "تصدير Excel"}
                     </Button>
                   </div>
                 </div>

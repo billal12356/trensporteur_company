@@ -6,7 +6,7 @@ import { Vihicles } from './vihicles.schema';
 import { Model, Types } from 'mongoose';
 import { OperateurDtwService } from 'src/operateur-dtw/operateur-dtw.service';
 import { ResponseBuilder } from 'src/common/builder/response.builder';
-import { UserQueryBuilder } from 'src/common/builder/pagination.builder';
+import { Buffer } from 'buffer';
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { Workbook } from 'exceljs';
@@ -15,8 +15,7 @@ import { ruralCoordinates } from 'src/constants/rural-coordinates';
 const fontkit = require('@pdf-lib/fontkit')
 import { getVisualString } from 'bidi-js';
 const arabicReshaper = require('arabic-reshaper');
-import * as fs from 'fs';
-import * as path from 'path';
+import * as ExcelJS from "exceljs"
 import { VihiclesQueryBuilder } from 'src/common/builder/VihiclesQueryBuilder';
 
 @Injectable()
@@ -375,6 +374,207 @@ export class VehiclesService {
       saveNext(0);
     });
   }
+
+
+  async searchByLineCode(lineCode: string) {
+    console.log("lineCode", lineCode)
+    const lines = await this.VihicileModel.find({ font_symbol: lineCode }).exec()
+    if (!lines || lines.length === 0) {
+      throw new NotFoundException(`Transport line with code ${lineCode} not found`)
+    }
+    return lines
+  }
+
+  async exportToExcel(lineCode: string): Promise<Buffer> {
+    const vehicles = await this.searchByLineCode(lineCode);
+
+    if (!vehicles || vehicles.length === 0) {
+      throw new NotFoundException(`Transport line with code ${lineCode} not found`);
+    }
+
+    const workbook = new Workbook();
+    const worksheet = workbook.addWorksheet("Transport Line Report");
+    worksheet.views = [{ rightToLeft: true }];
+
+    const headerFont = { name: "Arial", size: 12, bold: true };
+    const headerFontLine = { name: "Arial", size: 20, bold: true };
+    const headerAlignment: Partial<ExcelJS.Alignment> = {
+      horizontal: 'center',
+      vertical: 'middle',
+      wrapText: true,
+    };
+    const headerAligns: Partial<ExcelJS.Alignment> = {
+      horizontal: 'left',
+      vertical: 'middle',
+      wrapText: true,
+
+    };
+    const cellBorder: Partial<ExcelJS.Borders> = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' },
+    };
+
+    // رؤوس الجمهورية
+    worksheet.mergeCells("C1:G1");
+    const cellC1 = worksheet.getCell("C1");
+    cellC1.value = "الجمهورية الجزائرية الديمقراطية الشعبية";
+    cellC1.alignment = headerAlignment;
+    cellC1.font = headerFont;
+
+    worksheet.mergeCells("G5:H5");
+    const cellG5 = worksheet.getCell("G5");
+    cellG5.value = "عين الدفلى في: ...................";
+    cellG5.alignment = headerAlignment;
+
+
+
+    worksheet.mergeCells("A3:C3");
+    const cellA3 = worksheet.getCell("A3");
+    cellA3.value = "وزارة النقل";
+    cellA3.alignment = headerAligns;
+
+
+    worksheet.mergeCells("A4:C4");
+    const cellA4 = worksheet.getCell("A4");
+    cellA4.value = "مديرية النقل لولاية عين الدفلى";
+    cellA4.alignment = headerAligns;
+
+
+    worksheet.mergeCells("A5:C5");
+    const cellA5 = worksheet.getCell("A5");
+    cellA5.value = "مصلحة النقل البري";
+    cellA5.alignment = headerAligns;
+
+
+
+    worksheet.mergeCells("A6:C6");
+    const cellA6 = worksheet.getCell("A6");
+    cellA6.value = "مكتب نقل المسافرين";
+    cellA6.alignment = headerAligns;
+
+
+    // بيانات الخط
+    worksheet.mergeCells("F8:G8");
+    const cellF8 = worksheet.getCell("F8");
+    cellF8.value = "الخميس - الشلف";
+    cellF8.alignment = headerAlignment;
+
+
+    worksheet.mergeCells("C8:D8");
+    const cellC81 = worksheet.getCell("C8");
+    cellC81.value = `الخط المستغل: `;
+    cellC81.font = headerFontLine;
+    cellC81.alignment = headerAlignment;
+
+
+    worksheet.mergeCells("F9:G9");
+    const cellF9 = worksheet.getCell("F9");
+    cellF9.value = `${vehicles[0]?.font_symbol ?? ""}`;
+    cellF9.font = headerFont;
+    cellF9.alignment = headerAlignment;
+
+
+    // رؤوس الجدول
+    const startRow = 11;
+    const row1 = worksheet.getRow(startRow);
+    const row2 = worksheet.getRow(startRow + 1);
+
+    row1.getCell(1).value = "الرقم";
+    row1.getCell(2).value = "ملف";
+    row1.getCell(3).value = "اللقب و الإسم أو إسم الشركة";
+    worksheet.mergeCells(`D${startRow}:E${startRow}`);
+    worksheet.getCell(`D${startRow}`).value = "التوقيت";
+    row1.getCell(6).value = "رقم تسجيل المركبة";
+    row1.getCell(7).value = "المقاعد";
+    row1.getCell(8).value = "الملاحظة";
+
+    row2.getCell(4).value = "الذهاب          الاياب ";
+    row2.getCell(5).value = "الذهاب          الاياب ";
+    row2.getCell(4).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    row2.getCell(5).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+
+    for (let i = 1; i <= 8; i++) {
+      row1.getCell(i).font = headerFont;
+      row1.getCell(i).alignment = headerAlignment;
+      row1.getCell(i).border = cellBorder;
+
+      if (i >= 4 && i <= 5) {
+        row2.getCell(i).font = headerFont;
+        row2.getCell(i).alignment = headerAlignment;
+        row2.getCell(i).border = cellBorder;
+      }
+    }
+
+    // بيانات المركبات
+    vehicles.forEach((vehicle, index) => {
+      const rowIndex = startRow + 2 + index;
+      const row = worksheet.getRow(rowIndex);
+      row.getCell(1).value = index + 1;
+      row.getCell(2).value = vehicle.num_docier_client ?? "";
+      row.getCell(3).value = vehicle.fullName_arabe ?? "";
+      const go1 = Array.isArray(vehicle.time_depart1) ? vehicle.time_depart1 ?? "" : (vehicle.time_depart1 ?? "");
+      const go2 = Array.isArray(vehicle.time_depart2) ? vehicle.time_depart2 ?? "" : (vehicle.time_depart2 ?? "");
+      const return1 = Array.isArray(vehicle.time_depart3) ? vehicle.time_depart3 ?? "" : (vehicle.time_depart3 ?? "");
+      const return2 = Array.isArray(vehicle.time_depart4) ? vehicle.time_depart4 ?? "" : (vehicle.time_depart4 ?? "");
+
+      // تنسيق التوقيت بدقة
+      row.getCell(4).value = `${go2.padEnd(6, '     ')} ${go1}`;
+      row.getCell(5).value = `${return2.padEnd(6, '     ')} ${return1}`;
+      row.getCell(6).value = vehicle.num_bus_registration ?? "";
+      row.getCell(7).value = vehicle.Number_of_seats ?? "";
+      row.getCell(8).value = vehicle.note_chef_departement ?? "";
+
+      row.eachCell((cell) => {
+        cell.alignment = headerAlignment;
+        cell.border = cellBorder;
+      });
+
+      row.commit();
+    });
+
+    const totalSeats = vehicles.reduce((total, vehicle) => total + vehicle.Number_of_seats, 0);
+
+    // مجموع المقاعد
+    const totalRowIndex = startRow + 2 + vehicles.length;
+
+    // دمج الخلايا من A إلى H
+    worksheet.mergeCells(`A${totalRowIndex}:H${totalRowIndex}`);
+
+    // خلية المجموع + الخط
+    const mergedCell = worksheet.getCell(`A${totalRowIndex}`);
+    mergedCell.value = `خط : ${vehicles.length}                                                                                                                                                                  مجموع المقاعد: ${totalSeats} `;
+    mergedCell.font = headerFont;
+    mergedCell.alignment = headerAlignment;
+    mergedCell.border = cellBorder;
+
+
+
+    // عرض الأعمدة
+    worksheet.columns = [
+      { width: 6 },
+      { width: 10 },
+      { width: 30 },
+      { width: 20 },
+      { width: 20 },
+      { width: 20 },
+      { width: 10 },
+      { width: 30 },
+    ];
+
+    // توسيط وتحديد الحدود لكل الخلايا
+    worksheet.eachRow((row) => {
+      row.eachCell((cell) => {
+        cell.alignment = headerAlignment;
+      });
+    });
+
+    return Buffer.from(await workbook.xlsx.writeBuffer());
+  }
+
+
+
 
 
 }

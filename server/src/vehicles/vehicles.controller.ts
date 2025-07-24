@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res, NotFoundException, HttpStatus } from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
 import { CreateVihicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
@@ -6,6 +6,7 @@ import { Response } from 'express';
 import * as fs from 'fs';
 import * as ExcelJS from 'exceljs';
 import * as vihicules from '../seed/data/vihicule.json';
+import { ExportLineDto } from './dto/line.dto';
 
 @Controller('vehicles')
 export class VehiclesController {
@@ -85,6 +86,24 @@ export class VehiclesController {
 
     // const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));    
     return await this.vehiclesService.importExcel(vihicules);
+  }
+
+
+  @Post("export-line")
+  async exportLine(exportDto: ExportLineDto,@Query('search') search: string, @Res() res: Response) {
+    try {
+      const buffer = await this.vehiclesService.exportToExcel(search)
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+      res.setHeader("Content-Disposition", `attachment; filename=transport-line-${search}.xlsx`)
+
+      const result = res.end(buffer)
+      console.log(result)
+    } catch (error) {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message: "Error exporting data",
+        error: error.message,
+      })
+    }
   }
 
 }
