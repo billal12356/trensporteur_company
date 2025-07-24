@@ -106,7 +106,7 @@ export default function SignInForm() {
       </div>
 
       <div className="relative w-full max-w-md">
-        <Card className="shadow-2xl border-0 bg-white/10 backdrop-blur-lg border border-white/20">
+        <Card className="shadow-2xl border-0 bg-white/10 backdrop-blur-lg border-white/20">
           <CardHeader className="text-center pb-8">
             {/* شعار الشركة */}
             <div className="mx-auto w-24 h-24 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full flex items-center justify-center mb-6 shadow-2xl ring-4 ring-white/20">

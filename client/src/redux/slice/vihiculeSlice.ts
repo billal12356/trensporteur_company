@@ -353,7 +353,7 @@ export const ExportLines = createAsyncThunk<
         }
 
         const response = await axios.post(
-            `http://localhost:3000/api/v1/vehicles/export-line?search=${search}`,
+            `${API_URL}/api/v1/vehicles/export-line?search=${search}`,
             {}, // جسم الطلب فاضي لأنه POST بدون بيانات
             {
                 responseType: 'blob',
