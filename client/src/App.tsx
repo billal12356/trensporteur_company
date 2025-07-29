@@ -8,6 +8,9 @@ import { useUser } from './hooks/context/userContext/UserProvider';
 
 import { State } from './pages/statistique/State';
 import FlexDashboardLayout from './dashboards/Layout';
+import ResetPasswordForm from './pages/auth/Resset Password/ResetPasswordForm';
+import VerifyCodeForm from './pages/auth/Resset Password/VerifyCodeForm';
+import ChangePasswordForm from './pages/auth/Resset Password/ChangePasswordForm';
 const Home = lazy(() => import("./pages/home/Page"));
 const Login = lazy(() => import("./pages/auth/SignIn"));
 const Operateur = lazy(() => import("./pages/operateur/Operateur"));
@@ -32,6 +35,9 @@ function App() {
         <Routes>
           <Route index element={userData ? <Home /> : <Login />} />
           <Route path="/login" element={userData ? <Home /> : <Login />} />
+          <Route path="/reset-password" element={userData ? <Home /> : <ResetPasswordForm />} />
+          <Route path="/verify-code/:email" element={<VerifyCodeForm />} />
+          <Route path="/change-password/:email" element={<ChangePasswordForm />} />
           <Route path="/operateur" element={userData ? <Operateur /> : <Login />} />
           <Route path="/chauffeur" element={userData ? <Chauffeur /> : <Login />} />
           <Route path="/vehecule" element={userData ? <Véhecule /> : <Login />} />

@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2, Truck, Mail, Lock, Eye, EyeOff } from "lucide-react"
 import { useDispatch, useSelector } from "react-redux"
 import { AppDispatch, RootState } from "@/redux/store"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { loginUser } from "@/redux/slice/authSlice"
 
 interface FormData {
@@ -110,7 +110,7 @@ export default function SignInForm() {
           <CardHeader className="text-center pb-8">
             {/* شعار الشركة */}
             <div className="mx-auto w-24 h-24 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full flex items-center justify-center mb-6 shadow-2xl ring-4 ring-white/20">
-              <Truck className="w-12 h-12 text-white" />
+               <img className="rounded-full" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOT8Kacun1rrtYYQIG2h6Iq-N0s3DdiuoNFQ&s" alt="" />
             </div>
 
             <h1 className="text-3xl font-bold text-white mb-2">مرحباً بك</h1>
@@ -180,12 +180,12 @@ export default function SignInForm() {
 
               {/* تذكرني ونسيت كلمة المرور */}
               <div className="flex items-center justify-between">
-                <button
-                  type="button"
+                <Link
+                  to='/reset-password'
                   className="text-blue-300 hover:text-blue-100 text-sm transition-colors hover:underline"
                 >
                   نسيت كلمة المرور؟
-                </button>
+                </Link>
 
                 <div className="flex items-center space-x-2 space-x-reverse">
                   <Checkbox

@@ -65,6 +65,7 @@ export const fetchInterCommuneStats = createAsyncThunk(
     let url = `${API_URL}/api/v1/state/statsInterCommunal`;
     if (startDate && endDate) url += `?startDate=${startDate}&endDate=${endDate}`;
     const response = await axios.get(url);
+
     return response.data[0];
   }
 );
@@ -75,6 +76,7 @@ export const fetchInterWilayaStats = createAsyncThunk(
     let url = `${API_URL}/api/v1/state/statsInterWilaya`;
     if (startDate && endDate) url += `?startDate=${startDate}&endDate=${endDate}`;
     const response = await axios.get(url);
+        console.log(response)
     return response.data[0];
   }
 );

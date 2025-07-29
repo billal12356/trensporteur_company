@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^4.0.1",
     "@nestjs/core": "^10.0.0",
@@ -34,7 +35,9 @@
     "class-validator": "^0.14.1",
     "exceljs": "^4.4.0",
     "fontkit": "^2.0.4",
+    "handlebars": "^4.7.8",
     "mongoose": "^8.12.1",
+    "nodemailer": "^7.0.5",
     "pdf-lib": "^1.17.1",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",

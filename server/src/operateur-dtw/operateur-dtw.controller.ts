@@ -91,6 +91,10 @@ export class OperateurDtwController {
   }
 
 
+  @Get('generate')
+  generate(@Query('id') id: string,@Res() res: Response) {
+    return this.operateurDtwService.generatepdfs(id, res);
+  }
 
 
 }
