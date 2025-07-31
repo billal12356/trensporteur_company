@@ -734,7 +734,10 @@ export class OperateurDtwService {
   async generatepdfs(id: string, res: Response) {
     const operateur = await this.OperateurModel.findById(id).lean();
     if (!operateur) throw new NotFoundException('الناقل غير موجود');
-
+    const fullNameOperateur = operateur.fullName_francais;
+    const chauffeur =
+      await this.chauffeursService.findChauffeurByOperateur(fullNameOperateur);
+    console.log(chauffeur);
     const pdfDoc = await PDFDocument.create();
     pdfDoc.registerFontkit(fontkit);
 
@@ -864,11 +867,34 @@ export class OperateurDtwService {
       exploitationDate: '10/11/1990',
       date: '14/07/2025',
     };
+    function formatDate(
+      dateInput: Date | string,
+      reverse: boolean = false,
+    ): string {
+      const date = new Date(dateInput);
 
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear().toString();
+
+      const formattedDate = `${day}/${month}/${year}`;
+
+      return reverse
+        ? formattedDate.split('').reverse().join('')
+        : formattedDate;
+    }
+
+    const fullNameChauffeur = chauffeur[0].nom_prenom_chauffeur?.trim() || '';
+    const nameParts = fullNameChauffeur.split(' ');
+
+    const lastNameChauffeur = nameParts
+      .slice(0, nameParts.length - 1)
+      .join(' '); // "بن عيسى"
+    const firstNameChauffeur = nameParts[nameParts.length - 1];
     // INFO DISPLAY
     drawAlignedText({
       page,
-      text: `عين الدفلة في : ${info.date}`,
+      text: `عين الدفلة في : ${Date.now()}`,
       y: height - 80,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -876,7 +902,7 @@ export class OperateurDtwService {
     });
     drawAlignedText({
       page,
-      text: `رقم القيد في سجل الناقلين العموميين لاشخاص  : ${info.registerNumber}`,
+      text: `رقم القيد في سجل الناقلين العموميين لاشخاص  : ${chauffeur[0]?.num_enregistrement_du_transporteur}`,
       y: height - 200,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -884,7 +910,7 @@ export class OperateurDtwService {
     });
     drawAlignedText({
       page,
-      text: `تاريخ بداية النشاط  : ${info.activityStartDate}`,
+      text: `تاريخ بداية النشاط : ${formatDate(operateur.date_debut_activite, true)}`,
       y: height - 200,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -893,7 +919,7 @@ export class OperateurDtwService {
 
     drawAlignedText({
       page,
-      text: `لقب الناقل : ${info.lastName}`,
+      text: `لقب الناقل : ${lastNameChauffeur}`,
       y: height - 230,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -901,7 +927,7 @@ export class OperateurDtwService {
     });
     drawAlignedText({
       page,
-      text: `اسم الناقل : ${info.firstName}`,
+      text: `اسم الناقل : ${firstNameChauffeur}`,
       y: height - 230,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -909,7 +935,7 @@ export class OperateurDtwService {
     });
     drawAlignedText({
       page,
-      text: `رقم الهاتف : ${info.phone}`,
+      text: `رقم الهاتف : ${operateur.num_telephone_client ? operateur.num_telephone_client : '/'}`,
       y: height - 230,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -927,7 +953,7 @@ export class OperateurDtwService {
 
     drawAlignedText({
       page,
-      text: `تاريخ الميلاد : ${info.birthDate}`,
+      text: `تاريخ الميلاد : ${formatDate(operateur.date_naissance, true)}`,
       y: height - 290,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -935,7 +961,7 @@ export class OperateurDtwService {
     });
     drawAlignedText({
       page,
-      text: `مكان الميلاد  : ${info.birthPlace}`,
+      text: `مكان الميلاد  : ${operateur.lieu_naissance_arabe}`,
       y: height - 290,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -943,7 +969,7 @@ export class OperateurDtwService {
     });
     drawAlignedText({
       page,
-      text: `اسم الاب : ${info.fatherName}`,
+      text: `اسم الاب : ${operateur.nom_pere_arabe}`,
       y: height - 290,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -952,7 +978,7 @@ export class OperateurDtwService {
 
     drawAlignedText({
       page,
-      text: `العنوان او المقر الاجتماعي : ${info.address}`,
+      text: `العنوان او المقر الاجتماعي : ${operateur.address_arabe}`,
       y: height - 320,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -960,7 +986,7 @@ export class OperateurDtwService {
     });
     drawAlignedText({
       page,
-      text: `رقم السجل التجاري  : ${info.commerceRegister}`,
+      text: `رقم السجل التجاري  : ${operateur.num_registre_commerce}`,
       y: height - 350,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -968,7 +994,7 @@ export class OperateurDtwService {
     });
     drawAlignedText({
       page,
-      text: `تاريخ السجل التجاري  : ${info.commerceRegisterDate}`,
+      text: `تاريخ السجل التجاري  : ${formatDate(operateur.hestoire_registre_commerce, true)}`,
       y: height - 350,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -992,12 +1018,44 @@ export class OperateurDtwService {
     });
 
     // TABLE
-    // جدول الخطوط المستثناة
     const excludedLines = [
-      ['01', 'العوانة – تازة'],
-      ['02', 'بني حطاط – العنصر'],
-      ['03', 'الزبوجة – الميلية'],
-      ['04', 'السواحلية – جيملة'],
+      [
+        '1',
+        'برج ولد خريفة - الخميس',
+        '10/01/2023',
+        '05173-400-44',
+        'YC003991',
+        '30',
+        '19/09/2023',
+      ],
+      [
+        '2',
+        'برج ولد خريفة - الخميس',
+        '19/02/2024',
+        '00564-402-44',
+        'YC003991',
+        '30',
+        '19/09/2023',
+      ],
+      [
+        '3',
+        'الخميس - واد الجمعة',
+        '04/12/2024',
+        '16990-407-44',
+        '123375',
+        '15',
+        '16/11/2025',
+      ],
+    ];
+
+    const tableHeader = [
+      'الرقم',
+      'الخط المستغل',
+      'تاريخ الرخصة',
+      'رقم تسجيل المركبة',
+      'الرقم التسلسلي',
+      'المقاعد',
+      'ملاحظة',
     ];
 
     const drawExcludedLinesTable = (
@@ -1006,41 +1064,78 @@ export class OperateurDtwService {
       startY: number,
       rowHeight: number,
       tableWidth: number,
+      header: string[],
       rows: string[][],
       font,
       fontSize: number,
     ) => {
-      const columnWidths = [80, tableWidth - 80];
-      const tableHeight = rows.length * rowHeight;
+      const columnWidths = [40, 160, 80, 110, 85, 40, 165]; // ← المجموع = 680 مضبوط
+      const totalRows = rows.length + 1;
+      const tableHeight = totalRows * rowHeight;
 
-      // رسم الإطار الخارجي للجدول فقط
+      // رسم الإطار الخارجي
       page.drawRectangle({
         x: startX,
         y: startY - tableHeight,
         width: tableWidth,
         height: tableHeight,
         borderColor: rgb(0, 0, 0),
-        borderWidth: 1,
+        borderWidth: 1.5,
       });
 
-      // كتابة النصوص داخل الجدول
-      rows.forEach((row, rowIndex) => {
-        const y = startY - rowIndex * rowHeight - 10;
-        let x = startX;
-        row.forEach((cell, i) => {
-          page.drawText(cell, {
-            x: x + 5,
-            y: y,
-            size: fontSize,
-            font: font,
+      for (let rowIndex = 0; rowIndex < totalRows; rowIndex++) {
+        const y = startY - rowIndex * rowHeight;
+
+        // خط أفقي بين الصفوف
+        if (rowIndex > 0) {
+          page.drawLine({
+            start: { x: startX, y },
+            end: { x: startX + tableWidth, y },
+            thickness: 1,
             color: rgb(0, 0, 0),
           });
-          x += columnWidths[i];
-        });
-      });
+        }
+
+        let x = startX;
+
+        for (let colIndex = 0; colIndex < columnWidths.length; colIndex++) {
+          const colWidth = columnWidths[colIndex];
+
+          const text =
+            rowIndex === 0
+              ? tableHeader[tableHeader.length - 1 - colIndex]
+              : rows[rowIndex - 1][tableHeader.length - 1 - colIndex];
+
+          // رسم خلفية رأس الجدول
+          if (rowIndex === 0) {
+            page.drawRectangle({
+              x,
+              y: y - rowHeight,
+              width: colWidth,
+              height: rowHeight,
+              color: rgb(0.9, 0.9, 0.9), // رمادي فاتح
+            });
+          }
+
+          // محاذاة النص من اليمين مع هامش
+          const textWidth = font.widthOfTextAtSize(text, fontSize);
+          const textX = x + colWidth - textWidth - 6; // ← يبدأ من اليمين
+          const textY = y - rowHeight + 10;
+
+          page.drawText(text, {
+            x: textX,
+            y: textY,
+            size: fontSize,
+            font,
+            color: rgb(0, 0, 0),
+          });
+
+          x += colWidth;
+        }
+      }
     };
 
-    // عنوان الجدول
+    // رسم العنوان الرئيسي
     drawAlignedText({
       page,
       text: 'الخطوط المستثناة',
@@ -1050,16 +1145,17 @@ export class OperateurDtwService {
       align: 'center',
     });
 
-    // رسم الجدول أسفل العنوان
+    // رسم الجدول
     drawExcludedLinesTable(
       page,
-      80, // X Start
-      height - 450, // Y Start
-      30, // Row Height
-      400, // Table Width
-      excludedLines, // Rows
+      50, // X
+      height - 450, // Y
+      50, // ارتفاع الصف
+      680, // عرض الجدول
+      tableHeader,
+      excludedLines,
       cairoSemiBoldFont,
-      14,
+      12,
     );
 
     // Save and send response
