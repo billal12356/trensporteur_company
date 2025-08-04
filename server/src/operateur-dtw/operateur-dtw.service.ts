@@ -17,7 +17,7 @@ import { join } from 'path';
 import { Workbook } from 'exceljs';
 import { VehiclesService } from 'src/vehicles/vehicles.service';
 import { ChauffeursService } from 'src/chauffeurs/chauffeurs.service';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, PDFFont, rgb, StandardFonts } from 'pdf-lib';
 import { ruralCoordinates } from 'src/constants/rural-coordinates';
 const fontkit = require('@pdf-lib/fontkit');
 import { getVisualString } from 'bidi-js';
@@ -737,7 +737,8 @@ export class OperateurDtwService {
     const fullNameOperateur = operateur.fullName_francais;
     const chauffeur =
       await this.chauffeursService.findChauffeurByOperateur(fullNameOperateur);
-    console.log(chauffeur);
+    const num_op = operateur?.num_docier_client;
+    const vihicles = await this.vihiculeService.findVihiculeByOperateur(num_op);
     const pdfDoc = await PDFDocument.create();
     pdfDoc.registerFontkit(fontkit);
 
@@ -868,7 +869,7 @@ export class OperateurDtwService {
       date: '14/07/2025',
     };
     function formatDate(
-      dateInput: Date | string,
+      dateInput: Date | string | number,
       reverse: boolean = false,
     ): string {
       const date = new Date(dateInput);
@@ -894,7 +895,7 @@ export class OperateurDtwService {
     // INFO DISPLAY
     drawAlignedText({
       page,
-      text: `عين الدفلة في : ${Date.now()}`,
+      text: `عين الدفلة في : ${formatDate(Date.now(), true)}`,
       y: height - 80,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -1018,35 +1019,35 @@ export class OperateurDtwService {
     });
 
     // TABLE
-    const excludedLines = [
-      [
-        '1',
-        'برج ولد خريفة - الخميس',
-        '10/01/2023',
-        '05173-400-44',
-        'YC003991',
-        '30',
-        '19/09/2023',
-      ],
-      [
-        '2',
-        'برج ولد خريفة - الخميس',
-        '19/02/2024',
-        '00564-402-44',
-        'YC003991',
-        '30',
-        '19/09/2023',
-      ],
-      [
-        '3',
-        'الخميس - واد الجمعة',
-        '04/12/2024',
-        '16990-407-44',
-        '123375',
-        '15',
-        '16/11/2025',
-      ],
-    ];
+    // const excludedLines = [
+    //   [
+    //     '1',
+    //     'برج ولد خريفة - الخميس',
+    //     '10/01/2023',
+    //     '05173-400-44',
+    //     'YC003991',
+    //     '30',
+    //     '19/09/2023',
+    //   ],
+    //   [
+    //     '2',
+    //     'برج ولد خريفة - الخميس',
+    //     '19/02/2024',
+    //     '00564-402-44',
+    //     'YC003991',
+    //     '30',
+    //     '19/09/2023',
+    //   ],
+    //   [
+    //     '3',
+    //     'الخميس - واد الجمعة',
+    //     '04/12/2024',
+    //     '16990-407-44',
+    //     '123375',
+    //     '15',
+    //     '16/11/2025',
+    //   ],
+    // ];
 
     const tableHeader = [
       'الرقم',
@@ -1058,6 +1059,19 @@ export class OperateurDtwService {
       'ملاحظة',
     ];
 
+    const i = 0;
+    const excludedLines: string[][] = vihicles.map((v, i) => {
+      return [
+        String(i + 1),
+        `${v.point_depart} - ${v.point_arrive}`,
+        formatDate(v.driving_license_history),
+        String(v.num_bus_registration),
+        String(v.font_symbol),
+        String(v.Number_of_seats),
+        String(v.note_chef_departement),
+      ];
+    });
+
     const drawExcludedLinesTable = (
       page,
       startX: number,
@@ -1066,35 +1080,23 @@ export class OperateurDtwService {
       tableWidth: number,
       header: string[],
       rows: string[][],
-      font,
+      font: PDFFont,
       fontSize: number,
     ) => {
-      const columnWidths = [40, 160, 80, 110, 85, 40, 165]; // ← المجموع = 680 مضبوط
+      const columnWidths = [110, 50, 100, 130, 90, 170, 40]; // من اليمين إلى اليسار
       const totalRows = rows.length + 1;
-      const tableHeight = totalRows * rowHeight;
-
-      // رسم الإطار الخارجي
-      page.drawRectangle({
-        x: startX,
-        y: startY - tableHeight,
-        width: tableWidth,
-        height: tableHeight,
-        borderColor: rgb(0, 0, 0),
-        borderWidth: 1.5,
-      });
 
       for (let rowIndex = 0; rowIndex < totalRows; rowIndex++) {
         const y = startY - rowIndex * rowHeight;
 
-        // خط أفقي بين الصفوف
-        if (rowIndex > 0) {
-          page.drawLine({
-            start: { x: startX, y },
-            end: { x: startX + tableWidth, y },
-            thickness: 1,
-            color: rgb(0, 0, 0),
-          });
-        }
+        page.drawRectangle({
+          x: startX,
+          y: y - rowHeight,
+          width: columnWidths.reduce((sum, w) => sum + w, 0),
+          height: rowHeight,
+          borderColor: rgb(0, 0, 0),
+          borderWidth: 0.5,
+        });
 
         let x = startX;
 
@@ -1103,26 +1105,25 @@ export class OperateurDtwService {
 
           const text =
             rowIndex === 0
-              ? tableHeader[tableHeader.length - 1 - colIndex]
-              : rows[rowIndex - 1][tableHeader.length - 1 - colIndex];
+              ? header[header.length - 1 - colIndex]
+              : rows[rowIndex - 1][header.length - 1 - colIndex];
 
-          // رسم خلفية رأس الجدول
-          if (rowIndex === 0) {
-            page.drawRectangle({
-              x,
-              y: y - rowHeight,
-              width: colWidth,
-              height: rowHeight,
-              color: rgb(0.9, 0.9, 0.9), // رمادي فاتح
-            });
-          }
-
-          // محاذاة النص من اليمين مع هامش
           const textWidth = font.widthOfTextAtSize(text, fontSize);
-          const textX = x + colWidth - textWidth - 6; // ← يبدأ من اليمين
-          const textY = y - rowHeight + 10;
+          const maxTextWidth = colWidth - 10;
 
-          page.drawText(text, {
+          const safeText =
+            textWidth > maxTextWidth
+              ? text.slice(
+                  0,
+                  Math.floor((maxTextWidth / textWidth) * text.length),
+                ) + '…'
+              : text;
+
+          const textX =
+            x + colWidth - font.widthOfTextAtSize(safeText, fontSize) - 5;
+          const textY = y - rowHeight / 2 + fontSize / 2 - 2;
+
+          page.drawText(safeText, {
             x: textX,
             y: textY,
             size: fontSize,
@@ -1132,10 +1133,30 @@ export class OperateurDtwService {
 
           x += colWidth;
         }
+
+        if (rowIndex > 0) {
+          const lineNumber = rows[rowIndex - 1][0];
+          const commentText = `تاريخ نهاية صلاحية محظر المراقبة التقنية ${lineNumber}:`;
+          const commentTexts = `تاريخ نهاية صلاحية التأمين ${lineNumber}:`;
+
+           page.drawText(commentText, {
+            x: 500,
+            y: y - rowHeight + 6,
+            size: fontSize - 1,
+            font,
+            color: rgb(0.2, 0.2, 0.2),
+          });
+          page.drawText(commentTexts, {
+            x: 130,
+            y: y - rowHeight + 6,
+            size: fontSize - 1,
+            font,
+            color: rgb(0.2, 0.2, 0.2),
+          });
+        }
       }
     };
 
-    // رسم العنوان الرئيسي
     drawAlignedText({
       page,
       text: 'الخطوط المستثناة',
@@ -1148,10 +1169,10 @@ export class OperateurDtwService {
     // رسم الجدول
     drawExcludedLinesTable(
       page,
-      50, // X
-      height - 450, // Y
-      50, // ارتفاع الصف
-      680, // عرض الجدول
+      50,
+      height - 450,
+      48,
+      720,
       tableHeader,
       excludedLines,
       cairoSemiBoldFont,

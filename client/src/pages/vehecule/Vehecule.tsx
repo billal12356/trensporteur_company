@@ -58,7 +58,7 @@ const EnhancedVehicle = React.memo((): ReactElement => {
   }
 
   const handleExportLine = async () => {
-    setIsExporting(true)
+    setIsExportingLine(true)
     try {
       await dispatch(ExportLines({ search: searchQueryLine }))
       setSearchQueryLine('')
@@ -198,7 +198,7 @@ const EnhancedVehicle = React.memo((): ReactElement => {
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <Input
                         type="text"
-                        placeholder="البحث في ..."
+                        placeholder="البحث في المركبات على المسار..."
                         value={searchQueryLine}
                         onChange={(e) => setSearchQueryLine(e.target.value)}
                         className="pl-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg text-right"
@@ -214,7 +214,7 @@ const EnhancedVehicle = React.memo((): ReactElement => {
                       className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
                     >
                       <Download className="w-4 h-4" />
-                      {isExportingLine ? "جاري التصدير..." : "تصدير Excel"}
+                      {isExportingLine ? "جاري التصدير..." : " تصدير فلترة المسار  "}
                     </Button>
                   </div>
                 </div>
