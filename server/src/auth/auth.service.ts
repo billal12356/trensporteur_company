@@ -68,35 +68,88 @@ export class AuthService {
     );
 
     const htmlMessage = `
-    <div style="font-family: 'Cairo', Tahoma, sans-serif; background: #f0f4f8; padding: 20px; direction: rtl;">
-  <div style="max-width: 650px; margin: auto; background: #ffffff; padding: 35px 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); border-right: 5px solid #0d6efd;">
-    
-    <div style="text-align: center; margin-bottom: 25px;">
-      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOT8Kacun1rrtYYQIG2h6Iq-N0s3DdiuoNFQ&s" alt="شعار الجزائر" style="width: 60px; margin-bottom: 10px;" />
-      <h2 style="margin: 0; color: #0d6efd;">مديرية النقل - ولاية عين الدفلة</h2>
-      <p style="margin: 5px 0; color: #555;">رمز التحقق الإلكتروني</p>
-    </div>
+     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
+            <tr>
+                <td style="padding: 40px 20px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto;" class="container">
+                        <tr>
+                            <td>
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #ffffff; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden;">
+                                    
+                                    <!-- Header -->
+                                    <tr>
+                                        <td style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 40px 30px; text-align: center;" class="header">
+                                            <div style="background: rgba(255,255,255,0.2); width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 20px; display: inline-flex; align-items: center; justify-content: center;">
+                                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOT8Kacun1rrtYYQIG2h6Iq-N0s3DdiuoNFQ&s" alt="شعار الجزائر" style="width: 100%; height: 100%; border-radius: 50%;" />
+                                            </div>
+                                            <h1 style="margin: 0 0 8px 0; color: #ffffff; font-size: 24px; font-weight: 700;">مديرية النقل</h1>
+                                            <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 16px;">ولاية عين الدفلة</p>
+                                        </td>
+                                    </tr>
 
-    <p style="font-size: 16px; color: #333;">مرحبًا،</p>
-    <p style="font-size: 16px; color: #333;">لقد طلبت رمز تحقق لتأكيد هويتك. يرجى استخدام الكود التالي خلال 10 دقائق:</p>
+                                    <!-- Content -->
+                                    <tr>
+                                        <td style="padding: 50px 40px;" class="content">
+                                            <div style="text-align: center; margin-bottom: 30px;">
+                                                <div style="background: #f8fafc; width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 20px; display: inline-flex; align-items: center; justify-content: center;">
+                                                    <div style="width: 24px; height: 24px; background: #4f46e5; border-radius: 50%; position: relative;">
+                                                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; background: white; border-radius: 50%;"></div>
+                                                    </div>
+                                                </div>
+                                                <h2 style="margin: 0 0 12px 0; color: #1e293b; font-size: 28px; font-weight: 700;">رمز التحقق</h2>
+                                                <p style="margin: 0; color: #64748b; font-size: 16px;">تم إرسال رمز التحقق الخاص بك</p>
+                                            </div>
+                                            
+                                            <p style="margin: 0 0 25px 0; color: #374151; font-size: 18px; line-height: 1.7; text-align: center;">
+                                                مرحبًا بك! 👋<br>
+                                                لقد طلبت رمز تحقق لإعادة تعيين كلمة المرور الخاصة بك
+                                            </p>
 
-    <div style="text-align: center; margin: 35px 0;">
-      <div style="display: inline-block; background: #0d6efd; color: white; padding: 18px 35px; font-size: 26px; font-weight: bold; border-radius: 8px; letter-spacing: 4px; box-shadow: 0 3px 10px rgba(13, 110, 253, 0.3);">
-        ${code}
-      </div>
-    </div>
+                                            <!-- Code -->
+                                            <div style="text-align: center; padding: 30px 0;">
+                                                <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); display: inline-block; padding: 25px 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3); margin: 20px 0;" class="code-container">
+                                                    <p style="margin: 0 0 8px 0; color: rgba(255,255,255,0.8); font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">رمز التحقق</p>
+                                                    <div style="color: #ffffff; font-size: 36px; font-weight: 800; letter-spacing: 8px; font-family: 'Courier New', monospace;" class="code">
+                                                        ${code}
+                                                    </div>
+                                                </div>
+                                            </div>
 
-    <p style="font-size: 15px; color: #555;">إذا لم تطلب هذا الرمز، يمكنك تجاهل هذا البريد بأمان.</p>
+                                            <!-- Warning -->
+                                            <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 16px; margin: 20px 0; text-align: center;">
+                                                <p style="margin: 0; color: #92400e; font-size: 15px; font-weight: 600;">
+                                                    ⏰ هذا الرمز صالح لمدة <strong>10 دقائق فقط</strong>
+                                                </p>
+                                            </div>
 
-    <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
+                                            <!-- Security Notice -->
+                                            <div style="background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                                                <h4 style="margin: 0 0 12px 0; color: #dc2626; font-size: 16px; font-weight: 600;">🔒 تنبيه أمني</h4>
+                                                <p style="margin: 0; color: #7f1d1d; font-size: 14px; line-height: 1.6;">
+                                                    إذا لم تطلب هذا الرمز، يرجى تجاهل هذا البريد الإلكتروني.
+                                                </p>
+                                            </div>
+                                        </td>
+                                    </tr>
 
-    <p style="font-size: 14px; color: #888;">مع أطيب التحيات،<br />
-    مديرية النقل لولاية عين الدفلة<br />
-    📧 ${process.env.EMAIL}</p>
-  </div>
-</div>
-
-
+                                    <!-- Footer -->
+                                    <tr>
+                                        <td style="background: #f8fafc; padding: 30px 40px; border-top: 1px solid #e2e8f0; text-align: center;" class="footer">
+                                            <p style="margin: 0 0 16px 0; color: #64748b; font-size: 16px; font-weight: 600;">مع أطيب التحيات</p>
+                                            <p style="margin: 0 0 8px 0; color: #1e293b; font-size: 18px; font-weight: 700;">مديرية النقل لولاية عين الدفلة</p>
+                                            <p style="margin: 0; color: #64748b; font-size: 14px;">
+                                                📧 ${email}<br>
+                                                © 2024 جميع الحقوق محفوظة
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
 
     `;
     await this.mailerService.sendMail({
@@ -165,7 +218,9 @@ export class AuthService {
 
     if (changePasswordData.password !== changePasswordData.ConfirmePassword) {
       throw new BadRequestException(
-        new ResponseBuilder().setStatus(404).setMessage('كلمة السر غير متطابقة !'),
+        new ResponseBuilder()
+          .setStatus(404)
+          .setMessage('كلمة السر غير متطابقة !'),
       );
     }
 

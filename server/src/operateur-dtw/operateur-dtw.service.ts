@@ -1059,7 +1059,6 @@ export class OperateurDtwService {
       'ملاحظة',
     ];
 
-    const i = 0;
     const excludedLines: string[][] = vihicles.map((v, i) => {
       return [
         String(i + 1),
@@ -1072,18 +1071,23 @@ export class OperateurDtwService {
       ];
     });
 
+    // تعريف عرض الأعمدة وتوسيط الجدول
+    const columnWidths = [110, 50, 100, 130, 90, 170, 40]; // من اليمين إلى اليسار
+    const tableTotalWidth = columnWidths.reduce((sum, w) => sum + w, 0);
+    const startX = (page.getWidth() - tableTotalWidth) / 2;
+
+    // رسم الجدول
     const drawExcludedLinesTable = (
       page,
       startX: number,
       startY: number,
       rowHeight: number,
-      tableWidth: number,
       header: string[],
       rows: string[][],
       font: PDFFont,
       fontSize: number,
+      columnWidths: number[],
     ) => {
-      const columnWidths = [110, 50, 100, 130, 90, 170, 40]; // من اليمين إلى اليسار
       const totalRows = rows.length + 1;
 
       for (let rowIndex = 0; rowIndex < totalRows; rowIndex++) {
@@ -1139,7 +1143,7 @@ export class OperateurDtwService {
           const commentText = `تاريخ نهاية صلاحية محظر المراقبة التقنية ${lineNumber}:`;
           const commentTexts = `تاريخ نهاية صلاحية التأمين ${lineNumber}:`;
 
-           page.drawText(commentText, {
+          page.drawText(commentText, {
             x: 500,
             y: y - rowHeight + 6,
             size: fontSize - 1,
@@ -1157,6 +1161,7 @@ export class OperateurDtwService {
       }
     };
 
+    // العنوان في الوسط
     drawAlignedText({
       page,
       text: 'الخطوط المستثناة',
@@ -1166,17 +1171,17 @@ export class OperateurDtwService {
       align: 'center',
     });
 
-    // رسم الجدول
+    // استدعاء الدالة بعد حساب startX
     drawExcludedLinesTable(
       page,
-      50,
+      startX,
       height - 450,
       48,
-      720,
       tableHeader,
       excludedLines,
       cairoSemiBoldFont,
       12,
+      columnWidths,
     );
 
     // Save and send response
