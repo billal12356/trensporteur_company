@@ -7,7 +7,6 @@ import { useNavigate, useParams } from "react-router-dom"
 import { Eye, EyeOff, Lock, CheckCircle, XCircle, AlertCircle } from "lucide-react"
 import { changePassword } from "@/redux/slice/authSlice"
 import type { AppDispatch } from "@/redux/store"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -39,7 +38,7 @@ export default function ChangePasswordForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [_, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
   const {
@@ -60,11 +59,11 @@ export default function ChangePasswordForm() {
     return (metRequirements / passwordRequirements.length) * 100
   }
 
-  const getStrengthColor = (strength: number): string => {
-    if (strength < 40) return "bg-red-500"
-    if (strength < 70) return "bg-yellow-500"
-    return "bg-green-500"
-  }
+  // const getStrengthColor = (strength: number): string => {
+  //   if (strength < 40) return "bg-red-500"
+  //   if (strength < 70) return "bg-yellow-500"
+  //   return "bg-green-500"
+  // }
 
   const getStrengthText = (strength: number): string => {
     if (strength < 40) return "Weak"
