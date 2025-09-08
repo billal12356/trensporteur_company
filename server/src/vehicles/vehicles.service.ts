@@ -28,20 +28,36 @@ export class VehiclesService {
 
 
   async create(createVehicleDto: CreateVihicleDto) {
-    const { num_docier_client, fullName_arabe, fullName_francais } = createVehicleDto
+    const { num_docier_client, fullName_arabe, fullName_francais, num_bus_registration } = createVehicleDto
     const operateurNum = await this.operateurService.findByVihicilesandChauffer({ num_docier_client })
+    const MatriculeVihicule = await this.VihicileModel.findOne({ num_bus_registration })
 
-    console.log("ope", operateurNum);
+    const fulNameWhenMatriculeExist = MatriculeVihicule.fullName_arabe;
+    const MatriculeWhenMatriculeExist = MatriculeVihicule.fullName_arabe;
+    const TypeWhenMatriculeExist = MatriculeVihicule.font_type;
+    // if (!operateurNum) {
+    //   throw new NotFoundException(
+    //     new ResponseBuilder()
+    //       .setStatus(404)
+    //       .setMessage(`لم يتم العثور على ملف المتعامل  بهذا الرقم ${num_docier_client}`)
+    //       .setErrors({ _id: 'Operator not found' })
+    //       .build(),
+    //   );
+    // }
 
-    if (!operateurNum) {
+    let lastReturn = []
+    lastReturn.push({ fulNameWhenMatriculeExist, MatriculeWhenMatriculeExist, TypeWhenMatriculeExist })
+    if (MatriculeVihicule) {
       throw new NotFoundException(
         new ResponseBuilder()
           .setStatus(404)
-          .setMessage(`لم يتم العثور على ملف المتعامل  بهذا الرقم ${num_docier_client}`)
-          .setErrors({ _id: 'Operator not found' })
+          .setMessage('المركبة مسجلة من قبل')
+          .setErrors('المركبة مسجلة من قبل')
+          .setData(lastReturn)
           .build(),
       );
     }
+
 
     if (operateurNum.fullName_arabe !== fullName_arabe) {
       throw new NotFoundException(
