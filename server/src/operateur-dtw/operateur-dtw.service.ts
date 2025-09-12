@@ -210,6 +210,7 @@ export class OperateurDtwService {
   ) {}
 
   async create(createOperateurDtwDto: CreateOperateurDto) {
+    console.log("createOperateurDtwDto ==> " , createOperateurDtwDto);
     const operateur = await this.OperateurModel.create(createOperateurDtwDto);
     return new ResponseBuilder()
       .setStatus(201)
@@ -1003,7 +1004,7 @@ export class OperateurDtwService {
     });
     drawAlignedText({
       page,
-      text: `مقر الاستغلال رقم   : ${info.exploitationNumber}`,
+      text: `مقر الاستغلال رقم   : ${operateur.num_dhoraire}`,
       y: height - 380,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -1011,7 +1012,7 @@ export class OperateurDtwService {
     });
     drawAlignedText({
       page,
-      text: `بتاريخ  : ${info.exploitationDate}`,
+      text: `بتاريخ  : ${formatDate(operateur.date_prévue, true)}`,
       y: height - 380,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -1019,36 +1020,7 @@ export class OperateurDtwService {
     });
 
     // TABLE
-    // const excludedLines = [
-    //   [
-    //     '1',
-    //     'برج ولد خريفة - الخميس',
-    //     '10/01/2023',
-    //     '05173-400-44',
-    //     'YC003991',
-    //     '30',
-    //     '19/09/2023',
-    //   ],
-    //   [
-    //     '2',
-    //     'برج ولد خريفة - الخميس',
-    //     '19/02/2024',
-    //     '00564-402-44',
-    //     'YC003991',
-    //     '30',
-    //     '19/09/2023',
-    //   ],
-    //   [
-    //     '3',
-    //     'الخميس - واد الجمعة',
-    //     '04/12/2024',
-    //     '16990-407-44',
-    //     '123375',
-    //     '15',
-    //     '16/11/2025',
-    //   ],
-    // ];
-
+    // رأس الجدول
     const tableHeader = [
       'الرقم',
       'الخط المستغل',
@@ -1059,26 +1031,28 @@ export class OperateurDtwService {
       'ملاحظة',
     ];
 
-    const excludedLines: string[][] = vihicles.map((v, i) => {
-      return [
-        String(i + 1),
-        `${v.point_depart} - ${v.point_arrive}`,
-        formatDate(v.driving_license_history),
-        String(v.num_bus_registration),
-        String(v.font_symbol),
-        String(v.Number_of_seats),
-        String(v.note_chef_departement),
-      ];
-    });
+    // تحويل المركبات لصفوف
+    const excludedLines: string[][] = vihicles.map((v, i) => [
+      String(i + 1),
+      `${v.point_depart} - ${v.point_arrive}`,
+      formatDate(v.driving_license_history),
+      String(v.num_bus_registration),
+      String(v.font_symbol),
+      String(v.Number_of_seats),
+      String(v.note_chef_departement),
+    ]);
 
-    // تعريف عرض الأعمدة وتوسيط الجدول
-    const columnWidths = [110, 50, 100, 130, 90, 170, 40]; // من اليمين إلى اليسار
+    // تعريف عرض الأعمدة
+    const columnWidths = [110, 50, 100, 130, 90, 170, 40]; // من اليمين لليسار
     const tableTotalWidth = columnWidths.reduce((sum, w) => sum + w, 0);
     const startX = (page.getWidth() - tableTotalWidth) / 2;
 
-    // رسم الجدول
-    const drawExcludedLinesTable = (
+    /**
+     * دالة لرسم جدول واحد وإرجاع آخر Y بعد الانتهاء
+     */
+    const drawTable = (
       page,
+      title: string,
       startX: number,
       startY: number,
       rowHeight: number,
@@ -1087,16 +1061,28 @@ export class OperateurDtwService {
       font: PDFFont,
       fontSize: number,
       columnWidths: number[],
-    ) => {
-      const totalRows = rows.length + 1;
+    ): number => {
+      // رسم العنوان في الوسط
+      drawAlignedText({
+        page,
+        text: title,
+        y: startY,
+        font: cairoBoldFont,
+        fontSize: 16,
+        align: 'center',
+      });
+
+      const totalRows = rows.length + 1; // صفوف + رأس
+      let tableY = startY - 30; // تحت العنوان
 
       for (let rowIndex = 0; rowIndex < totalRows; rowIndex++) {
-        const y = startY - rowIndex * rowHeight;
+        const y = tableY - rowIndex * rowHeight;
 
+        // رسم المستطيل الخارجي للصف
         page.drawRectangle({
           x: startX,
           y: y - rowHeight,
-          width: columnWidths.reduce((sum, w) => sum + w, 0),
+          width: tableTotalWidth,
           height: rowHeight,
           borderColor: rgb(0, 0, 0),
           borderWidth: 0.5,
@@ -1104,6 +1090,7 @@ export class OperateurDtwService {
 
         let x = startX;
 
+        // رسم الأعمدة
         for (let colIndex = 0; colIndex < columnWidths.length; colIndex++) {
           const colWidth = columnWidths[colIndex];
 
@@ -1138,19 +1125,20 @@ export class OperateurDtwService {
           x += colWidth;
         }
 
+        // ملاحظات إضافية تحت كل صف
         if (rowIndex > 0) {
           const lineNumber = rows[rowIndex - 1][0];
-          const commentText = `تاريخ نهاية صلاحية محظر المراقبة التقنية ${lineNumber}:`;
-          const commentTexts = `تاريخ نهاية صلاحية التأمين ${lineNumber}:`;
+          const comment1 = `تاريخ نهاية صلاحية محظر المراقبة التقنية ${lineNumber}:`;
+          const comment2 = `تاريخ نهاية صلاحية التأمين ${lineNumber}:`;
 
-          page.drawText(commentText, {
+          page.drawText(comment1, {
             x: 500,
             y: y - rowHeight + 6,
             size: fontSize - 1,
             font,
             color: rgb(0.2, 0.2, 0.2),
           });
-          page.drawText(commentTexts, {
+          page.drawText(comment2, {
             x: 130,
             y: y - rowHeight + 6,
             size: fontSize - 1,
@@ -1159,23 +1147,24 @@ export class OperateurDtwService {
           });
         }
       }
+
+      // إرجاع آخر Y بعد الجدول
+      return tableY - totalRows * rowHeight - 50; // + مسافة بين الجداول
     };
 
-    // العنوان في الوسط
-    drawAlignedText({
-      page,
-      text: 'الخطوط المستثناة',
-      y: height - 420,
-      font: cairoBoldFont,
-      fontSize: 16,
-      align: 'center',
-    });
+    // ---------------------------
+    // استدعاء عدة جداول
+    // ---------------------------
 
-    // استدعاء الدالة بعد حساب startX
-    drawExcludedLinesTable(
+    // البداية من أعلى الصفحة
+    let nextY = height - 450;
+
+    // جدول 1
+    nextY = drawTable(
       page,
+      'الخطوط المستثناة',
       startX,
-      height - 450,
+      nextY,
       48,
       tableHeader,
       excludedLines,
@@ -1183,6 +1172,21 @@ export class OperateurDtwService {
       12,
       columnWidths,
     );
+
+    // جدول 2 (نفس البيانات كمثال، تقدر تغير rows)
+    nextY = drawTable(
+      page,
+      "",
+      startX,
+      nextY,
+      48,
+      tableHeader,
+      excludedLines,
+      cairoSemiBoldFont,
+      12,
+      columnWidths,
+    );
+
 
     // Save and send response
     const pdfBytes = await pdfDoc.save();
