@@ -17,7 +17,7 @@ import { join } from 'path';
 import { Workbook } from 'exceljs';
 import { VehiclesService } from 'src/vehicles/vehicles.service';
 import { ChauffeursService } from 'src/chauffeurs/chauffeurs.service';
-import { PDFDocument, PDFFont, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from 'pdf-lib';
 import { ruralCoordinates } from 'src/constants/rural-coordinates';
 const fontkit = require('@pdf-lib/fontkit');
 import { getVisualString } from 'bidi-js';
@@ -210,7 +210,6 @@ export class OperateurDtwService {
   ) {}
 
   async create(createOperateurDtwDto: CreateOperateurDto) {
-    console.log("createOperateurDtwDto ==> " , createOperateurDtwDto);
     const operateur = await this.OperateurModel.create(createOperateurDtwDto);
     return new ResponseBuilder()
       .setStatus(201)
@@ -765,7 +764,7 @@ export class OperateurDtwService {
       fs.readFileSync(cairoSemiBoldPath),
     );
 
-    const page = pdfDoc.addPage([750, 842]);
+    let page = pdfDoc.addPage([750, 842]);
     const { width, height } = page.getSize();
 
     const drawAlignedText = ({
@@ -800,45 +799,26 @@ export class OperateurDtwService {
       fontSize: 20,
       align: 'center',
     });
-    drawAlignedText({
-      page,
-      text: 'وزارة النقل',
-      y: height - 50,
-      font: cairoSemiBoldFont,
-      fontSize: 16,
-      align: 'right',
-    });
-    drawAlignedText({
-      page,
-      text: 'مديرية النقل',
-      y: height - 70,
-      font: cairoSemiBoldFont,
-      fontSize: 16,
-      align: 'right',
-    });
-    drawAlignedText({
-      page,
-      text: 'لولاية عين الدفلة',
-      y: height - 90,
-      font: cairoSemiBoldFont,
-      fontSize: 16,
-      align: 'right',
-    });
-    drawAlignedText({
-      page,
-      text: 'مصلحة النقل البري',
-      y: height - 110,
-      font: cairoSemiBoldFont,
-      fontSize: 16,
-      align: 'right',
-    });
-    drawAlignedText({
-      page,
-      text: 'مكتب نقل المسافرين',
-      y: height - 130,
-      font: cairoSemiBoldFont,
-      fontSize: 16,
-      align: 'right',
+    // right
+    const marginRight = 50; // مسافة من يمين الورقة
+    const x = page.getWidth() - marginRight;
+
+    const texts = [
+      { text: 'وزارة النقل', font: cairoSemiBoldFont, fontSize: 16 },
+      { text: 'مديرية النقل', font: cairoSemiBoldFont, fontSize: 16 },
+      { text: 'لولاية عين الدفلة', font: cairoSemiBoldFont, fontSize: 16 },
+      { text: 'مصلحة النقل البري', font: cairoSemiBoldFont, fontSize: 16 },
+      { text: 'مكتب نقل المسافرين', font: cairoSemiBoldFont, fontSize: 16 },
+    ];
+
+    texts.forEach((t, i) => {
+      page.drawText(t.text, {
+        x: x - t.font.widthOfTextAtSize(t.text, t.fontSize), // يمين مضبوط
+        y: height - 25 - i * 20,
+        size: t.fontSize,
+        font: t.font,
+        color: rgb(0, 0, 0),
+      });
     });
 
     // CENTERED TITLE
@@ -1051,6 +1031,7 @@ export class OperateurDtwService {
      * دالة لرسم جدول واحد وإرجاع آخر Y بعد الانتهاء
      */
     const drawTable = (
+      pdfDoc,
       page,
       title: string,
       startX: number,
@@ -1061,27 +1042,42 @@ export class OperateurDtwService {
       font: PDFFont,
       fontSize: number,
       columnWidths: number[],
-    ): number => {
-      // رسم العنوان في الوسط
-      drawAlignedText({
-        page,
-        text: title,
-        y: startY,
-        font: cairoBoldFont,
-        fontSize: 16,
-        align: 'center',
-      });
+    ): { page: PDFPage; y: number } => {
+      let tableY = startY;
+      let rowIndex = 0;
+      const totalRows = rows.length + 1; // الهيدر + الصفوف
 
-      const totalRows = rows.length + 1; // صفوف + رأس
-      let tableY = startY - 30; // تحت العنوان
+      const drawHeader = (page, y) => {
+        drawAlignedText({
+          page,
+          text: title,
+          y,
+          font: cairoBoldFont,
+          fontSize: 16,
+          align: 'center',
+        });
+        return y - 30;
+      };
 
-      for (let rowIndex = 0; rowIndex < totalRows; rowIndex++) {
-        const y = tableY - rowIndex * rowHeight;
+      // رسم العنوان لأول مرة
+      tableY = drawHeader(page, tableY);
+
+      while (rowIndex < totalRows) {
+        const y = tableY - rowHeight;
+
+        // 🔥 لو ما بقاش مكان نضيف صفحة جديدة
+        if (y < 100) {
+          page = pdfDoc.addPage([750, 842]);
+          tableY = page.getHeight() - 50;
+
+          // نرسم العنوان مرة ثانية
+          tableY = drawHeader(page, tableY);
+        }
 
         // رسم المستطيل الخارجي للصف
         page.drawRectangle({
           x: startX,
-          y: y - rowHeight,
+          y: tableY - rowHeight,
           width: tableTotalWidth,
           height: rowHeight,
           borderColor: rgb(0, 0, 0),
@@ -1093,7 +1089,6 @@ export class OperateurDtwService {
         // رسم الأعمدة
         for (let colIndex = 0; colIndex < columnWidths.length; colIndex++) {
           const colWidth = columnWidths[colIndex];
-
           const text =
             rowIndex === 0
               ? header[header.length - 1 - colIndex]
@@ -1112,7 +1107,7 @@ export class OperateurDtwService {
 
           const textX =
             x + colWidth - font.widthOfTextAtSize(safeText, fontSize) - 5;
-          const textY = y - rowHeight / 2 + fontSize / 2 - 2;
+          const textY = tableY - rowHeight / 2 + fontSize / 2 - 2;
 
           page.drawText(safeText, {
             x: textX,
@@ -1125,31 +1120,11 @@ export class OperateurDtwService {
           x += colWidth;
         }
 
-        // ملاحظات إضافية تحت كل صف
-        if (rowIndex > 0) {
-          const lineNumber = rows[rowIndex - 1][0];
-          const comment1 = `تاريخ نهاية صلاحية محظر المراقبة التقنية ${lineNumber}:`;
-          const comment2 = `تاريخ نهاية صلاحية التأمين ${lineNumber}:`;
-
-          page.drawText(comment1, {
-            x: 500,
-            y: y - rowHeight + 6,
-            size: fontSize - 1,
-            font,
-            color: rgb(0.2, 0.2, 0.2),
-          });
-          page.drawText(comment2, {
-            x: 130,
-            y: y - rowHeight + 6,
-            size: fontSize - 1,
-            font,
-            color: rgb(0.2, 0.2, 0.2),
-          });
-        }
+        tableY -= rowHeight;
+        rowIndex++;
       }
 
-      // إرجاع آخر Y بعد الجدول
-      return tableY - totalRows * rowHeight - 50; // + مسافة بين الجداول
+      return { page, y: tableY - 30 };
     };
 
     // ---------------------------
@@ -1159,8 +1134,8 @@ export class OperateurDtwService {
     // البداية من أعلى الصفحة
     let nextY = height - 450;
 
-    // جدول 1
-    nextY = drawTable(
+    ({ page, y: nextY } = drawTable(
+      pdfDoc,
       page,
       'الخطوط المستثناة',
       startX,
@@ -1171,12 +1146,12 @@ export class OperateurDtwService {
       cairoSemiBoldFont,
       12,
       columnWidths,
-    );
+    ));
 
-    // جدول 2 (نفس البيانات كمثال، تقدر تغير rows)
-    nextY = drawTable(
+    ({ page, y: nextY } = drawTable(
+      pdfDoc,
       page,
-      "",
+      '',
       startX,
       nextY,
       48,
@@ -1185,13 +1160,16 @@ export class OperateurDtwService {
       cairoSemiBoldFont,
       12,
       columnWidths,
-    );
-
+    ));
 
     // Save and send response
     const pdfBytes = await pdfDoc.save();
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename=operateur.pdf');
     res.send(Buffer.from(pdfBytes));
+  }
+
+  async findOperateurByNumClient (num_client:number){
+    return await this.OperateurModel.find({num_docier_client:num_client})
   }
 }
