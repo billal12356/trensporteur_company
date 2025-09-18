@@ -16,11 +16,6 @@ import { Buffer } from 'buffer';
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { Workbook } from 'exceljs';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { ruralCoordinates } from 'src/constants/rural-coordinates';
-const fontkit = require('@pdf-lib/fontkit');
-import { getVisualString } from 'bidi-js';
-const arabicReshaper = require('arabic-reshaper');
 import * as ExcelJS from 'exceljs';
 import { VihiclesQueryBuilder } from 'src/common/builder/VihiclesQueryBuilder';
 
@@ -35,6 +30,7 @@ export class VehiclesService {
   async create(createVehicleDto: CreateVihicleDto) {
     const { num_docier_client, fullName_arabe, fullName_francais } =
       createVehicleDto;
+    console.log('createVehicleDto ==>', createVehicleDto);
     const operateurNum = await this.operateurService.findByVihicilesandChauffer(
       { num_docier_client },
     );
@@ -495,7 +491,6 @@ export class VehiclesService {
   async exportToExcel(lineCode: string): Promise<Buffer> {
     const vehicles = await this.searchByLineCode(lineCode);
 
-
     function formatDate(
       dateInput: Date | string | number,
       reverse: boolean = false,
@@ -704,5 +699,502 @@ export class VehiclesService {
     });
 
     return Buffer.from(await workbook.xlsx.writeBuffer());
+  }
+
+  async exportUrbanTransportExcel(): Promise<Buffer> {
+    const data = await this.VihicileModel.find({
+      font_type: 'حضري',
+    }).lean();
+
+    // دالة تجيب عدد المتعاملين
+    const operateur = async (num_client: number) => {
+      const op =
+        await this.operateurService.findOperateurByNumClient(num_client);
+      return op.length;
+    };
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('النقل الحضري');
+
+    // 🟦 1) إضافة العنوان مع "padding" عبر ارتفاع الصف
+    worksheet.mergeCells('A1:N2'); // ياخذ صفّين = padding عمودي
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'مخطط النقل الحضري بخطوط الحضرية';
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' }; // في الوسط
+    titleCell.font = {
+      name: 'Cairo',
+      size: 24,
+      bold: true,
+      color: { argb: 'FFFFFFFF' }, // أبيض
+    };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '4472C4' }, // أزرق غامق
+    };
+    worksheet.getRow(1).height = 40;
+
+    // 🟦 2) صف رؤوس الأعمدة (صف 3 الآن)
+    const headerRow = worksheet.addRow([
+      'ترخيص وزاري',
+      'اقتراح اللجنة',
+      'الحد الاقصى للخط + (الترخيص + التعريض + الحالي)',
+      'عدد المركبات حاليا',
+      'عدد المتعاملين حاليا',
+      'عدد المركبات القديمة',
+      'النقطة 5',
+      'النقطة 4',
+      'النقطة 3',
+      'النقطة 2',
+      'النقطة 1',
+      'نقطة الوصول',
+      'نقطة الإنطلاق',
+      'رمز الخط',
+    ]);
+
+    // 🟦 3) AutoFit أعمدة + تنسيق الهيدر
+    headerRow.eachCell((cell, colNumber) => {
+      cell.alignment = {
+        vertical: 'middle',
+        horizontal: 'center',
+        wrapText: true,
+      };
+      cell.font = { name: 'Cairo', size: 13, bold: true };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'D9E1F2' },
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+
+      // عرض الأعمدة بناءً على طول الكلمة (min 15, max 40)
+      const headerText = cell.value?.toString() || '';
+      worksheet.getColumn(colNumber).width = Math.min(
+        Math.max(headerText.length + 5, 15),
+        40,
+      );
+    });
+    headerRow.height = 30;
+
+    // 🟦 4) إدخال البيانات
+    for (const item of data) {
+      const opCount = await operateur(item.num_docier_client);
+
+      worksheet.addRow({
+        ministerial_license: '',
+        committee_proposal: item.note_chef_departement || '',
+        max_limit: '',
+        vehicles_now: '',
+        operateurCount: opCount,
+        old_vehicles: '',
+        point_Traffic5: item.point_Traffic5,
+        point_Traffic4: item.point_Traffic4,
+        point_Traffic3: item.point_Traffic3,
+        point_Traffic2: item.point_Traffic2,
+        point_Traffic1: item.point_Traffic1,
+        point_arrive: item.point_arrive,
+        point_depart: item.point_depart,
+        font_symbol: item.font_symbol,
+      });
+    }
+
+    // 🟦 5) تنسيق الصفوف (وسط + حدود)
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber > 2) {
+        // بعد العنوان والهيدر
+        row.height = 20;
+        row.eachCell((cell) => {
+          cell.alignment = { vertical: 'middle', horizontal: 'center' };
+          cell.font = { name: 'Cairo', size: 11 };
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' },
+          };
+        });
+      }
+    });
+
+    // 🟦 6) إرجاع الملف
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+  }
+
+  async exportBaladyExcel(): Promise<Buffer> {
+    const vehicles = await this.VihicileModel.find({
+      font_type: 'بين البلديات',
+    }).exec();
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Vehicles');
+
+    // --- Header title (merged row) ---
+    worksheet.mergeCells('A1:L1'); // عندك 12 عمود في الهيدر
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'مخطط النقل الخاص بالخطوط البلدية';
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    titleCell.font = {
+      name: 'Cairo',
+      size: 24,
+      bold: true,
+      color: { argb: 'FFFFFFFF' },
+    };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '4472C4' },
+    };
+    worksheet.getRow(1).height = 40;
+
+    // --- Column headers ---
+    const headerRow = worksheet.addRow([
+      'راي المدير',
+      'اتفاق اللجنة',
+      'عدد الرخص التي تم تعويضها',
+      'العدد المتفق عليه باخر محضر',
+      'ملاحظات رئيس المصلحة',
+      'عدد المركبات سابقا',
+      'عدد المركبات في الوقت الحالي',
+      'عدد المتعاملين في الوقت الحالي',
+      'الوصول',
+      'الانطلاق',
+      'رمز الخط',
+      'الرقم',
+    ]);
+
+    // --- Style headers ---
+    headerRow.eachCell((cell, colNumber) => {
+      cell.alignment = {
+        vertical: 'middle',
+        horizontal: 'center',
+        wrapText: true,
+      };
+      cell.font = { name: 'Cairo', size: 13, bold: true };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'D9E1F2' },
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+
+      // عرض الأعمدة بناءً على طول الكلمة (min 15, max 40)
+      const headerText = cell.value?.toString() || '';
+      worksheet.getColumn(colNumber).width = Math.min(
+        Math.max(headerText.length + 5, 15),
+        40,
+      );
+    });
+
+    headerRow.height = 30;
+
+    // --- Data rows ---
+    let idx = 0;
+    for (const v of vehicles) {
+      const op = await this.operateurService.findOperateurByNumClient(
+        v.num_docier_client,
+      );
+      const opCount = op?.length ?? 0;
+
+      const row = worksheet.addRow([
+        '', // راي المدير
+        '', // اتفاق اللجنة
+        '', // عدد الرخص التي تم تعويضها
+        '', // العدد المتفق عليه باخر محضر
+        v.note_chef_departement ?? '', // ملاحظات رئيس المصلحة
+        '', // عدد المركبات سابقا
+        '', // عدد المركبات حاليا
+        opCount, // عدد المتعاملين حاليا
+        v.point_arrive ?? '', // الوصول
+        v.point_depart ?? '', // الانطلاق
+        v.font_type ?? '', // رمز الخط
+        idx + 1, // الرقم
+      ]);
+
+      // Style rows + alternate colors
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber > 2) {
+          // بعد العنوان والهيدر
+          row.height = 20;
+          row.eachCell((cell) => {
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            cell.font = { name: 'Cairo', size: 11 };
+            cell.border = {
+              top: { style: 'thin' },
+              left: { style: 'thin' },
+              bottom: { style: 'thin' },
+              right: { style: 'thin' },
+            };
+          });
+        }
+      });
+
+      idx++;
+    }
+
+    // --- Auto column widths ---
+    worksheet.columns.forEach((col) => {
+      col.width = 20;
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+  }
+
+  async exportRifiExcel(): Promise<Buffer> {
+    const vehicles = await this.VihicileModel.find({
+      font_type: 'ريفي',
+    }).exec();
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Vehicles');
+
+    // --- Header title (merged row) ---
+    worksheet.mergeCells('A1:L1'); // عندك 12 عمود في الهيدر
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'مخطط النقل الخاص بالخطوط الريفية';
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    titleCell.font = {
+      name: 'Cairo',
+      size: 24,
+      bold: true,
+      color: { argb: 'FFFFFFFF' },
+    };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '4472C4' },
+    };
+    worksheet.getRow(1).height = 40;
+
+    // --- Column headers ---
+    const headerRow = worksheet.addRow([
+      'راي المدير',
+      'راي اللجنة',
+      'ترخيص وزاري',
+      'الحد الاقصى للخط (الترخيص + التعريض + الحالي)',
+      'عدد المركبات حاليا',
+      'عدد المتعاملين حاليا ',
+      'عدد المركبات في قديما ',
+      'نقطة الوصول',
+      'نقطة الانطلاق',
+      'رمز الخط',
+      'الرقم',
+    ]);
+
+    // --- Style headers ---
+    headerRow.eachCell((cell, colNumber) => {
+      cell.alignment = {
+        vertical: 'middle',
+        horizontal: 'center',
+        wrapText: true,
+      };
+      cell.font = { name: 'Cairo', size: 13, bold: true };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'D9E1F2' },
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+
+      // عرض الأعمدة بناءً على طول الكلمة (min 15, max 40)
+      const headerText = cell.value?.toString() || '';
+      worksheet.getColumn(colNumber).width = Math.min(
+        Math.max(headerText.length + 5, 15),
+        40,
+      );
+    });
+    headerRow.height = 30;
+
+    // --- Data rows ---
+    let idx = 0;
+    for (const v of vehicles) {
+      const op = await this.operateurService.findOperateurByNumClient(
+        v.num_docier_client,
+      );
+      const opCount = op?.length ?? 0;
+
+      const row = worksheet.addRow([
+        '', // راي المدير
+        v.note_chef_departement ?? '', // ملاحظات رئيس المصلحة
+        '',
+        '',
+        '', // عدد المركبات سابقا
+        opCount, // عدد المتعاملين حاليا
+        '', // عدد المركبات حاليا
+        v.point_arrive ?? '', // الوصول
+        v.point_depart ?? '', // الانطلاق
+        v.font_type ?? '', // رمز الخط
+        idx + 1, // الرقم
+      ]);
+
+      // Style rows + alternate colors
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber > 2) {
+          // بعد العنوان والهيدر
+          row.height = 20;
+          row.eachCell((cell) => {
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            cell.font = { name: 'Cairo', size: 11 };
+            cell.border = {
+              top: { style: 'thin' },
+              left: { style: 'thin' },
+              bottom: { style: 'thin' },
+              right: { style: 'thin' },
+            };
+          });
+        }
+      });
+
+      idx++;
+    }
+
+    // --- Auto column widths ---
+    worksheet.columns.forEach((col) => {
+      col.width = 20;
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+  }
+
+  async exportExcelWilay(): Promise<Buffer> {
+    const vehicles = await this.VihicileModel.find({
+      font_type: 'بين الولايات',
+    }).exec();
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Vehicles');
+
+    // --- Header title (merged row) ---
+    worksheet.mergeCells('A1:M1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'مخطط النقل الخاص بالخطوط الولائية';
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    titleCell.font = {
+      name: 'Cairo',
+      size: 24,
+      bold: true,
+      color: { argb: 'FFFFFFFF' },
+    };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '4472C4' },
+    };
+    worksheet.getRow(1).height = 40;
+    // --- Column headers ---
+    const headerRow = worksheet.addRow([
+      'راي المدير',
+      'اتفاق اللجنة',
+      'عدد الرخص التي تم تعويضها',
+      'العدد المتفق عليه باخر محضر',
+      'ملاحظات رئيس المصلحة',
+      'العدد الاقصى حسب محضر الاجتماع',
+      'عدد المركبات سابقا',
+      'عدد المركبات في الوقت الحالي',
+      'عدد المتعاملين في الوقت الحالي',
+      'الوصول',
+      'الانطلاق',
+      'رمز الخط',
+      'الرقم',
+    ]);
+
+    // --- Style headers ---
+    headerRow.eachCell((cell, colNumber) => {
+      cell.alignment = {
+        vertical: 'middle',
+        horizontal: 'center',
+        wrapText: true,
+      };
+      cell.font = { name: 'Cairo', size: 13, bold: true };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'D9E1F2' },
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+
+      // عرض الأعمدة بناءً على طول الكلمة (min 15, max 40)
+      const headerText = cell.value?.toString() || '';
+      worksheet.getColumn(colNumber).width = Math.min(
+        Math.max(headerText.length + 5, 15),
+        40,
+      );
+    });
+    headerRow.height = 30;
+
+    // --- Data rows ---
+    let idx = 0;
+    for (const v of vehicles) {
+      const op = await this.operateurService.findOperateurByNumClient(
+        v.num_docier_client,
+      );
+      const opCount = op?.length ?? 0;
+
+      const row = worksheet.addRow([
+        '', // راي المدير
+        '', // اتفاق اللجنة
+        '', // عدد الرخص التي تم تعويضها
+        '', // العدد المتفق عليه باخر محضر
+        v.note_chef_departement ?? '', // ملاحظات رئيس المصلحة
+        '', // عدد المركبات سابقا
+        '', // عدد المركبات سابقا
+        '', // عدد المركبات حاليا
+        opCount, // عدد المتعاملين حاليا
+        v.point_arrive ?? '', // الوصول
+        v.point_depart ?? '', // الانطلاق
+        v.font_type ?? '', // رمز الخط
+        idx + 1, // الرقم
+      ]);
+
+      // Style rows + alternate colors
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber > 2) {
+          // بعد العنوان والهيدر
+          row.height = 20;
+          row.eachCell((cell) => {
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            cell.font = { name: 'Cairo', size: 11 };
+            cell.border = {
+              top: { style: 'thin' },
+              left: { style: 'thin' },
+              bottom: { style: 'thin' },
+              right: { style: 'thin' },
+            };
+          });
+        }
+      });
+
+      idx++;
+    }
+
+    // --- Auto column widths ---
+    worksheet.columns.forEach((col) => {
+      col.width = 20;
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
   }
 }
