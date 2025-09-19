@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res, NotFoundException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  Res,
+  NotFoundException,
+  HttpStatus,
+} from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
 import { CreateVihicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
@@ -10,14 +22,14 @@ import { ExportLineDto } from './dto/line.dto';
 
 @Controller('vehicles')
 export class VehiclesController {
-  constructor(private readonly vehiclesService: VehiclesService) { }
+  constructor(private readonly vehiclesService: VehiclesService) {}
 
   @Post('create')
   async create(@Body() createVehicleDto: CreateVihicleDto) {
     return await this.vehiclesService.create(createVehicleDto);
   }
 
-  @Get("find-all")
+  @Get('find-all')
   async findAll(@Query() query) {
     return await this.vehiclesService.findAll(query);
   }
@@ -28,7 +40,10 @@ export class VehiclesController {
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateVehicleDto: UpdateVehicleDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateVehicleDto: UpdateVehicleDto,
+  ) {
     return await this.vehiclesService.update(id, updateVehicleDto);
   }
 
@@ -38,7 +53,7 @@ export class VehiclesController {
   }
 
   @Get('export')
-  async exportExcel(@Res() res: Response, @Query('search') search: string) {
+  async s(@Res() res: Response, @Query('search') search: string) {
     const filePath = await this.vehiclesService.exportVihiculeToExcel(search);
     res.download(filePath, 'vihicules.xlsx', (err) => {
       if (err) {
@@ -48,13 +63,16 @@ export class VehiclesController {
     });
   }
 
-  @Get("export-stats")
+  @Get('export-stats')
   async exportStatsToExcel(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
-    const stats = await this.vehiclesService.getRegistrationStats(startDate, endDate);
+    const stats = await this.vehiclesService.getRegistrationStats(
+      startDate,
+      endDate,
+    );
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('إحصائيات المركبات');
@@ -68,42 +86,87 @@ export class VehiclesController {
 
     res.setHeader(
       'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename=registration_stats_${startDate}_to_${endDate}.xlsx`
+      `attachment; filename=registration_stats_${startDate}_to_${endDate}.xlsx`,
     );
 
     const buffer = await workbook.xlsx.writeBuffer();
     res.end(buffer);
   }
 
-
   @Post('import-vihicule')
   async createVihc() {
     // const filePath = path.join(process.cwd(), 'src', 'import-operateur', 'data.json');
 
-    // const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));    
+    // const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
     return await this.vehiclesService.importExcel(vihicules);
   }
 
-
-  @Post("export-line")
-  async exportLine(exportDto: ExportLineDto,@Query('search') search: string, @Res() res: Response) {
+  @Post('export-line')
+  async exportLine(
+    exportDto: ExportLineDto,
+    @Query('search') search: string,
+    @Res() res: Response,
+  ) {
     try {
-      const buffer = await this.vehiclesService.exportToExcel(search)
-      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-      res.setHeader("Content-Disposition", `attachment; filename=transport-line-${search}.xlsx`)
+      const buffer = await this.vehiclesService.exportToExcel(search);
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename=transport-line-${search}.xlsx`,
+      );
 
-      const result = res.end(buffer)
-      console.log(result)
+      const result = res.end(buffer);
+      console.log(result);
     } catch (error) {
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        message: "Error exporting data",
+        message: 'Error exporting data',
         error: error.message,
-      })
+      });
     }
   }
 
+  @Get('export-excel')
+  async exportExcels(@Res() res: Response) {
+    const buffer = await this.vehiclesService.exportUrbanTransportExcel();
+
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename=transporter_Hadari.xlsx',
+    );
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+
+    res.end(buffer);
+  }
+
+  @Get('exportBalady')
+  async exportExcel(@Res() res: Response) {
+    const buffer = await this.vehiclesService.exportBaladyExcel();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=balady.xlsx');
+    res.send(buffer);
+  }
+  @Get('exportRifi')
+  async exportExcelRifi(@Res() res: Response) {
+    const buffer = await this.vehiclesService.exportRifiExcel();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=transporter_Rifi.xlsx');
+    res.send(buffer);
+  }
+  @Get('exportWilay')
+  async exportExcelWilay(@Res() res: Response) {
+    const buffer = await this.vehiclesService.exportExcelWilay();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=transporter_Wilay.xlsx');
+    res.send(buffer);
+  }
 }
