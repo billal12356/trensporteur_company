@@ -64,5 +64,17 @@ export class StateController {
   }
 
 
+  @Get('statistique-annee')
+  async statistiqueAnnee(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const start = startDate ? new Date(startDate) : undefined;
+    const end = endDate ? new Date(endDate) : undefined;
+    return await this.stateService.statistiqueAnnee(start, end);
+  }
+
+
+
 
 }

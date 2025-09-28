@@ -123,6 +123,7 @@ interface VihiclesState {
     error: string | null;
     fileURL: string | null,
     successMessage: null,
+    statistiqueAnnee: any;
 }
 
 // Initial State
@@ -139,6 +140,7 @@ const initialState: VihiclesState = {
     error: null,
     fileURL: null as string | null,
     successMessage: null,
+    statistiqueAnnee: {},
 };
 
 export const downloadRegistrationStats = createAsyncThunk<
@@ -378,6 +380,140 @@ export const ExportLines = createAsyncThunk<
 });
 
 
+// ================== Download Balady ==================
+export const downloadBaladyExcel = createAsyncThunk<
+    void,
+    void,
+    { rejectValue: string }
+>("vehicles/downloadBaladyExcel", async (_, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(
+            `${API_URL}/api/v1/vehicles/exportBalady`,
+            { responseType: "blob", withCredentials: true }
+        );
+
+        const blob = new Blob([response.data], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "balady.xlsx");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (error) {
+        return rejectWithValue("فشل في تحميل ملف البلدي");
+    }
+});
+
+// ================== Download Rifi ==================
+export const downloadRifiExcel = createAsyncThunk<
+    void,
+    void,
+    { rejectValue: string }
+>("vehicles/downloadRifiExcel", async (_, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(
+            `${API_URL}/api/v1/vehicles/exportRifi`,
+            { responseType: "blob", withCredentials: true }
+        );
+
+        const blob = new Blob([response.data], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "transporter_Rifi.xlsx");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (error) {
+        return rejectWithValue("فشل في تحميل ملف الريفي");
+    }
+});
+
+// ================== Download Wilay ==================
+export const downloadWilayExcel = createAsyncThunk<
+    void,
+    void,
+    { rejectValue: string }
+>("vehicles/downloadWilayExcel", async (_, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(
+            `${API_URL}/api/v1/vehicles/exportWilay`,
+            { responseType: "blob", withCredentials: true }
+        );
+
+        const blob = new Blob([response.data], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "transporter_Wilay.xlsx");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (error) {
+        return rejectWithValue("فشل في تحميل ملف الولائي");
+    }
+});
+// ================== Download hadari ==================
+export const downloadHadariExcel = createAsyncThunk<
+    void,
+    void,
+    { rejectValue: string }
+>("vehicles/downloadHadariExcel", async (_, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(
+            `${API_URL}/api/v1/vehicles/exportHadari`,
+            { responseType: "blob", withCredentials: true }
+        );
+
+        const blob = new Blob([response.data], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "transporter_Hadari.xlsx");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (error) {
+        return rejectWithValue("فشل في تحميل ملف الولائي");
+    }
+});
+
+
+export const fetchStatistiqueAnnee = createAsyncThunk(
+    "stats/fetchStatistiqueAnnee",
+    async (
+        { startDate, endDate }: { startDate?: string; endDate?: string },
+        { rejectWithValue }
+    ) => {
+        try {
+            let url = `${API_URL}/api/v1/state/statistique-annee`;
+            if (startDate && endDate) {
+                url += `?startDate=${startDate}&endDate=${endDate}`;
+            }
+            const res = await axios.get(url);
+            return res.data; // راح يرجع { Operateur, Vihicle }
+        } catch (err: any) {
+            return rejectWithValue(
+                err.response?.data?.message || "Failed to fetch statistique annee"
+            );
+        }
+    }
+);
+
+
 
 // Create Slice
 const operateurSlice = createSlice({
@@ -541,6 +677,83 @@ const operateurSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload as string;
             });
+        builder
+            .addCase(downloadBaladyExcel.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(downloadBaladyExcel.fulfilled, (state) => {
+                state.loading = false;
+                toast.success("تم تحميل ملف البلدي بنجاح");
+            })
+            .addCase(downloadBaladyExcel.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+                toast.error(action.payload as string);
+            });
+
+        builder
+            .addCase(downloadRifiExcel.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(downloadRifiExcel.fulfilled, (state) => {
+                state.loading = false;
+                toast.success("تم تحميل ملف الريفي بنجاح");
+            })
+            .addCase(downloadRifiExcel.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+                toast.error(action.payload as string);
+            });
+
+        builder
+            .addCase(downloadWilayExcel.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(downloadWilayExcel.fulfilled, (state) => {
+                state.loading = false;
+                toast.success("تم تحميل ملف الولائي بنجاح");
+            })
+            .addCase(downloadWilayExcel.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+                toast.error(action.payload as string);
+            });
+        builder
+            .addCase(downloadHadariExcel.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(downloadHadariExcel.fulfilled, (state) => {
+                state.loading = false;
+                toast.success("تم تحميل ملف الحضري بنجاح");
+            })
+            .addCase(downloadHadariExcel.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+                toast.error(action.payload as string);
+            });
+
+
+        builder
+            .addCase(fetchStatistiqueAnnee.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchStatistiqueAnnee.fulfilled, (state, action) => {
+                state.loading = false;
+                // هنا نحفظ البيانات الراجعة من NestJS
+                // مثلا:
+                state.statistiqueAnnee = action.payload
+            })
+            .addCase(fetchStatistiqueAnnee.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+
+
     },
 });
 

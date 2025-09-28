@@ -1,9 +1,11 @@
 import MainContainer from "@/components/MainContainer";
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { TransportStatsTable } from "./transport-stats-table";
 
 const TransportTable: React.FC = () => {
   const tableRef = useRef<HTMLDivElement>(null);
+  const [startDate, setStartDate] = useState("2025-01-01");
+  const [endDate, setEndDate] = useState("2025-12-31");
 
   const handlePrint = () => {
     const printContents = tableRef.current?.innerHTML;
@@ -39,18 +41,39 @@ const TransportTable: React.FC = () => {
           Statistiques de Transport de Voyageurs
         </h1>
 
-        <div className="mb-4">
+        <div className="mb-4 flex justify-between">
           <button
             onClick={handlePrint}
             className="bg-blue-600 hover:bg-blue-700 cursor-pointer text-white px-4 py-2 rounded text-sm"
           >
             طباعة
           </button>
+          <div className="flex items-center gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">📅 Start Date</label>
+              <input
+                type="date"
+                className="border rounded p-2 text-sm"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">📅 End Date</label>
+              <input
+                type="date"
+                className="border rounded p-2 text-sm"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
 
         {/* ✅ Attach ref here so we capture the table for printing */}
-        <div ref={tableRef}>
-          <TransportStatsTable />
+        <div ref={tableRef} >
+          <TransportStatsTable startDate={startDate} endDate={endDate} />
         </div>
       </div>
     </MainContainer>

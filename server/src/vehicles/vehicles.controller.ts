@@ -132,7 +132,7 @@ export class VehiclesController {
     }
   }
 
-  @Get('export-excel')
+  @Get('exportHadari')
   async exportExcels(@Res() res: Response) {
     const buffer = await this.vehiclesService.exportUrbanTransportExcel();
 
