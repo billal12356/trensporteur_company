@@ -1,67 +1,108 @@
-interface TransportData {
-  category: string;
-  categoryArabic?: string;
-  subcategory?: string;
-  subcategoryArabic?: string;
-  q4_2025: {
-    operators: number;
-    vehicles: number;
-    capacity: number;
-  };
-  isTotal?: boolean;
-  isSubcategory?: boolean;
+import { fetchAnneeStats } from "@/redux/slice/stateSlice";
+import { AppDispatch, RootState } from "@/redux/store";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
+interface Props {
+  startDate: string;
+  endDate: string;
 }
 
-const transportData: TransportData[] = [
-  {
-    category: "Transport public de voyageurs",
-    categoryArabic: "النقل العمومي للمسافرين",
-    q4_2025: { operators: 1, vehicles: 30, capacity: 3000 },
-    isSubcategory: true,
-  },
-  {
-    category: "",
-    subcategory: "Public",
-    subcategoryArabic: "عمومي",
-    q4_2025: { operators: 42, vehicles: 210, capacity: 7177 },
-    isSubcategory: true,
-  },
-  {
-    category: "",
-    subcategory: "Privé",
-    subcategoryArabic: "خاص",
-    q4_2025: { operators: 744, vehicles: 1030, capacity: 25662 },
-    isSubcategory: true,
-  },
-  {
-    category: "Transport propre compte",
-    categoryArabic: "النقل لحساب خاص",
-    q4_2025: { operators: 64, vehicles: 251, capacity: 7580 },
-  },
-  {
-    category: "",
-    subcategory: "Public",
-    subcategoryArabic: "عمومي",
-    q4_2025: { operators: 42, vehicles: 210, capacity: 7177 },
-    isSubcategory: true,
-  },
-  {
-    category: "",
-    subcategory: "Privé",
-    subcategoryArabic: "خاص",
-    q4_2025: { operators: 22, vehicles: 41, capacity: 403 },
-    isSubcategory: true,
-  },
-  {
-    category: "TOTAL",
-    q4_2025: { operators: 1809, vehicles: 1311, capacity: 36242 },
-    isTotal: true,
-  },
-];
+export function TransportStatsTable({ startDate, endDate }: Props) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { anneeStats, loading, error } = useSelector((state: RootState) => state.stats);
 
-export function TransportStatsTable() {
+
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      dispatch(fetchAnneeStats({ startDate, endDate }));
+    }
+  }, [dispatch, startDate, endDate]);
+
+  if (loading) return <p>⏳ تحميل...</p>;
+  if (error) return <p className="text-red-500">❌ {error}</p>;
+  if (!anneeStats) return <p>لا توجد بيانات</p>;
+
+  // 🔹 بناء Data من الـ API
+  const transportData = [
+    {
+      category: "Transport public de voyageurs",
+      categoryArabic: "النقل العمومي للمسافرين",
+      q4_2025: {
+        operators: anneeStats.Operateur.transport_public_voyageurs.total,
+        vehicles: anneeStats.Vihicle.transport_public_voyageurs.total,
+        capacity: anneeStats.CAPACITÉ.transport_public_voyageurs.total,
+      },
+    },
+    {
+      category: "",
+      subcategory: "Public",
+      subcategoryArabic: "عمومي",
+      q4_2025: {
+        operators: anneeStats.Operateur.transport_public_voyageurs.public,
+        vehicles: anneeStats.Vihicle.transport_public_voyageurs.public,
+        capacity: anneeStats.CAPACITÉ.transport_public_voyageurs.public,
+      },
+      isSubcategory: true,
+    },
+    {
+      category: "",
+      subcategory: "Privé",
+      subcategoryArabic: "خاص",
+      q4_2025: {
+        operators: anneeStats.Operateur.transport_public_voyageurs.prive,
+        vehicles: anneeStats.Vihicle.transport_public_voyageurs.prive,
+        capacity: anneeStats.CAPACITÉ.transport_public_voyageurs.prive,
+      },
+      isSubcategory: true,
+    },
+    {
+      category: "Transport propre compte",
+      categoryArabic: "النقل لحساب خاص",
+      q4_2025: {
+        operators: anneeStats.Operateur.transport_propre_compte.total,
+        vehicles: anneeStats.Vihicle.transport_propre_compte.total,
+        capacity: anneeStats.CAPACITÉ.transport_propre_compte.total,
+      },
+    },
+    {
+      category: "",
+      subcategory: "Public",
+      subcategoryArabic: "عمومي",
+      q4_2025: {
+        operators: anneeStats.Operateur.transport_propre_compte.pubC,
+        vehicles: anneeStats.Vihicle.transport_propre_compte.pubC,
+        capacity: anneeStats.CAPACITÉ.transport_propre_compte.pubC,
+      },
+      isSubcategory: true,
+    },
+    {
+      category: "",
+      subcategory: "Privé",
+      subcategoryArabic: "خاص",
+      q4_2025: {
+        operators: anneeStats.Operateur.transport_propre_compte.PrvC,
+        vehicles: anneeStats.Vihicle.transport_propre_compte.PrvC,
+        capacity: anneeStats.CAPACITÉ.transport_propre_compte.PrvC,
+      },
+      isSubcategory: true,
+    },
+    {
+      category: "TOTAL",
+      q4_2025: {
+        operators: anneeStats.Operateur.total,
+        vehicles: anneeStats.Vihicle.totalVichecle,
+        capacity: anneeStats.CAPACITÉ.totalNP,
+      },
+      isTotal: true,
+    },
+  ];
+
   return (
     <div className="w-full overflow-x-auto bg-white shadow-lg rounded-lg border border-gray-300">
+
+
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="bg-gray-100">
@@ -78,7 +119,7 @@ export function TransportStatsTable() {
               className="border border-gray-400 p-2 text-center font-semibold text-gray-800 bg-gray-200"
               colSpan={3}
             >
-              4 er trimestre 2025
+              4ème trimestre 2025
             </th>
           </tr>
           <tr className="bg-gray-50">
@@ -97,28 +138,22 @@ export function TransportStatsTable() {
           {transportData.map((row, index) => (
             <tr
               key={index}
-              className={`
-                ${
-                  row.isTotal
-                    ? "bg-gray-200 font-semibold"
-                    : "bg-white hover:bg-gray-50"
-                }
-                ${index % 2 === 0 && !row.isTotal ? "bg-gray-25" : ""}
-              `}
+              className={`${row.isTotal
+                ? "bg-gray-200 font-semibold"
+                : "bg-white hover:bg-gray-50"
+                } ${index % 2 === 0 && !row.isTotal ? "bg-gray-25" : ""}`}
             >
               <td
-                className={`border border-gray-400 p-3 ${
-                  row.isSubcategory ? "pl-8" : ""
-                }`}
+                className={`border border-gray-400 p-3 ${row.isSubcategory ? "pl-8" : ""
+                  }`}
               >
                 <div className="flex flex-col">
                   {row.category && (
                     <span
-                      className={`${
-                        row.isTotal
-                          ? "font-bold text-gray-900"
-                          : "font-medium text-gray-800"
-                      }`}
+                      className={`${row.isTotal
+                        ? "font-bold text-gray-900"
+                        : "font-medium text-gray-800"
+                        }`}
                     >
                       {row.category}
                     </span>
@@ -151,7 +186,6 @@ export function TransportStatsTable() {
               <td className="border border-gray-400 p-2 text-center font-mono">
                 {row.q4_2025.capacity.toLocaleString()}
               </td>
-              
             </tr>
           ))}
         </tbody>

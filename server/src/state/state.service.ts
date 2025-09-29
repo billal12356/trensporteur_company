@@ -752,4 +752,157 @@ export class StateService {
     ]);
   }
 
+
+
+  async statistiqueAnnee(startDate: Date, endDate: Date) {
+    let Operateur = {};
+    let Vihicle = {};
+    let CAPACITÉ = {};
+
+    // نجيب المركبات فقط بين startDate و endDate
+    const vehicles = await this.vehiculeModel.find({
+      createdAt: {
+        $gte: startDate,
+        $lte: endDate,
+      },
+    });
+
+    // نربطهم مع الـ opérateur
+    const results = await Promise.all(
+      vehicles.map(async (v) => {
+        const op = await this.operateurModel.findOne({
+          num_docier_client: v.num_docier_client,
+        });
+        return op ? v : null;
+      })
+    );
+
+    const filtered = results.filter((v) => v !== null);
+
+    /** ------------ 1. Operateur (عدد المتعاملين) ------------- **/
+    const tpv = filtered.filter((v) =>
+      ["بين البلديات", "بين الولايات", "حضري", "ريفي"].includes(v.font_type)
+    );
+
+    const publicCount = tpv.filter((v) => v.status_activite === "PUBLICE").length;
+    const priveCount = tpv.filter((v) => v.status_activite === "PRIVE").length;
+
+    const tpc = filtered.filter((v) =>
+      ["مدرسي", "نقل العمال"].includes(v.font_type)
+    );
+
+    const cPub = tpc.filter((c) => c.status_activite === "PUBLICE").length;
+    const cPrv = tpc.filter((c) => c.status_activite === "PRIVE").length;
+
+    const total = tpv.length + tpc.length;
+
+    Operateur = {
+      transport_public_voyageurs: {
+        total: tpv.length,
+        public: publicCount,
+        prive: priveCount,
+      },
+      transport_propre_compte: {
+        total: tpc.length,
+        pubC: cPub,
+        PrvC: cPrv,
+      },
+      total,
+    };
+
+    /** ------------ 2. Vehicle (عدد المركبات) ------------- **/
+    const tpvVichecle = vehicles.filter((v) =>
+      ["بين البلديات", "بين الولايات", "حضري", "ريفي"].includes(v.font_type)
+    );
+
+    const publicCounVichecle = tpvVichecle.filter(
+      (v) => v.status_activite === "PUBLICE"
+    ).length;
+    const priveCountVichecle = tpvVichecle.filter(
+      (v) => v.status_activite === "PRIVE"
+    ).length;
+
+    const tpcVichecle = vehicles.filter((v) =>
+      ["مدرسي", "نقل العمال"].includes(v.font_type)
+    );
+
+    const cPubVichecle = tpcVichecle.filter(
+      (c) => c.status_activite === "PUBLICE"
+    ).length;
+    const cPrvVichecle = tpcVichecle.filter(
+      (c) => c.status_activite === "PRIVE"
+    ).length;
+
+    const totalVichecle = tpcVichecle.length + tpvVichecle.length;
+
+    Vihicle = {
+      transport_public_voyageurs: {
+        total: tpvVichecle.length,
+        public: publicCounVichecle,
+        prive: priveCountVichecle,
+      },
+      transport_propre_compte: {
+        total: tpcVichecle.length,
+        pubC: cPubVichecle,
+        PrvC: cPrvVichecle,
+      },
+      totalVichecle,
+    };
+
+    /** ------------ 3. CAPACITÉ (مجموع المقاعد) ------------- **/
+    const tpvNP = vehicles.filter((v) =>
+      ["بين البلديات", "بين الولايات", "حضري", "ريفي"].includes(v.font_type)
+    );
+
+    const publicCountNP = tpvNP
+      .filter((v) => v.status_activite === "PUBLICE" && v.Number_of_seats)
+      .reduce((sum, v) => sum + v.Number_of_seats, 0);
+
+    const priveCountNP = tpvNP
+      .filter((v) => v.status_activite === "PRIVE" && v.Number_of_seats)
+      .reduce((sum, v) => sum + v.Number_of_seats, 0);
+
+    const tpcNP = vehicles.filter((v) =>
+      ["مدرسي", "نقل العمال"].includes(v.font_type)
+    );
+
+    const cPubNP = tpcNP
+      .filter((c) => c.status_activite === "PUBLICE" && c.Number_of_seats)
+      .reduce((sum, v) => sum + v.Number_of_seats, 0);
+
+    const cPrvNP = tpcNP
+      .filter((c) => c.status_activite === "PRIVE" && c.Number_of_seats)
+      .reduce((sum, v) => sum + v.Number_of_seats, 0);
+
+    const totalNP = publicCountNP + priveCountNP + cPubNP + cPrvNP;
+
+    CAPACITÉ = {
+      transport_public_voyageurs: {
+        total: tpvNP.reduce((sum, v) => sum + (v.Number_of_seats || 0), 0),
+        public: publicCountNP,
+        prive: priveCountNP,
+      },
+      transport_propre_compte: {
+        total: tpcNP.reduce((sum, v) => sum + (v.Number_of_seats || 0), 0),
+        pubC: cPubNP,
+        PrvC: cPrvNP,
+      },
+      totalNP,
+    };
+
+    /** ------------ 4. Return ------------- **/
+    return {
+      Operateur,
+      Vihicle,
+      CAPACITÉ,
+    };
+  }
+
+
+
+
+
+
+
+
 }

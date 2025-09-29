@@ -28,26 +28,38 @@ export class VehiclesService {
   ) {}
 
   async create(createVehicleDto: CreateVihicleDto) {
-    const { num_docier_client, fullName_arabe, fullName_francais } =
-      createVehicleDto;
-    console.log('createVehicleDto ==>', createVehicleDto);
-    const operateurNum = await this.operateurService.findByVihicilesandChauffer(
-      { num_docier_client },
-    );
+    const { num_docier_client, fullName_arabe, fullName_francais, num_bus_registration } = createVehicleDto
+    const operateurNum = await this.operateurService.findByVihicilesandChauffer({ num_docier_client })
+    const MatriculeVihicule = await this.VihicileModel.findOne({ num_bus_registration })
 
-    console.log('ope', operateurNum);
+    
 
+    const fulNameWhenMatriculeExist = MatriculeVihicule.fullName_arabe;
+    const MatriculeWhenMatriculeExist = MatriculeVihicule.fullName_arabe;
+    const TypeWhenMatriculeExist = MatriculeVihicule.font_type;
     if (!operateurNum) {
       throw new NotFoundException(
         new ResponseBuilder()
           .setStatus(404)
-          .setMessage(
-            `لم يتم العثور على ملف المتعامل  بهذا الرقم ${num_docier_client}`,
-          )
+          .setMessage(`لم يتم العثور على ملف المتعامل  بهذا الرقم ${num_docier_client}`)
           .setErrors({ _id: 'Operator not found' })
           .build(),
       );
     }
+
+    let lastReturn = []
+    lastReturn.push({ fulNameWhenMatriculeExist, MatriculeWhenMatriculeExist, TypeWhenMatriculeExist })
+    if (MatriculeVihicule) {
+      throw new NotFoundException(
+        new ResponseBuilder()
+          .setStatus(404)
+          .setMessage('المركبة مسجلة من قبل')
+          .setErrors('المركبة مسجلة من قبل')
+          .setData(lastReturn)
+          .build(),
+      );
+    }
+
 
     if (operateurNum.fullName_arabe !== fullName_arabe) {
       throw new NotFoundException(
@@ -703,7 +715,7 @@ export class VehiclesService {
 
   async exportUrbanTransportExcel(): Promise<Buffer> {
     const data = await this.VihicileModel.find({
-      font_type: 'حضري',
+      font_type: 'حضري او شبه حضري',
     }).lean();
 
     // دالة تجيب عدد المتعاملين
@@ -831,6 +843,8 @@ export class VehiclesService {
       font_type: 'بين البلديات',
     }).exec();
 
+    console.log("vehicles ==> " , vehicles)
+
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Vehicles');
 
@@ -955,6 +969,7 @@ export class VehiclesService {
     const vehicles = await this.VihicileModel.find({
       font_type: 'ريفي',
     }).exec();
+    
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Vehicles');

@@ -15,6 +15,13 @@ interface TransportStats {
   totalTrajets: number;
 }
 
+interface AnneeStats {
+  Operateur: any;
+  Vihicle: any;
+  CAPACITÉ: any;
+}
+
+
 interface StatsState {
   data: {
     operateurs: TimeStats;
@@ -26,6 +33,7 @@ interface StatsState {
   rural: TransportStats | null;
   urbain: TransportStats | null;
   scolaire: TransportStats | null;
+  anneeStats: AnneeStats | null;
   loading: boolean;
   error: string | null;
 }
@@ -41,6 +49,7 @@ const initialState: StatsState = {
   rural: null,
   urbain: null,
   scolaire: null,
+  anneeStats: null,
   loading: false,
   error: null,
 };
@@ -51,7 +60,7 @@ export const fetchAllStats = createAsyncThunk(
     try {
       const res = await axios.get(`${API_URL}/api/v1/state/all`);
       console.log(res);
-      
+
       return res.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch stats");
@@ -76,7 +85,7 @@ export const fetchInterWilayaStats = createAsyncThunk(
     let url = `${API_URL}/api/v1/state/statsInterWilaya`;
     if (startDate && endDate) url += `?startDate=${startDate}&endDate=${endDate}`;
     const response = await axios.get(url);
-        console.log(response)
+    console.log(response)
     return response.data[0];
   }
 );
@@ -108,6 +117,18 @@ export const fetchScolaireStats = createAsyncThunk(
     if (startDate && endDate) url += `?startDate=${startDate}&endDate=${endDate}`;
     const response = await axios.get(url);
     return response.data[0];
+  }
+);
+
+export const fetchAnneeStats = createAsyncThunk(
+  'stats/fetchAnneeStats',
+  async ({ startDate, endDate }: { startDate?: string; endDate?: string }) => {
+    let url = `${API_URL}/api/v1/state/statistique-annee`;
+    if (startDate && endDate) {
+      url += `?startDate=${startDate}&endDate=${endDate}`;
+    }
+    const response = await axios.get(url);
+    return response.data; // { Operateur, Vihicle, CAPACITÉ }
   }
 );
 
@@ -199,6 +220,20 @@ const statsSlice = createSlice({
       .addCase(fetchScolaireStats.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Error loading Scolaire stats';
+      })
+
+      // annee 
+      .addCase(fetchAnneeStats.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAnneeStats.fulfilled, (state, action) => {
+        state.loading = false;
+        state.anneeStats = action.payload;
+      })
+      .addCase(fetchAnneeStats.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Error loading annual stats';
       });
   },
 });
