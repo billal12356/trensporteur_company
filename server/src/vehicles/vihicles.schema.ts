@@ -241,6 +241,8 @@ export class Vihicles {
     @Prop({ type: String })
     path: string;
 
+    @Prop({type:Number})
+    num_up:number
 
 }
 

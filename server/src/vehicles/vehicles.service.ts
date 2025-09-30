@@ -28,11 +28,18 @@ export class VehiclesService {
   ) {}
 
   async create(createVehicleDto: CreateVihicleDto) {
-    const { num_docier_client, fullName_arabe, fullName_francais, num_bus_registration } = createVehicleDto
-    const operateurNum = await this.operateurService.findByVihicilesandChauffer({ num_docier_client })
-    const MatriculeVihicule = await this.VihicileModel.findOne({ num_bus_registration })
-
-    
+    const {
+      num_docier_client,
+      fullName_arabe,
+      fullName_francais,
+      num_bus_registration,
+    } = createVehicleDto;
+    const operateurNum = await this.operateurService.findByVihicilesandChauffer(
+      { num_docier_client },
+    );
+    const MatriculeVihicule = await this.VihicileModel.findOne({
+      num_bus_registration,
+    });
 
     const fulNameWhenMatriculeExist = MatriculeVihicule.fullName_arabe;
     const MatriculeWhenMatriculeExist = MatriculeVihicule.fullName_arabe;
@@ -41,14 +48,20 @@ export class VehiclesService {
       throw new NotFoundException(
         new ResponseBuilder()
           .setStatus(404)
-          .setMessage(`لم يتم العثور على ملف المتعامل  بهذا الرقم ${num_docier_client}`)
+          .setMessage(
+            `لم يتم العثور على ملف المتعامل  بهذا الرقم ${num_docier_client}`,
+          )
           .setErrors({ _id: 'Operator not found' })
           .build(),
       );
     }
 
-    let lastReturn = []
-    lastReturn.push({ fulNameWhenMatriculeExist, MatriculeWhenMatriculeExist, TypeWhenMatriculeExist })
+    let lastReturn = [];
+    lastReturn.push({
+      fulNameWhenMatriculeExist,
+      MatriculeWhenMatriculeExist,
+      TypeWhenMatriculeExist,
+    });
     if (MatriculeVihicule) {
       throw new NotFoundException(
         new ResponseBuilder()
@@ -59,7 +72,6 @@ export class VehiclesService {
           .build(),
       );
     }
-
 
     if (operateurNum.fullName_arabe !== fullName_arabe) {
       throw new NotFoundException(
@@ -153,16 +165,9 @@ export class VehiclesService {
       );
     }
 
-    const vihicile = await this.VihicileModel.findByIdAndUpdate(
-      id,
-      { $set: updateVehicleDto },
-      {
-        new: true,
-        runValidators: true,
-      },
-    ).exec();
-
-    if (!vihicile) {
+    // Get the existing vehicle first
+    const existingVehicle = await this.VihicileModel.findById(id).exec();
+    if (!existingVehicle) {
       throw new NotFoundException(
         new ResponseBuilder()
           .setStatus(404)
@@ -172,10 +177,29 @@ export class VehiclesService {
       );
     }
 
+    // Check if num_matricule is being updated
+    let updateData: any = { $set: updateVehicleDto };
+    if (
+      updateVehicleDto.num_bus_registration &&
+      updateVehicleDto.num_bus_registration !== existingVehicle.num_bus_registration
+    ) {
+      // increment num_up if num_matricule has changed
+      updateData.$inc = { num_up: 1 };
+    }
+
+    const updatedVehicle = await this.VihicileModel.findByIdAndUpdate(
+      id,
+      updateData,
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).exec();
+
     return new ResponseBuilder()
       .setStatus(200)
       .setMessage('تم تحديث المشغل بنجاح!')
-      .setData(vihicile)
+      .setData(updatedVehicle)
       .build();
   }
 
@@ -843,7 +867,7 @@ export class VehiclesService {
       font_type: 'بين البلديات',
     }).exec();
 
-    console.log("vehicles ==> " , vehicles)
+    console.log('vehicles ==> ', vehicles);
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Vehicles');
@@ -969,7 +993,6 @@ export class VehiclesService {
     const vehicles = await this.VihicileModel.find({
       font_type: 'ريفي',
     }).exec();
-    
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Vehicles');

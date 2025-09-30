@@ -20,9 +20,11 @@ const FormOperateur: React.FC = () => {
   const { loading } = useSelector((state: RootState) => state.operateur);
   const { register, handleSubmit, setValue, watch } = useForm<Operateur>();
   const onSubmit: SubmitHandler<Operateur> = async (data) => {
+    console.log("data ==>" ,data);
     await dispatch(createOperateur(data)).unwrap();
     navigate("/operateur")
   }
+
 
 
   const depnd = watch("depend_activite");
