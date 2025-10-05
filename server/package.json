@@ -33,6 +33,7 @@
     "bidi-js": "^1.0.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "docx": "^9.5.1",
     "exceljs": "^4.4.0",
     "fontkit": "^2.0.4",
     "handlebars": "^4.7.8",

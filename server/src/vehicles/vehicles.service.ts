@@ -25,7 +25,7 @@ export class VehiclesService {
     @InjectModel(Vihicles.name) private VihicileModel: Model<Vihicles>,
     @Inject(forwardRef(() => OperateurDtwService))
     private readonly operateurService: OperateurDtwService,
-  ) {}
+  ) { }
 
   async create(createVehicleDto: CreateVihicleDto) {
     const {
@@ -186,6 +186,11 @@ export class VehiclesService {
       // increment num_up if num_matricule has changed
       updateData.$inc = { num_up: 1 };
     }
+    await this.VihicileModel.updateMany(
+      { num_up: { $exists: false } },
+      { $set: { num_up: 0 } }
+    );
+
 
     const updatedVehicle = await this.VihicileModel.findByIdAndUpdate(
       id,

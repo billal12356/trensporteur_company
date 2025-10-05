@@ -13,6 +13,7 @@ import VerifyCodeForm from './pages/auth/Resset Password/VerifyCodeForm';
 import ChangePasswordForm from './pages/auth/Resset Password/ChangePasswordForm';
 import TransportTable from './pages/statique_2025';
 import PageExcelVihecles from './pages/excel-vehicles';
+import StatistiqueCompt from './pages/statistique_compt';
 const Home = lazy(() => import("./pages/home/Page"));
 const Login = lazy(() => import("./pages/auth/SignIn"));
 const Operateur = lazy(() => import("./pages/operateur/Operateur"));
@@ -52,6 +53,7 @@ function App() {
           <Route path="/statistique" element={userData ? <State /> : <Login />} />
           <Route path="/statistique-2025" element={userData ? <TransportTable /> : <Login />} />
           <Route path="/Excel-vihecles" element={userData ? <PageExcelVihecles /> : <Login />} />
+          <Route path="/statistique-compte" element={userData ? <StatistiqueCompt /> : <Login />} />
 
           <Route path="/create-chauffeur" element={userData ? <CreateChauffeur /> : <Login />} />
 

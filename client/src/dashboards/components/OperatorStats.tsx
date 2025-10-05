@@ -95,7 +95,6 @@ export default function EnhancedOperatorStats() {
   const dispatch = useDispatch<AppDispatch>()
   const operateurs = useSelector((state: RootState) => state.operateur.operateurs)
 
-  console.log(operateurs)
   const [startDate, setStartDate] = useState<Date>()
   const [endDate, setEndDate] = useState<Date>()
   const [loading, setLoading] = useState(false)

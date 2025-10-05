@@ -21,6 +21,6 @@
         "include": "src/import-operateur/*.json",
         "outDir": "dist/seed/data"
       }
-    ]    
+    ]
   }
 }

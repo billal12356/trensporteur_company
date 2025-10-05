@@ -23,7 +23,7 @@ const FormOperateur: React.FC = () => {
   const { loading, error } = useSelector((state: RootState) => state.vihicule);
   const [formData, setFormData] = useState<Partial<Vihicles>>({});
 
-  console.log("formData", formData)
+  console.log("formData ==> ", formData)
   const depnd = formData.vihicile_parked;
   const handleChange = (field: keyof Vihicles, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -84,18 +84,20 @@ const FormOperateur: React.FC = () => {
               </label>
               <Input
                 type="text"
-                onChange={(v) => handleChange("fullName_arabe", v)}
+                onChange={(e) => handleChange("fullName_arabe", e.target.value)}
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
                 الاسم و لقب المتعامل بالفرنسية
               </label>
               <Input
                 type="text"
-                onChange={(v) => handleChange("fullName_francais", v)}
+                onChange={(e) => handleChange("fullName_francais", e.target.value)}
               />
             </div>
+
           </div>
 
           {/* Row 3 */}
@@ -205,9 +207,9 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField
               label="اول سنة استعمال"
-              type="text"
+              type="number"
               value={formData.First_year_of_use ?? ""}
-              onChange={(v) => handleChange("First_year_of_use", v)}
+              onChange={(val) => handleChange("First_year_of_use", Number(val as number))}
             />
             <SelectField
               label="النوع"
@@ -251,9 +253,9 @@ const FormOperateur: React.FC = () => {
             />
             <InputField
               label="رقم رخصة سير المركبة"
-              type="text"
+              type="number"
               value={formData.num_driving_license ?? ""}
-              onChange={(v) => handleChange("num_driving_license", v)}
+              onChange={(val) => handleChange("num_driving_license", Number(val as number))}
             />
           </div>
 
@@ -345,19 +347,19 @@ const FormOperateur: React.FC = () => {
               label="نقطة المرور 3"
               type="string"
               value={formData.point_Traffic3 ?? ""}
-              onChange={(v) => handleChange("point_Traffic3",v)}
+              onChange={(v) => handleChange("point_Traffic3", v)}
             />
             <InputField
               label="نقطة المرور 2"
               type="string"
               value={formData.point_Traffic2 ?? ""}
-              onChange={(v) => handleChange("point_Traffic2",v)}
+              onChange={(v) => handleChange("point_Traffic2", v)}
             />
             <InputField
               label="نقطة المرور 1"
               type="string"
               value={formData.point_Traffic1 ?? ""}
-              onChange={(v) => handleChange("point_Traffic1",v)}
+              onChange={(v) => handleChange("point_Traffic1", v)}
             />
           </div>
 
@@ -366,13 +368,13 @@ const FormOperateur: React.FC = () => {
               label="نقطة المرور 5"
               type="string"
               value={formData.point_Traffic5 ?? ""}
-              onChange={(v) => handleChange("point_Traffic5",v)}
+              onChange={(v) => handleChange("point_Traffic5", v)}
             />
             <InputField
               label="نقطة المرور 4"
               type="string"
               value={formData.point_Traffic4 ?? ""}
-              onChange={(v) => handleChange("point_Traffic4",v)}
+              onChange={(v) => handleChange("point_Traffic4", v)}
             />
           </div>
 
@@ -381,13 +383,13 @@ const FormOperateur: React.FC = () => {
               label="توقيت نهاية الخط"
               type="string"
               value={formData.line_end_time ?? ""}
-              onChange={(v) => handleChange("line_end_time",  v)}
+              onChange={(v) => handleChange("line_end_time", v)}
             />
             <InputField
               label="توقيت بداية الخط"
               type="string"
               value={formData.line_start_time ?? ""}
-              onChange={(v) => handleChange("line_start_time",  v)}
+              onChange={(v) => handleChange("line_start_time", v)}
             />
           </div>
 
@@ -411,19 +413,19 @@ const FormOperateur: React.FC = () => {
               label="توقيت الانطلاق 4"
               type="string"
               value={formData.time_depart4 ?? ""}
-              onChange={(v) => handleChange("time_depart4",v)}
+              onChange={(v) => handleChange("time_depart4", v)}
             />
             <InputField
               label="توقيت الانطلاق 3"
               type="string"
               value={formData.time_depart3 ?? ""}
-              onChange={(v) => handleChange("time_depart3",v)}
+              onChange={(v) => handleChange("time_depart3", v)}
             />
             <InputField
               label="توقيت الانطلاق 2"
               type="string"
               value={formData.time_depart2 ?? ""}
-              onChange={(v) => handleChange("time_depart2",v)}
+              onChange={(v) => handleChange("time_depart2", v)}
             />
           </div>
           {/* Row 15 */}

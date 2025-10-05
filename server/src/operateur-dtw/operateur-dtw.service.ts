@@ -18,7 +18,6 @@ import { Workbook } from 'exceljs';
 import { VehiclesService } from 'src/vehicles/vehicles.service';
 import { ChauffeursService } from 'src/chauffeurs/chauffeurs.service';
 import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from 'pdf-lib';
-import { ruralCoordinates } from 'src/constants/rural-coordinates';
 const fontkit = require('@pdf-lib/fontkit');
 import { getVisualString } from 'bidi-js';
 const arabicReshaper = require('arabic-reshaper');
@@ -27,6 +26,7 @@ import * as path from 'path';
 import { OperateurQueryBuilder } from 'src/common/builder/OperateurQueryBuilder';
 import { Response } from 'express';
 
+import { Document, Packer, Paragraph, TextRun } from "docx";
 function convertToArabicWords(num: number): string {
   const ones = [
     '',
@@ -207,7 +207,7 @@ export class OperateurDtwService {
     private readonly vihiculeService: VehiclesService,
     @Inject(forwardRef(() => ChauffeursService))
     private readonly chauffeursService: ChauffeursService,
-  ) {}
+  ) { }
 
   async create(createOperateurDtwDto: CreateOperateurDto) {
     const operateur = await this.OperateurModel.create(createOperateurDtwDto);
@@ -1100,9 +1100,9 @@ export class OperateurDtwService {
           const safeText =
             textWidth > maxTextWidth
               ? text.slice(
-                  0,
-                  Math.floor((maxTextWidth / textWidth) * text.length),
-                ) + '…'
+                0,
+                Math.floor((maxTextWidth / textWidth) * text.length),
+              ) + '…'
               : text;
 
           const textX =
@@ -1169,7 +1169,54 @@ export class OperateurDtwService {
     res.send(Buffer.from(pdfBytes));
   }
 
-  async findOperateurByNumClient (num_client:number){
-    return await this.OperateurModel.find({num_docier_client:num_client})
+  //find name and address word
+  async generatePdf(res: Response, data: { fullName: string; address: string }) {
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
+
+    // تحميل الخط العربي
+    const fontPath = path.join(__dirname, '..', 'assets', 'fonts', 'Cairo-Bold.ttf');
+    const fontBytes = fs.readFileSync(fontPath);
+    const customFont = await pdfDoc.embedFont(fontBytes);
+
+    // إنشاء صفحة جديدة A4
+    const page = pdfDoc.addPage([595, 842]);
+
+    // دالة لعكس ترتيب الكلمات فقط (مش الحروف)
+    const reverseWords = (text: string) =>
+      text ? text.split(' ').reverse().join(' ') : '';
+
+    // كتابة اسم / لقب المتعامل
+    page.drawText(reverseWords(`${data.fullName}`), {
+      x: 250, // أقرب لليسار
+      y: 700,
+      size: 14,
+      font: customFont,
+      color: rgb(0, 0, 0),
+    });
+
+    // كتابة العنوان
+    page.drawText(reverseWords(`${data.address}`), {
+      x: 250,
+      y: 660,
+      size: 14,
+      font: customFont,
+      color: rgb(0, 0, 0),
+    });
+
+    // تجهيز الملف للإرسال
+    const pdfBytes = await pdfDoc.save();
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'inline; filename=transport.pdf',
+      'Content-Length': pdfBytes.length,
+    });
+    res.end(Buffer.from(pdfBytes));
+  }
+
+
+
+  async findOperateurByNumClient(num_client: number) {
+    return await this.OperateurModel.find({ num_docier_client: num_client })
   }
 }

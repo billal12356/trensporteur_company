@@ -92,9 +92,16 @@ export class OperateurDtwController {
 
 
   @Get('generate')
-  generate(@Query('id') id: string,@Res() res: Response) {
+  generate(@Query('id') id: string, @Res() res: Response) {
     return this.operateurDtwService.generatepdfs(id, res);
   }
 
-
+  @Get("generate-pdf")
+  async generatepdf(@Res() res: Response) {
+    const fakeData = {
+      fullName: "محمد بن أحمد",
+      address: "حي النصر - الجزائر العاصمة",
+    };
+    return this.operateurDtwService.generatePdf(res, fakeData);
+  } 
 }

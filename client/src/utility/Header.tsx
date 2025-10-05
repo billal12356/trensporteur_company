@@ -14,6 +14,7 @@ import {
   LogOut,
   User,
   Settings,
+  BarChart4,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Link } from "react-router-dom"
@@ -76,9 +77,33 @@ const navigationItems: NavItem[] = [
     ],
   },
   {
-    label: "الإحصائيات",
-    href: "/statistique",
+    label: "الاحصائيات",
     icon: BarChart3,
+    children: [
+      {
+        label: "الإحصائيات",
+        href: "/statistique",
+        icon: BarChart3,
+        description: "إدارة وعرض احصائيات ",
+      },
+      {
+        label: "الإحصائيات للسنة",
+        href: "/statistique-2025",
+        icon: BarChart4,
+        description: "إدارة وعرض احصائيات سنة 2025",
+      },
+      {
+        label: "الإحصائيات المركبات",
+        href: "/statistique-compte",
+        icon: BarChart4,
+        description: "إدارة وعرض احصائيات المركبات",
+      },
+    ],
+  },
+  {
+    label: "جداول المركبات",
+    href: "/Excel-vihecles",
+    icon: BarChart4,
   },
   {
     label: "إنشاء جديد",
@@ -142,11 +167,10 @@ const EnhancedNavbar = () => {
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200"
-          : "bg-white shadow-sm border-b border-gray-100"
-      }`}
+      className={`sticky top-0 z-50 transition-all duration-300 ${scrolled
+        ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200"
+        : "bg-white shadow-sm border-b border-gray-100"
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -183,18 +207,16 @@ const EnhancedNavbar = () => {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={(e) => handleDropdownClick(e, item.label)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        activeDropdown === item.label
-                          ? "bg-blue-50 text-blue-700"
-                          : "text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeDropdown === item.label
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-gray-700 hover:bg-gray-50 hover:text-blue-600"
+                        }`}
                     >
                       <Icon className="w-4 h-4" />
                       {item.label}
                       <ChevronDown
-                        className={`w-3 h-3 transition-transform duration-200 ${
-                          activeDropdown === item.label ? "rotate-180" : ""
-                        }`}
+                        className={`w-3 h-3 transition-transform duration-200 ${activeDropdown === item.label ? "rotate-180" : ""
+                          }`}
                       />
                     </motion.button>
                   ) : (
@@ -369,9 +391,8 @@ const EnhancedNavbar = () => {
                                     <span className="font-medium">{item.label}</span>
                                   </div>
                                   <ChevronDown
-                                    className={`w-4 h-4 transition-transform ${
-                                      activeDropdown === item.label ? "rotate-180" : ""
-                                    }`}
+                                    className={`w-4 h-4 transition-transform ${activeDropdown === item.label ? "rotate-180" : ""
+                                      }`}
                                   />
                                 </button>
                                 <AnimatePresence>
