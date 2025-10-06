@@ -1170,14 +1170,92 @@ export class OperateurDtwService {
   }
 
   //find name and address word
-  async generatePdf(
-    res: Response,
-    data: { fullName: string; address: string },
-  ) {
+  // async generatePdf(res: Response, id: String) {
+  //   const operateur = await this.OperateurModel.findById(id);
+  //   if (!operateur) {
+  //     throw new NotFoundException('لم يتم العثور على المتعامل');
+  //   }
+  //   const pdfDoc = await PDFDocument.create();
+  //   pdfDoc.registerFontkit(fontkit);
+
+  //   // تحميل الخط العربي
+  //   const fontPath = path.join(
+  //     __dirname,
+  //     '..',
+  //     'assets',
+  //     'fonts',
+  //     'Cairo-Bold.ttf',
+  //   );
+  //   const fontBytes = fs.readFileSync(fontPath);
+  //   const customFont = await pdfDoc.embedFont(fontBytes);
+
+  //   // إنشاء صفحة جديدة A4
+  //   const page = pdfDoc.addPage([595, 842]);
+  //   const { width, height } = page.getSize();
+
+  //   // ✅ تحميل صورة الخلفية
+  //   // const backgroundPath = path.join(
+  //   //   process.cwd(),
+  //   //   'src',
+  //   //   'assets',
+  //   //   'background.jpg',
+  //   // );
+  //   // const backgroundBytes = fs.readFileSync(backgroundPath);
+  //   // const backgroundImage = await pdfDoc.embedJpg(backgroundBytes);
+
+  //   // ✅ رسم الصورة لتغطي الصفحة بالكامل
+  //   page.drawImage(backgroundImage, {
+  //     x: 0,
+  //     y: 0,
+  //     width,
+  //     height,
+  //   });
+
+  //   // 🔁 دالة لعكس ترتيب الكلمات فقط (مش الحروف)
+  //   const reverseWords = (text: string) =>
+  //     text ? text.split(' ').reverse().join(' ') : '';
+
+  //   // 🖋️ كتابة اسم / لقب المتعامل
+  //   page.drawText(reverseWords(`${operateur.fullName_arabe}`), {
+  //     x: 420, // أقرب لليسار
+  //     y: 410,
+  //     size: 14,
+  //     font: customFont,
+  //     color: rgb(0, 0, 0),
+  //   });
+
+  //   // 🏠 كتابة العنوان
+  //   page.drawText(reverseWords(`${operateur.address_arabe}`), {
+  //     x: 400,
+  //     y: 380,
+  //     size: 14,
+  //     font: customFont,
+  //     color: rgb(0, 0, 0),
+  //   });
+
+  //   // 📄 تجهيز الملف للإرسال
+  //   const pdfBytes = await pdfDoc.save();
+
+  //   res.set({
+  //     'Content-Type': 'application/pdf',
+  //     'Content-Disposition': 'inline; filename=transport.pdf',
+  //     'Content-Length': pdfBytes.length,
+  //   });
+
+  //   res.end(Buffer.from(pdfBytes));
+  // }
+  async generatePdf(res: Response, id: string) {
+    // ✅ جلب المتعامل من قاعدة البيانات
+    const operateur = await this.OperateurModel.findById(id);
+    if (!operateur) {
+      throw new NotFoundException('لم يتم العثور على المتعامل');
+    }
+
+    // ✅ إنشاء ملف PDF جديد
     const pdfDoc = await PDFDocument.create();
     pdfDoc.registerFontkit(fontkit);
 
-    // تحميل الخط العربي
+    // ✅ تحميل الخط العربي
     const fontPath = path.join(
       __dirname,
       '..',
@@ -1188,35 +1266,16 @@ export class OperateurDtwService {
     const fontBytes = fs.readFileSync(fontPath);
     const customFont = await pdfDoc.embedFont(fontBytes);
 
-    // إنشاء صفحة جديدة A4
+    // ✅ إنشاء صفحة جديدة A4
     const page = pdfDoc.addPage([595, 842]);
-    const { width, height } = page.getSize();
-
-    // ✅ تحميل صورة الخلفية
-    const backgroundPath = path.join(
-      process.cwd(),
-      'src',
-      'assets',
-      'background.jpg',
-    );
-    const backgroundBytes = fs.readFileSync(backgroundPath);
-    const backgroundImage = await pdfDoc.embedJpg(backgroundBytes);
-
-    // ✅ رسم الصورة لتغطي الصفحة بالكامل
-    page.drawImage(backgroundImage, {
-      x: 0,
-      y: 0,
-      width,
-      height,
-    });
 
     // 🔁 دالة لعكس ترتيب الكلمات فقط (مش الحروف)
     const reverseWords = (text: string) =>
       text ? text.split(' ').reverse().join(' ') : '';
 
     // 🖋️ كتابة اسم / لقب المتعامل
-    page.drawText(reverseWords(`${data.fullName}`), {
-      x: 420, // أقرب لليسار
+    page.drawText(reverseWords(`${operateur.fullName_arabe || ''}`), {
+      x: 420,
       y: 410,
       size: 14,
       font: customFont,
@@ -1224,7 +1283,7 @@ export class OperateurDtwService {
     });
 
     // 🏠 كتابة العنوان
-    page.drawText(reverseWords(`${data.address}`), {
+    page.drawText(reverseWords(`${operateur.address_arabe || ''}`), {
       x: 400,
       y: 380,
       size: 14,
@@ -1243,7 +1302,6 @@ export class OperateurDtwService {
 
     res.end(Buffer.from(pdfBytes));
   }
-
   async findOperateurByNumClient(num_client: number) {
     return await this.OperateurModel.find({ num_docier_client: num_client });
   }

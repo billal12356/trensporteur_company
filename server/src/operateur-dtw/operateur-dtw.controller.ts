@@ -97,11 +97,7 @@ export class OperateurDtwController {
   }
 
   @Get("generate-pdf")
-  async generatepdf(@Res() res: Response) {
-    const fakeData = {
-      fullName: "محمد بن أحمد",
-      address: "حي النصر - الجزائر العاصمة",
-    };
-    return this.operateurDtwService.generatePdf(res, fakeData);
+  async generatepdf(@Query('id') id: string,@Res() res: Response) {
+    return this.operateurDtwService.generatePdf(res,id);
   } 
 }
