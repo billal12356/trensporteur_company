@@ -28,78 +28,82 @@ export class VehiclesService {
   ) { }
 
   async create(createVehicleDto: CreateVihicleDto) {
-    const {
-      num_docier_client,
-      fullName_arabe,
-      fullName_francais,
-      num_bus_registration,
-    } = createVehicleDto;
-    const operateurNum = await this.operateurService.findByVihicilesandChauffer(
-      { num_docier_client },
+  const {
+    num_docier_client,
+    fullName_arabe,
+    fullName_francais,
+    num_bus_registration,
+  } = createVehicleDto;
+
+  // 🔹 Check if operator exists
+  const operateurNum = await this.operateurService.findByVihicilesandChauffer({
+    num_docier_client,
+  });
+
+  if (!operateurNum) {
+    throw new NotFoundException(
+      new ResponseBuilder()
+        .setStatus(404)
+        .setMessage(`لم يتم العثور على ملف المتعامل بهذا الرقم ${num_docier_client}`)
+        .setErrors({ _id: 'Operator not found' })
+        .build(),
     );
-    const MatriculeVihicule = await this.VihicileModel.findOne({
-      num_bus_registration,
-    });
-
-    const fulNameWhenMatriculeExist = MatriculeVihicule.fullName_arabe;
-    const MatriculeWhenMatriculeExist = MatriculeVihicule.fullName_arabe;
-    const TypeWhenMatriculeExist = MatriculeVihicule.font_type;
-    if (!operateurNum) {
-      throw new NotFoundException(
-        new ResponseBuilder()
-          .setStatus(404)
-          .setMessage(
-            `لم يتم العثور على ملف المتعامل  بهذا الرقم ${num_docier_client}`,
-          )
-          .setErrors({ _id: 'Operator not found' })
-          .build(),
-      );
-    }
-
-    let lastReturn = [];
-    lastReturn.push({
-      fulNameWhenMatriculeExist,
-      MatriculeWhenMatriculeExist,
-      TypeWhenMatriculeExist,
-    });
-    if (MatriculeVihicule) {
-      throw new NotFoundException(
-        new ResponseBuilder()
-          .setStatus(404)
-          .setMessage('المركبة مسجلة من قبل')
-          .setErrors('المركبة مسجلة من قبل')
-          .setData(lastReturn)
-          .build(),
-      );
-    }
-
-    if (operateurNum.fullName_arabe !== fullName_arabe) {
-      throw new NotFoundException(
-        new ResponseBuilder()
-          .setStatus(404)
-          .setMessage(`لم يتم العثور على  ${fullName_arabe}`)
-          .setErrors({ _id: 'Operator not found' })
-          .build(),
-      );
-    }
-
-    if (operateurNum.fullName_francais !== fullName_francais) {
-      throw new NotFoundException(
-        new ResponseBuilder()
-          .setStatus(404)
-          .setMessage(`لم يتم العثور على  ${fullName_francais}`)
-          .setErrors({ _id: 'Operator not found' })
-          .build(),
-      );
-    }
-
-    const vihicile = await this.VihicileModel.create(createVehicleDto);
-    return new ResponseBuilder()
-      .setStatus(201)
-      .setMessage('تم تسجيل المركبة بنجاح')
-      .setData(vihicile)
-      .build();
   }
+
+  // 🔹 Check if vehicle already exists
+  const existingVehicle = await this.VihicileModel.findOne({
+    num_bus_registration,
+  });
+
+  if (existingVehicle) {
+    const vehicleInfo = {
+      fullName_arabe: existingVehicle.fullName_arabe,
+      matricule: existingVehicle.num_bus_registration,
+      font_type: existingVehicle.font_type,
+    };
+
+    throw new NotFoundException(
+      new ResponseBuilder()
+        .setStatus(409)
+        .setMessage('المركبة مسجلة من قبل')
+        .setErrors('المركبة مسجلة من قبل')
+        .setData(vehicleInfo)
+        .build(),
+    );
+  }
+
+  // 🔹 Validate operator’s Arabic name
+  if (operateurNum.fullName_arabe !== fullName_arabe) {
+    throw new NotFoundException(
+      new ResponseBuilder()
+        .setStatus(404)
+        .setMessage(`اسم المتعامل بالعربية غير مطابق: ${fullName_arabe}`)
+        .setErrors({ name: 'Arabic name mismatch' })
+        .build(),
+    );
+  }
+
+  // 🔹 Validate operator’s French name
+  if (operateurNum.fullName_francais !== fullName_francais) {
+    throw new NotFoundException(
+      new ResponseBuilder()
+        .setStatus(404)
+        .setMessage(`اسم المتعامل بالفرنسية غير مطابق: ${fullName_francais}`)
+        .setErrors({ name: 'French name mismatch' })
+        .build(),
+    );
+  }
+
+  // 🔹 Create new vehicle
+  const vehicle = await this.VihicileModel.create(createVehicleDto);
+
+  return new ResponseBuilder()
+    .setStatus(201)
+    .setMessage('تم تسجيل المركبة بنجاح')
+    .setData(vehicle)
+    .build();
+}
+
 
   async findAll(params: any) {
     const page = Number(params.page) || 1;

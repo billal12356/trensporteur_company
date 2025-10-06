@@ -8,107 +8,96 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"; // If Select exists
+} from "@/components/ui/select";
 import { AppDispatch, RootState } from "@/redux/store";
 import { useDispatch, useSelector } from "react-redux";
 import { Vihicles } from "@/components/types/OperateurTypes";
-import { Loader } from "lucide-react";
+import { AlertCircleIcon, Loader } from "lucide-react";
 import { createVihicules } from "@/redux/slice/vihiculeSlice";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const FormOperateur: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { loading, error } = useSelector((state: RootState) => state.vihicule);
+  const { loading, error, errorDetails } = useSelector(
+    (state: RootState) => state.vihicule
+  );
+
+  // ✅ useState for all form fields
   const [formData, setFormData] = useState<Partial<Vihicles>>({});
 
-  console.log("formData ==> ", formData)
-  const depnd = formData.vihicile_parked;
+  // ✅ update handler
   const handleChange = (field: keyof Vihicles, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      e.preventDefault();
       await dispatch(createVihicules(formData as Vihicles)).unwrap();
-      navigate("/Véhecule");
+      navigate("/vehecule");
     } catch (error) {
-      console.log("error", error);
+      console.error("Error:", error);
     }
   };
-  console.log("formData", formData);
+
+  const depnd = formData.vihicile_parked;
+
   return (
     <MainContainer>
       <Helmet>
         <title>اضافة مركبة</title>
         <meta name="description" content="مرحبا بك في Finissio" />
-        <link
-          rel="icon"
-          type="image/png"
-          href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOT8Kacun1rrtYYQIG2h6Iq-N0s3DdiuoNFQ&s"
-        />
       </Helmet>
+
       <div className="w-full max-w-5xl mx-auto p-8 bg-white shadow-lg rounded-lg mt-10">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
           📝 تسجيل المركبة
         </h2>
+
         <form className="space-y-10" onSubmit={handleSubmit}>
-          {/* Row 1 */}
+          {/* ✅ Row 1 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-
-              <InputField
-                label="رقم ملف المتعامل في سجل الناقلين"
-                type="number"
-                value={formData.num_docier_client ?? ""}
-                onChange={(val) => handleChange("num_docier_client", Number(val as number))}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-
-              <InputField
-                label="رقم الولاية"
-                type="number"
-                value={formData.num_wilaya ?? ""}
-                onChange={(val) => handleChange("num_wilaya", Number(val as number))}
-              />
-            </div>
+            <InputField
+              label="رقم ملف المتعامل في سجل الناقلين"
+              type="number"
+              value={formData.num_docier_client ?? ""}
+              onChange={(val) => handleChange("num_docier_client", val)}
+            />
+            <InputField
+              label="رقم الولاية"
+              type="number"
+              value={formData.num_wilaya ?? ""}
+              onChange={(val) => handleChange("num_wilaya", val)}
+            />
           </div>
 
-          {/* Row 2 */}
+          {/* ✅ Row 2 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-end text-gray-700">
-                الاسم و لقب المتعامل بالعربية
-              </label>
-              <Input
-                type="text"
-                onChange={(e) => handleChange("fullName_arabe", e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-end text-gray-700">
-                الاسم و لقب المتعامل بالفرنسية
-              </label>
-              <Input
-                type="text"
-                onChange={(e) => handleChange("fullName_francais", e.target.value)}
-              />
-            </div>
-
+            <InputField
+              label="الاسم و لقب المتعامل بالعربية"
+              type="text"
+              value={formData.fullName_arabe ?? ""}
+              onChange={(val) => handleChange("fullName_arabe", val)}
+            />
+            <InputField
+              label="الاسم و لقب المتعامل بالفرنسية"
+              type="text"
+              value={formData.fullName_francais ?? ""}
+              onChange={(val) => handleChange("fullName_francais", val)}
+            />
           </div>
 
           {/* Row 3 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* colonne 1 Field */}
             <SelectField
               label="Colonne 1"
               value={formData.colonne1 ?? ""}
               onChange={(v) => handleChange("colonne1", v)}
               options={[
-                { label: "transport voyageurs", value: "transport_passagers" },
+                { label: "Transport voyageurs", value: "transport_passagers" },
               ]}
             />
             <SelectField
@@ -121,7 +110,6 @@ const FormOperateur: React.FC = () => {
 
           {/* Row 4 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* colonne 1 Field */}
             <SelectField
               label="Colonne 2"
               value={formData.colonne2 ?? ""}
@@ -136,15 +124,14 @@ const FormOperateur: React.FC = () => {
               value={formData.nature_activite ?? ""}
               onChange={(v) => handleChange("nature_activite", v)}
               options={[
-                { label: "PRIVE", value: "PRIVE" },
-                { label: "PUBLICE", value: "PUBLICE" },
+                { label: "خاص", value: "خاص" },
+                { label: "عمومي", value: "عمومي" },
               ]}
             />
           </div>
 
           {/* Row 5 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* colonne 1 Field */}
             <SelectField
               label="Colonne 3"
               value={formData.colonne3 ?? ""}
@@ -174,7 +161,7 @@ const FormOperateur: React.FC = () => {
               onChange={(v) => handleChange("circle", v)}
             />
             <InputField
-              label="رقم تسجيل الحافلة او الشاحنة"
+              label="رقم تسجيل الحافلة أو الشاحنة"
               type="text"
               value={formData.num_bus_registration ?? ""}
               onChange={(v) => handleChange("num_bus_registration", v)}
@@ -206,10 +193,12 @@ const FormOperateur: React.FC = () => {
           {/* Row 8 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField
-              label="اول سنة استعمال"
+              label="أول سنة استعمال"
               type="number"
               value={formData.First_year_of_use ?? ""}
-              onChange={(val) => handleChange("First_year_of_use", Number(val as number))}
+              onChange={(val) =>
+                handleChange("First_year_of_use", Number(val as number))
+              }
             />
             <SelectField
               label="النوع"
@@ -228,9 +217,11 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField
               label="عدد المقاعد"
-              type="text"
+              type="number"
               value={formData.Number_of_seats ?? ""}
-              onChange={(v) => handleChange("Number_of_seats", v)}
+              onChange={(val) =>
+                handleChange("Number_of_seats", Number(val as number))
+              }
             />
             <SelectField
               label="الطاقة"
@@ -238,7 +229,7 @@ const FormOperateur: React.FC = () => {
               onChange={(v) => handleChange("Energy", v)}
               options={[
                 { label: "مازوت", value: "مازوت" },
-                { label: "بنزين", value: "PUBLICE" },
+                { label: "بنزين", value: "بنزين" },
               ]}
             />
           </div>
@@ -247,15 +238,23 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField
               label="تاريخ رخصة السير"
-              type="text"
-              value={formData.driving_license_history ?? ""}
+              type="date"
+              value={
+                formData.driving_license_history
+                  ? new Date(formData.driving_license_history)
+                      .toISOString()
+                      .split("T")[0]
+                  : ""
+              }
               onChange={(v) => handleChange("driving_license_history", v)}
             />
             <InputField
               label="رقم رخصة سير المركبة"
               type="number"
               value={formData.num_driving_license ?? ""}
-              onChange={(val) => handleChange("num_driving_license", Number(val as number))}
+              onChange={(val) =>
+                handleChange("num_driving_license", Number(val as number))
+              }
             />
           </div>
 
@@ -263,8 +262,14 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField
               label="تاريخ بداية نشاط الخط"
-              type="text"
-              value={formData.line_activity_start_date ?? ""}
+              type="date"
+              value={
+                formData.line_activity_start_date
+                  ? new Date(formData.line_activity_start_date)
+                      .toISOString()
+                      .split("T")[0]
+                  : ""
+              }
               onChange={(v) => handleChange("line_activity_start_date", v)}
             />
             <InputField
@@ -294,9 +299,15 @@ const FormOperateur: React.FC = () => {
             <InputField
               label="تاريخ بداية نشاط المركبة"
               type="date"
-              value={formData.Vehicle_activity_start_date ?? ""}
+              value={
+                formData.Vehicle_activity_start_date
+                  ? new Date(formData.Vehicle_activity_start_date)
+                      .toISOString()
+                      .split("T")[0]
+                  : ""
+              }
               onChange={(val) =>
-                handleChange("Vehicle_activity_start_date", new Date(val as string))
+                handleChange("Vehicle_activity_start_date", val)
               }
             />
           </div>
@@ -305,14 +316,14 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField
               label="رمز الخط"
-              type="string"
+              type="text"
               value={formData.font_symbol ?? ""}
               onChange={(v) => handleChange("font_symbol", v)}
             />
             <SelectField
               label="colonne 4"
-              value={formData.colonne1 ?? ""}
-              onChange={(v) => handleChange("colonne1", v)}
+              value={formData.colonne4 ?? ""}
+              onChange={(v) => handleChange("colonne4", v)}
               options={[
                 { label: "inter - communale", value: "inter - communale" },
                 { label: "Transport personnel", value: "Transport personnel" },
@@ -329,35 +340,35 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField
               label="نقطة الوصول"
-              type="string"
+              type="text"
               value={formData.point_arrive ?? ""}
               onChange={(v) => handleChange("point_arrive", v)}
             />
             <InputField
               label="نقطة الانطلاق"
-              type="string"
+              type="text"
               value={formData.point_depart ?? ""}
               onChange={(v) => handleChange("point_depart", v)}
             />
           </div>
 
-          {/* Row 14 */}
+          {/* المرور */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <InputField
               label="نقطة المرور 3"
-              type="string"
+              type="text"
               value={formData.point_Traffic3 ?? ""}
               onChange={(v) => handleChange("point_Traffic3", v)}
             />
             <InputField
               label="نقطة المرور 2"
-              type="string"
+              type="text"
               value={formData.point_Traffic2 ?? ""}
               onChange={(v) => handleChange("point_Traffic2", v)}
             />
             <InputField
               label="نقطة المرور 1"
-              type="string"
+              type="text"
               value={formData.point_Traffic1 ?? ""}
               onChange={(v) => handleChange("point_Traffic1", v)}
             />
@@ -366,28 +377,29 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField
               label="نقطة المرور 5"
-              type="string"
+              type="text"
               value={formData.point_Traffic5 ?? ""}
               onChange={(v) => handleChange("point_Traffic5", v)}
             />
             <InputField
               label="نقطة المرور 4"
-              type="string"
+              type="text"
               value={formData.point_Traffic4 ?? ""}
               onChange={(v) => handleChange("point_Traffic4", v)}
             />
           </div>
 
+          {/* الأوقات */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField
               label="توقيت نهاية الخط"
-              type="string"
+              type="text"
               value={formData.line_end_time ?? ""}
               onChange={(v) => handleChange("line_end_time", v)}
             />
             <InputField
               label="توقيت بداية الخط"
-              type="string"
+              type="text"
               value={formData.line_start_time ?? ""}
               onChange={(v) => handleChange("line_start_time", v)}
             />
@@ -396,49 +408,51 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField
               label="توقيت الانطلاق 1"
-              type="string"
+              type="text"
               value={formData.time_depart1 ?? ""}
               onChange={(v) => handleChange("time_depart1", v)}
             />
             <InputField
               label="الوتيرة بالدقائق بالنسبة للحضري"
-              type="number"
+              type="text"
               value={formData.Pace_per_minute ?? ""}
-              onChange={(val) => handleChange("Pace_per_minute", Number(val as number))}
+              onChange={(v) => handleChange("Pace_per_minute", v)}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <InputField
               label="توقيت الانطلاق 4"
-              type="string"
+              type="text"
               value={formData.time_depart4 ?? ""}
               onChange={(v) => handleChange("time_depart4", v)}
             />
             <InputField
               label="توقيت الانطلاق 3"
-              type="string"
+              type="text"
               value={formData.time_depart3 ?? ""}
               onChange={(v) => handleChange("time_depart3", v)}
             />
             <InputField
               label="توقيت الانطلاق 2"
-              type="string"
+              type="text"
               value={formData.time_depart2 ?? ""}
               onChange={(v) => handleChange("time_depart2", v)}
             />
           </div>
-          {/* Row 15 */}
+
+          {/* Row 15 - حالة المركبة */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SelectField
-              label="المركبة موقفة او لا"
+              label="هل المركبة متوقفة؟"
               value={formData.vihicile_parked ?? ""}
               onChange={(v) => handleChange("vihicile_parked", v)}
               options={[
-                { label: "متوقفة", value: "متوقفة" },
+                { label: "نعم، متوقفة", value: "متوقفة" },
                 { label: "لا", value: "لا" },
               ]}
             />
+
             <SelectField
               label="نوع التوقيف"
               value={formData.type_parked ?? ""}
@@ -447,27 +461,41 @@ const FormOperateur: React.FC = () => {
                 { label: "نهائي", value: "نهائي" },
                 { label: "مؤقت", value: "مؤقت" },
               ]}
-              disabled={depnd === "لا"} // هنا الشرط
+              disabled={formData.vihicile_parked === "لا"}
             />
           </div>
 
-          {/* Row 16 */}
-          {/* Row 16 - التوقيف */}
+          {/* Row 16 - التواريخ */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField
-              label="تاريخ نهاية توقيف مؤقت"
-              type="date"
-              value={formData.hestoire_parked_end ?? ""}
-              onChange={(v) => handleChange("hestoire_parked_end", v)}
-              disabled={depnd === "لا"}
-            />
-
             <InputField
               label="تاريخ التوقيف"
               type="date"
-              value={formData.hestoire_parked ?? ""}
+              value={
+                formData.hestoire_parked
+                  ? new Date(formData.hestoire_parked)
+                      .toISOString()
+                      .split("T")[0]
+                  : ""
+              }
               onChange={(v) => handleChange("hestoire_parked", v)}
-              disabled={depnd === "لا"}
+              disabled={formData.vihicile_parked === "لا"}
+            />
+
+            <InputField
+              label="تاريخ نهاية التوقيف المؤقت"
+              type="date"
+              value={
+                formData.hestoire_parked_end
+                  ? new Date(formData.hestoire_parked_end)
+                      .toISOString()
+                      .split("T")[0]
+                  : ""
+              }
+              onChange={(v) => handleChange("hestoire_parked_end", v)}
+              disabled={
+                formData.vihicile_parked === "لا" ||
+                formData.type_parked === "نهائي"
+              }
             />
           </div>
 
@@ -488,33 +516,66 @@ const FormOperateur: React.FC = () => {
             />
           </div>
 
-          {/* ملاحظات */}
-          <InputField
-            label="ملاحظات"
-            type="text"
-            value={formData.comments ?? ""}
-            onChange={(v) => handleChange("comments", v)}
-          />
+          {/* Row 18 - الملاحظات */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InputField
+              label="ملاحظات"
+              type="text"
+              value={formData.comments ?? ""}
+              onChange={(v) => handleChange("comments", v)}
+            />
 
-          <InputField
-            label="ملاحظات رئيس القسم"
-            type="text"
-            value={formData.note_chef_departement ?? ""}
-            onChange={(v) => handleChange("note_chef_departement", v)}
-          />
+            <InputField
+              label="ملاحظات رئيس القسم"
+              type="text"
+              value={formData.note_chef_departement ?? ""}
+              onChange={(v) => handleChange("note_chef_departement", v)}
+            />
+          </div>
 
-          {/* Submit Button */}
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? <Loader className="animate-spin" /> : "إرسال البيانات"}
           </Button>
         </form>
       </div>
+      {errorDetails?.message === "المركبة مسجلة من قبل" && (
+        <div className="bg-red-50 border border-red-300 text-red-700 p-4 rounded-lg mb-6">
+          <h3 className="font-bold text-lg mb-2">⚠️ حدث خطأ أثناء العملية</h3>
+          <p>{errorDetails.message || "حدث خطأ غير متوقع"}</p>
+
+          {/* لو في تفاصيل إضافية */}
+          {errorDetails && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+              <div className="bg-red-50 border border-red-300 text-red-700 p-6 rounded-xl shadow-xl max-w-md w-full text-center animate-fadeIn">
+                <h3 className="font-bold text-xl mb-3">
+                   <p>{errorDetails.message  || "حدث خطأ غير متوقع"}</p>
+                </h3>
+                <p className="text-black font-semibold">معلومات عن المركبة المسجلة</p>
+                
+                {errorDetails && (
+                  <ul className="list-disc text-right pr-6 mt-3 text-sm text-red-600">
+                    <li className="text-xl font-semibold">الاسم الكامل : {errorDetails?.data?.fullName_arabe}</li>
+                    <li className="text-xl font-semibold">رقم المركبة: {errorDetails?.data?.matricule}</li>
+                    <li className="text-xl font-semibold">نوع الخط: {errorDetails?.data?.font_type}</li>
+                  </ul>
+                )}
+
+                <button
+                  onClick={() => window.location.reload()}
+                  className="mt-5 bg-red-600 text-white py-2 px-5 rounded-lg hover:bg-red-700 transition-all"
+                >
+                  إغلاق
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </MainContainer>
   );
 };
 
-// Input Field Component
-// ✅ Input Field Component
+// ✅ Reusable Input Component
 const InputField = ({
   label,
   type,
@@ -524,27 +585,50 @@ const InputField = ({
 }: {
   label: string;
   type: string;
-  value: string | number;
-  onChange: (v: string | number) => void;
+  value: string | number | Date | null | undefined;
+  onChange: (v: string | number | Date) => void;
   disabled?: boolean;
-}) => (
-  <div className="flex flex-col gap-2">
-    <label className="block text-sm text-end font-medium text-gray-700">
-      {label}
-    </label>
-    <Input
-      type={type}
-      value={value}
-      disabled={disabled}
-      onChange={(e) => {
-        const val = type === "number" ? Number(e.target.value) : e.target.value;
-        onChange(val);
-      }}
-    />
-  </div>
-);
+}) => {
+  // 🧠 Prepare display value (string or number only)
+  let displayValue: string | number | undefined = "";
 
-// ✅ Select Field Component
+  if (type === "date" && value) {
+    // Convert Date to ISO string
+    displayValue =
+      value instanceof Date
+        ? value.toISOString().split("T")[0]
+        : new Date(value).toISOString().split("T")[0];
+  } else if (value !== null && value !== undefined) {
+    displayValue = value as string | number;
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="block text-sm text-end font-medium text-gray-700">
+        {label}
+      </label>
+
+      <Input
+        type={type}
+        value={displayValue}
+        disabled={disabled}
+        onChange={(e) => {
+          const inputVal = e.target.value;
+
+          if (type === "number") {
+            onChange(Number(inputVal));
+          } else if (type === "date") {
+            onChange(inputVal ? new Date(inputVal) : "");
+          } else {
+            onChange(inputVal);
+          }
+        }}
+      />
+    </div>
+  );
+};
+
+// ✅ Reusable Select Component
 const SelectField = ({
   label,
   value,
