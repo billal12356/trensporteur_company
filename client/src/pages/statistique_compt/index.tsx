@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button"
 const StatistiqueCompt = () => {
     const dispatch = useDispatch<AppDispatch>()
     const { vihicules } = useSelector((state: RootState) => state.vihicule)
-    const [page, setPage] = useState(1)
+    const [page] = useState(1)
 
     // Ref عشان نحدد الجزء اللي نطبعو
     const printRef = useRef<HTMLDivElement>(null)

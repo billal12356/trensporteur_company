@@ -11,12 +11,12 @@ export interface Chauffeur {
     num_enregistrement_du_transporteur: number;
     operateur: string;
     ligne_exploitée: string;
-    num_vehicule: number;
+    num_vehicule: string;
     nature_ligne: string;
     nom_prenom_chauffeur: string;
     nature_utilisateur: string;
     num_didentification_national_NIN: number;
-    num_permis_conduire: number;
+    num_permis_conduire: string;
     date_sortie: string;
     date_expiration_article: string;
     municipalite_emettrice: string;

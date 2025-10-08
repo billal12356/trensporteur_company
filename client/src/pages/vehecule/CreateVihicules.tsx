@@ -12,16 +12,15 @@ import {
 import { AppDispatch, RootState } from "@/redux/store";
 import { useDispatch, useSelector } from "react-redux";
 import { Vihicles } from "@/components/types/OperateurTypes";
-import { AlertCircleIcon, Loader } from "lucide-react";
+import { Loader } from "lucide-react";
 import { createVihicules } from "@/redux/slice/vihiculeSlice";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const FormOperateur: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { loading, error, errorDetails } = useSelector(
+  const { loading, errorDetails } = useSelector(
     (state: RootState) => state.vihicule
   );
 
@@ -43,7 +42,6 @@ const FormOperateur: React.FC = () => {
     }
   };
 
-  const depnd = formData.vihicile_parked;
 
   return (
     <MainContainer>

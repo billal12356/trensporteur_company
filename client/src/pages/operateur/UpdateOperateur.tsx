@@ -20,6 +20,7 @@ import {
 import { Loader } from "lucide-react";
 import MainContainer from "@/components/MainContainer";
 import { Helmet } from "react-helmet-async";
+import { isEqual } from "lodash";
 
 const EditOperateur = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +31,7 @@ const EditOperateur = () => {
   );
 
   const [formData, setFormData] = useState<Operateur>({} as Operateur);
+  const [hasChanges, setHasChanges] = useState(false);
 
   // ✅ Fetch operator by ID
   useEffect(() => {
@@ -52,14 +54,20 @@ const EditOperateur = () => {
     }
   }, [messageUpdate, navigate]);
 
-  // ✅ Handle Change Function
+  // ✅ Detect if formData changed from original
+  useEffect(() => {
+    if (!operateur) return;
+    setHasChanges(!isEqual(formData, operateur));
+  }, [formData, operateur]);
+
+  // ✅ Handle text/number/textarea inputs
   const handleChange = (
-    field: keyof Operateur,
+    name: keyof Operateur,
     value: string | number | undefined
   ) => {
     setFormData((prev) => ({
       ...prev,
-      [field]: value,
+      [name]: value === "" ? undefined : value,
     }));
   };
 
@@ -103,7 +111,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="number"
-                value={operateur.num_docier_client ?? ""}
+                defaultValue={operateur.num_docier_client ?? ""}
                 onChange={(e) =>
                   handleChange("num_docier_client", Number(e.target.value))
                 }
@@ -116,7 +124,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="number"
-                value={operateur.num_wilaya ?? ""}
+                defaultValue={operateur.num_wilaya ?? ""}
                 onChange={(e) =>
                   handleChange("num_wilaya", Number(e.target.value))
                 }
@@ -132,7 +140,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="date"
-                value={operateur.date_expiration ?? ""}
+                defaultValue={operateur.date_expiration ?? ""}
                 onChange={(e) =>
                   handleChange("date_expiration", e.target.value)
                 }
@@ -144,7 +152,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.fullName_arabe ?? ""}
+                defaultValue={operateur.fullName_arabe ?? ""}
                 onChange={(e) => handleChange("fullName_arabe", e.target.value)}
               />
             </div>
@@ -154,7 +162,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.fullName_francais ?? ""}
+                defaultValue={operateur.fullName_francais ?? ""}
                 onChange={(e) =>
                   handleChange("fullName_francais", e.target.value)
                 }
@@ -169,7 +177,7 @@ const EditOperateur = () => {
                 النشاط
               </label>
               <Select
-                value={operateur.activite ?? ""}
+                defaultValue={operateur.activite ?? ""}
                 onValueChange={(val) => handleChange("activite", val)}
               >
                 <SelectTrigger className="w-full">
@@ -186,7 +194,7 @@ const EditOperateur = () => {
                 حالة النشاط
               </label>
               <Select
-                value={operateur.status_activite ?? ""}
+                defaultValue={operateur.status_activite ?? ""}
                 onValueChange={(val) => handleChange("status_activite", val)}
               >
                 <SelectTrigger className="w-full">
@@ -208,7 +216,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="number"
-                value={operateur.num_cate_enregistement ?? ""}
+                defaultValue={operateur.num_cate_enregistement ?? ""}
                 onChange={(e) =>
                   handleChange(
                     "num_cate_enregistement",
@@ -224,7 +232,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="number"
-                value={operateur.num_dhoraire ?? ""}
+                defaultValue={operateur.num_dhoraire ?? ""}
                 onChange={(e) =>
                   handleChange(
                     "num_dhoraire",
@@ -240,7 +248,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="date"
-                value={operateur.date_prévue ?? ""}
+                defaultValue={operateur.date_prévue ?? ""}
                 onChange={(e) => handleChange("date_prévue", e.target.value)}
               />
             </div>
@@ -254,7 +262,7 @@ const EditOperateur = () => {
                 Colonne 1
               </label>
               <Select
-                value={operateur.colonne1 ?? ""}
+                defaultValue={operateur.colonne1 ?? ""}
                 onValueChange={(val) => handleChange("colonne1", val)}
               >
                 <SelectTrigger className="w-full">
@@ -273,7 +281,7 @@ const EditOperateur = () => {
                 النشاط
               </label>
               <Select
-                value={operateur.activite ?? ""}
+                defaultValue={operateur.activite ?? ""}
                 onValueChange={(val) => handleChange("activite", val)}
               >
                 <SelectTrigger className="w-full">
@@ -294,7 +302,7 @@ const EditOperateur = () => {
                 Colonne 2
               </label>
               <Select
-                value={operateur.colonne2 ?? ""}
+                defaultValue={operateur.colonne2 ?? ""}
                 onValueChange={(val) => handleChange("colonne2", val)}
               >
                 <SelectTrigger className="w-full">
@@ -313,7 +321,7 @@ const EditOperateur = () => {
                 طبيعة النشاط
               </label>
               <Select
-                value={operateur.nature_activite ?? ""}
+                defaultValue={operateur.nature_activite ?? ""}
                 onValueChange={(val) => handleChange("nature_activite", val)}
               >
                 <SelectTrigger className="w-full">
@@ -337,7 +345,7 @@ const EditOperateur = () => {
                 Colonne 3
               </label>
               <Select
-                value={operateur.colonne3 ?? ""}
+                defaultValue={operateur.colonne3 ?? ""}
                 onValueChange={(val) => handleChange("colonne3", val)}
               >
                 <SelectTrigger className="w-full">
@@ -356,7 +364,7 @@ const EditOperateur = () => {
                 حالة النشاط
               </label>
               <Select
-                value={operateur.status_activite ?? ""}
+                defaultValue={operateur.status_activite ?? ""}
                 onValueChange={(val) => handleChange("status_activite", val)}
               >
                 <SelectTrigger className="w-full">
@@ -378,7 +386,7 @@ const EditOperateur = () => {
                 Colonne 4
               </label>
               <Select
-                value={operateur.colonne4 ?? ""}
+                defaultValue={operateur.colonne4 ?? ""}
                 onValueChange={(val) => handleChange("colonne4", val)}
               >
                 <SelectTrigger className="w-full">
@@ -399,7 +407,7 @@ const EditOperateur = () => {
                 نوع المتعامل
               </label>
               <Select
-                value={operateur.type_client ?? ""}
+                defaultValue={operateur.type_client ?? ""}
                 onValueChange={(val) => handleChange("type_client", val)}
               >
                 <SelectTrigger className="w-full">
@@ -421,7 +429,7 @@ const EditOperateur = () => {
                 شكل الشركة او المؤسسة في حالة شخص معنوي
               </label>
               <Select
-                value={operateur.institution_person_moral ?? ""}
+                defaultValue={operateur.institution_person_moral ?? ""}
                 onValueChange={(val) =>
                   handleChange("institution_person_moral", val)
                 }
@@ -447,7 +455,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.fullName_gerent_person_moral ?? ""}
+                defaultValue={operateur.fullName_gerent_person_moral ?? ""}
                 onChange={(e) =>
                   handleChange("fullName_gerent_person_moral", e.target.value)
                 }
@@ -463,7 +471,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="number"
-                value={operateur.num_dacte_naissance ?? ""}
+                defaultValue={operateur.num_dacte_naissance ?? ""}
                 onChange={(e) =>
                   handleChange("num_dacte_naissance", Number(e.target.value))
                 }
@@ -476,7 +484,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="number"
-                value={operateur.num_didentification_national_NIN ?? ""}
+                defaultValue={operateur.num_didentification_national_NIN ?? ""}
                 onChange={(e) =>
                   handleChange(
                     "num_didentification_national_NIN",
@@ -495,7 +503,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.lieu_naissance_francais ?? ""}
+                defaultValue={operateur.lieu_naissance_francais ?? ""}
                 onChange={(e) =>
                   handleChange("lieu_naissance_francais", e.target.value)
                 }
@@ -507,7 +515,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.lieu_naissance_arabe ?? ""}
+                defaultValue={operateur.lieu_naissance_arabe ?? ""}
                 onChange={(e) =>
                   handleChange("lieu_naissance_arabe", e.target.value)
                 }
@@ -519,7 +527,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="date"
-                value={operateur.date_naissance ?? ""}
+                defaultValue={operateur.date_naissance ?? ""}
                 onChange={(e) => handleChange("date_naissance", e.target.value)}
               />
             </div>
@@ -533,7 +541,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.fullName_mere_arabe ?? ""}
+                defaultValue={operateur.fullName_mere_arabe ?? ""}
                 onChange={(e) =>
                   handleChange("fullName_mere_arabe", e.target.value)
                 }
@@ -545,7 +553,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.nom_pere_francais ?? ""}
+                defaultValue={operateur.nom_pere_francais ?? ""}
                 onChange={(e) =>
                   handleChange("nom_pere_francais", e.target.value)
                 }
@@ -557,7 +565,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.nom_pere_arabe ?? ""}
+                defaultValue={operateur.nom_pere_arabe ?? ""}
                 onChange={(e) => handleChange("nom_pere_arabe", e.target.value)}
               />
             </div>
@@ -571,7 +579,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.communes_naissance_francais ?? ""}
+                defaultValue={operateur.communes_naissance_francais ?? ""}
                 onChange={(e) =>
                   handleChange("communes_naissance_francais", e.target.value)
                 }
@@ -583,7 +591,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.communes_naissance_arabe ?? ""}
+                defaultValue={operateur.communes_naissance_arabe ?? ""}
                 onChange={(e) =>
                   handleChange("communes_naissance_arabe", e.target.value)
                 }
@@ -595,7 +603,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.fullName_mere_francais ?? ""}
+                defaultValue={operateur.fullName_mere_francais ?? ""}
                 onChange={(e) =>
                   handleChange("fullName_mere_francais", e.target.value)
                 }
@@ -611,7 +619,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.address_municipalité_arabe ?? ""}
+                defaultValue={operateur.address_municipalité_arabe ?? ""}
                 onChange={(e) =>
                   handleChange("address_municipalité_arabe", e.target.value)
                 }
@@ -623,7 +631,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.address_francais ?? ""}
+                defaultValue={operateur.address_francais ?? ""}
                 onChange={(e) =>
                   handleChange("address_francais", e.target.value)
                 }
@@ -635,7 +643,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.address_arabe ?? ""}
+                defaultValue={operateur.address_arabe ?? ""}
                 onChange={(e) => handleChange("address_arabe", e.target.value)}
               />
             </div>
@@ -649,7 +657,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.num_registre_commerce_n5 ?? ""}
+                defaultValue={operateur.num_registre_commerce_n5 ?? ""}
                 onChange={(e) =>
                   handleChange("num_registre_commerce_n5", e.target.value)
                 }
@@ -661,7 +669,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.num_registre_commerce ?? ""}
+                defaultValue={operateur.num_registre_commerce ?? ""}
                 onChange={(e) =>
                   handleChange("num_registre_commerce", e.target.value)
                 }
@@ -673,7 +681,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.address_municipalité_francais ?? ""}
+                defaultValue={operateur.address_municipalité_francais ?? ""}
                 onChange={(e) =>
                   handleChange("address_municipalité_francais", e.target.value)
                 }
@@ -689,7 +697,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="date"
-                value={operateur.date_debut_activite ?? ""}
+                defaultValue={operateur.date_debut_activite ?? ""}
                 onChange={(e) =>
                   handleChange("date_debut_activite", e.target.value)
                 }
@@ -701,7 +709,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="date"
-                value={operateur.modifier_hestoire_registre_commerce ?? ""}
+                defaultValue={operateur.modifier_hestoire_registre_commerce ?? ""}
                 onChange={(e) =>
                   handleChange(
                     "modifier_hestoire_registre_commerce",
@@ -716,7 +724,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="date"
-                value={operateur.hestoire_registre_commerce ?? ""}
+                defaultValue={operateur.hestoire_registre_commerce ?? ""}
                 onChange={(e) =>
                   handleChange("hestoire_registre_commerce", e.target.value)
                 }
@@ -732,7 +740,7 @@ const EditOperateur = () => {
                 متوقف عن النشاط او لا
               </label>
               <Select
-                value={operateur.depend_activite ?? ""}
+                defaultValue={operateur.depend_activite ?? ""}
                 onValueChange={(val) => handleChange("depend_activite", val)}
               >
                 <SelectTrigger className="w-full">
@@ -752,7 +760,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.num_adherent_caise_national_non_salaire ?? ""}
+                defaultValue={operateur.num_adherent_caise_national_non_salaire ?? ""}
                 onChange={(e) =>
                   handleChange(
                     "num_adherent_caise_national_non_salaire",
@@ -772,7 +780,7 @@ const EditOperateur = () => {
               <Input
                 type="date"
                 disabled={depnd === "لا"}
-                value={operateur.date_arret_activite_permanent ?? ""}
+                defaultValue={operateur.date_arret_activite_permanent ?? ""}
                 onChange={(e) =>
                   handleChange("date_arret_activite_permanent", e.target.value)
                 }
@@ -786,7 +794,7 @@ const EditOperateur = () => {
               <Input
                 type="date"
                 disabled={depnd === "لا"}
-                value={operateur.date_arret_activite_temporaire ?? ""}
+                defaultValue={operateur.date_arret_activite_temporaire ?? ""}
                 onChange={(e) =>
                   handleChange("date_arret_activite_temporaire", e.target.value)
                 }
@@ -798,7 +806,7 @@ const EditOperateur = () => {
                 نوع التوقف
               </label>
               <Select
-                value={operateur.type_depend ?? ""}
+                defaultValue={operateur.type_depend ?? ""}
                 onValueChange={(val) => handleChange("type_depend", val)}
                 disabled={depnd === "لا"}
               >
@@ -821,7 +829,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.soccupe ?? ""}
+                defaultValue={operateur.soccupe ?? ""}
                 onChange={(e) => handleChange("soccupe", e.target.value)}
               />
             </div>
@@ -832,7 +840,7 @@ const EditOperateur = () => {
               </label>
               <Input
                 type="text"
-                value={operateur.num_telephone_client ?? ""}
+                defaultValue={operateur.num_telephone_client ?? ""}
                 onChange={(e) =>
                   handleChange("num_telephone_client", e.target.value)
                 }
@@ -847,7 +855,7 @@ const EditOperateur = () => {
             </label>
             <Textarea
               placeholder="أدخل أي ملاحظات"
-              value={operateur.note_chef_departement ?? ""}
+              defaultValue={operateur.note_chef_departement ?? ""}
               onChange={(e) =>
                 handleChange("note_chef_departement", e.target.value)
               }
@@ -857,10 +865,18 @@ const EditOperateur = () => {
           {/* Submit Button */}
           <Button
             type="submit"
-            disabled={loading}
-            className="w-full flex justify-center items-center gap-2"
+            disabled={loading || !hasChanges} // disable if no changes
+            className={`w-full ${
+              !hasChanges ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
-            {loading ? <Loader className="animate-spin" /> : "إرسال البيانات"}
+            {loading ? (
+              <Loader />
+            ) : hasChanges ? (
+              "💾 حفظ التعديلات"
+            ) : (
+              "لا توجد تغييرات"
+            )}
           </Button>
         </form>
       </div>

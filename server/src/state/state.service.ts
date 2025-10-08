@@ -35,6 +35,7 @@ export class StateService {
     return { operateurs, chauffeurs, vehicules };
   }
 
+  //inter communal
   async getInter_communal(startDate?: Date, endDate?: Date) {
     const matchConditions: any = {
       font_type: 'بين البلديات',
@@ -177,10 +178,7 @@ export class StateService {
     ]);
   }
 
-
-
-
-
+  //inter wilaya
   async getInter_wilaya(startDate, endDate) {
     const matchConditions: any = {
       font_type: 'بين الولايات',
@@ -325,6 +323,7 @@ export class StateService {
   }
 
 
+  //inter rural 
   async getInter_rural(startDate, endDate) {
     const matchConditions: any = {
       font_type: 'ريفي',
@@ -468,6 +467,7 @@ export class StateService {
   }
 
 
+  //inter urbain 
   async getInter_urbain(startDate, endDate) {
     const matchConditions: any = {
       font_type: 'نقل العمال',
@@ -610,6 +610,8 @@ export class StateService {
     ]);
   }
 
+
+  //inter scolaire 
   async getInter_scolaire(startDate, endDate) {
     const matchConditions: any = {
       font_type: 'نقل مدرسي',
@@ -754,6 +756,7 @@ export class StateService {
 
 
 
+  //statistisue annee 
   async statistiqueAnnee(startDate: Date, endDate: Date) {
     let Operateur = {};
     let Vihicle = {};
@@ -783,7 +786,8 @@ export class StateService {
     const tpv = filtered.filter((v) =>
       ["بين البلديات", "بين الولايات", "حضري", "ريفي"].includes(v.font_type)
     );
-
+    console.log("tpv , ", tpv);
+ 
     const publicCount = tpv.filter((v) => v.status_activite === "PUBLICE").length;
     const priveCount = tpv.filter((v) => v.status_activite === "PRIVE").length;
 

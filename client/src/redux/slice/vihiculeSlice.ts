@@ -619,7 +619,7 @@ const operateurSlice = createSlice({
         state.error = null;
         state.errorDetails = null;
       })
-      .addCase(createVihicules.fulfilled, (state, action) => {
+      .addCase(createVihicules.fulfilled, (state) => {
         state.loading = false;
         toast.success("تم تسجيل المركبة بنجاح");
         state.messageCreated = "تم تسجيل المركبة بنجاح";

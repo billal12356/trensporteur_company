@@ -16,52 +16,58 @@ import { Loader } from "lucide-react";
 import { FindOneVihicule, updateVihicules } from "@/redux/slice/vihiculeSlice";
 import MainContainer from "@/components/MainContainer";
 import { Helmet } from "react-helmet-async";
+import { isEqual } from "lodash";
 
 const EditOperateur = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+
   const { vihicule, loading, messageUpdate } = useSelector(
     (state: RootState) => state.vihicule
   );
 
-  // ✅ Local State for form data
   const [formData, setFormData] = useState<Partial<Vihicles>>({});
+  const [hasChanges, setHasChanges] = useState(false);
 
-  // ✅ Handle Change for inputs
-  const handleChange = (key: keyof Vihicles, value: any) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-  };
-
-  // ✅ Fetch data when ID changes
+  // ✅ Fetch vihicule by ID
   useEffect(() => {
-    if (id) {
-      dispatch(FindOneVihicule(id));
-    }
+    if (id) dispatch(FindOneVihicule(id));
   }, [dispatch, id]);
 
-  // ✅ Populate form when data arrives
+  // ✅ Populate form data once fetched
   useEffect(() => {
-    if (vihicule) {
-      setFormData(vihicule);
-    }
+    if (vihicule) setFormData(vihicule);
   }, [vihicule]);
+
+  // ✅ Compare for changes
+  useEffect(() => {
+    if (!vihicule) return;
+    setHasChanges(!isEqual(formData, vihicule));
+  }, [formData, vihicule]);
 
   // ✅ Navigate after update
   useEffect(() => {
-    if (messageUpdate) {
-      navigate("/vehecule");
-    }
+    if (messageUpdate) navigate("/vehecule");
   }, [messageUpdate, navigate]);
 
-  // ✅ Submit handler
-  const handleSubmitForm = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!id) return;
-    dispatch(updateVihicules({ id, data: formData }));
+  // ✅ Handle input changes safely
+  const handleChange = (
+    name: keyof Vihicles,
+    value: string | number | Date | undefined
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value === "" ? undefined : value,
+    }));
   };
 
-  const depnd = formData.vihicile_parked;
+  // ✅ Handle submit
+  const handleSubmitForm = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !hasChanges) return;
+    dispatch(updateVihicules({ id, data: formData }));
+  };
 
   return (
     <MainContainer>
@@ -552,8 +558,20 @@ const EditOperateur = () => {
           </div>
 
           {/* ✅ Submit */}
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? <Loader /> : "إرسال البيانات"}
+          <Button
+            type="submit"
+            disabled={loading || !hasChanges} // disable if no changes
+            className={`w-full ${
+              !hasChanges ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            {loading ? (
+              <Loader />
+            ) : hasChanges ? (
+              "💾 حفظ التعديلات"
+            ) : (
+              "لا توجد تغييرات"
+            )}
           </Button>
         </form>
       </div>

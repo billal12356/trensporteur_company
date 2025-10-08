@@ -267,7 +267,7 @@ export class OperateurDtwService {
     };
   }
 
-  async drawArabicText(page, text, x, y, font, size = 14) {
+  async drawArabicText(page, text, x, y, font, size =10) {
     const visual = getVisualString(text);
     page.drawText(visual, { x, y, font, size, color: rgb(0, 0, 0) });
   }
@@ -303,10 +303,24 @@ export class OperateurDtwService {
     );
     const customFont = await pdfDoc.embedFont(fs.readFileSync(fontPath));
 
-    const page = pdfDoc.addPage([595, 842]); // A4 portrait
+    // تحميل الصورة الخلفية
+    const bgPath = path.join(process.cwd(), 'dist', 'assets', 'jpg.jpg');
+    const bgImageBytes = fs.readFileSync(bgPath);
+    const bgImage = await pdfDoc.embedJpg(bgImageBytes);
 
+    // إضافة الصفحة
+    const page = pdfDoc.addPage([595, 842]); // A4
+
+    // رسم الخلفية لتغطي الصفحة كاملة
+    const { width, height } = page.getSize();
+    page.drawImage(bgImage, {
+      x: 0,
+      y: 0,
+      width,
+      height,
+    });
     // دالة لطباعة النص العربي من اليمين لليسار
-    const drawArabic = (text: any, x: number, y: number, size = 14) => {
+    const drawArabic = (text: any, x: number, y: number, size = 12) => {
       let str: string;
 
       if (text instanceof Date) {
@@ -332,10 +346,10 @@ export class OperateurDtwService {
     };
 
     // ✅ كتابة بيانات المشغل فقط في الصفحة الأولى
-    drawArabic('عين الدفلة', 405, 90); // الولاية
-    drawArabic(operateur?.fullName_arabe, 280, 200, 14); // الاسم الكامل
-    drawArabic(operateur?.date_debut_activite, 260, 280); // تاريخ بداية النشاط
-    drawArabic(operateur?.num_cate_enregistement, 450, 280); // رقم بطاقة التسجيل
+    drawArabic('عين الدفلة', 380, 115, 14); // الولاية
+    drawArabic(operateur?.fullName_arabe, 300, 235); // الاسم الكامل
+    drawArabic(operateur?.date_debut_activite, 280, 325); // تاريخ بداية النشاط
+    drawArabic(operateur?.num_cate_enregistement, 430, 325); // رقم بطاقة التسجيل
     if (
       vihicules[0].font_type === 'بين البلديات' ||
       vihicules[0].font_type === 'بين الولايات'
@@ -351,33 +365,33 @@ export class OperateurDtwService {
     }
     if (vihicules[0].font_type === 'ريـفي') {
       drawArabic('', 350, 340);
-      drawArabic(vihicules[0]?.point_depart, 200, 340);
-      drawArabic(vihicules[0]?.point_arrive, 100, 340);
-      drawArabic('5:00', 350, 390);
-      drawArabic('22:00', 200, 390);
-      drawArabic('06', 100, 390);
+      drawArabic(vihicules[0]?.point_depart, 180, 375);
+      drawArabic(vihicules[0]?.point_arrive,40, 375);
+      drawArabic('5:00', 370, 395);
+      drawArabic('22:00', 210, 395);
+      drawArabic('06', 110, 395);
     }
-    drawArabic(vihicules[0]?.point_Traffic1, 500, 490); // نقطة الوصول
-    drawArabic(vihicules[0]?.point_Traffic2, 440, 490); // نقطة الوصول
-    drawArabic(vihicules[0]?.point_Traffic3, 380, 490); // نقطة الوصول
-    drawArabic(vihicules[0]?.point_Traffic4, 320, 490);
-    drawArabic(vihicules[0]?.point_depart, 200, 490); // نقطة الانطلاق
-    drawArabic(vihicules[0]?.point_arrive, 80, 490);
+    drawArabic(vihicules[0]?.point_Traffic1, 490, 470); // نقطة الوصول
+    drawArabic(vihicules[0]?.point_Traffic2, 430, 470); // نقطة الوصول
+    drawArabic(vihicules[0]?.point_Traffic3, 370, 470); // نقطة الوصول
+    drawArabic(vihicules[0]?.point_Traffic4, 310, 470);
+    drawArabic(vihicules[0]?.point_depart, 200, 470); // نقطة الانطلاق
+    drawArabic(vihicules[0]?.point_arrive, 80, 470);
 
     if (vihicules.length === 1) {
       const [vehicule] = vihicules;
 
       if (vehicule.Number_of_seats !== undefined)
-        drawArabic(vehicule.Number_of_seats.toString(), 50, 746);
+        drawArabic(vehicule.Number_of_seats.toString(), 80, 620);
 
-      if (vehicule.Style) drawArabic(vehicule.Style, 100, 746);
+      if (vehicule.Style) drawArabic(vehicule.Style, 150, 620);
 
-      if (vehicule.type) drawArabic(vehicule.type, 200, 746);
+      if (vehicule.type) drawArabic(vehicule.type, 230, 620);
 
-      if (vehicule.category) drawArabic(vehicule.category, 300, 746);
+      if (vehicule.category) drawArabic(vehicule.category, 300, 620);
 
       if (vehicule.num_bus_registration)
-        drawArabic(vehicule.num_bus_registration, 400, 746);
+        drawArabic(vehicule.num_bus_registration, 405, 620);
     }
 
     if (

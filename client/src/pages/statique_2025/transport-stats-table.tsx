@@ -1,6 +1,6 @@
 import { fetchAnneeStats } from "@/redux/slice/stateSlice";
 import { AppDispatch, RootState } from "@/redux/store";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 interface Props {
