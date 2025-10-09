@@ -40,6 +40,8 @@ export class VehiclesService {
     num_docier_client,
   });
 
+  
+
   if (!operateurNum) {
     throw new NotFoundException(
       new ResponseBuilder()
@@ -521,7 +523,6 @@ export class VehiclesService {
   }
 
   async searchByLineCode(lineCode: string) {
-    console.log('lineCode', lineCode);
     const lines = await this.VihicileModel.find({
       font_symbol: lineCode,
     }).exec();
@@ -535,6 +536,7 @@ export class VehiclesService {
 
   async exportToExcel(lineCode: string): Promise<Buffer> {
     const vehicles = await this.searchByLineCode(lineCode);
+    console.log("vehicles " ,vehicles);
 
     function formatDate(
       dateInput: Date | string | number,

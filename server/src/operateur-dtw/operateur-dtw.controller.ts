@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseGuards,
+  Res,
+} from '@nestjs/common';
 import { OperateurDtwService } from './operateur-dtw.service';
 import { CreateOperateurDto } from './dto/create-operateur-dtw.dto';
 import { UpdateOperateurDtwDto } from './dto/update-operateur-dtw.dto';
@@ -8,12 +19,19 @@ import { Response } from 'express';
 import * as ExcelJS from 'exceljs';
 @Controller('operateur-dtw')
 export class OperateurDtwController {
-  constructor(private readonly operateurDtwService: OperateurDtwService) { }
+  constructor(private readonly operateurDtwService: OperateurDtwService) {}
 
   @UseGuards(AuthGuard)
   @Post('create')
-  create(@Body() createOperateurDtwDto: CreateOperateurDto) {
-    return this.operateurDtwService.create(createOperateurDtwDto);
+  async create(
+    @Body() createOperateurDtwDto: CreateOperateurDto,
+    @Res() res: Response,
+  ) {
+    const operateur = await this.operateurDtwService.create(
+      createOperateurDtwDto,
+      res,
+    );
+    return operateur;
   }
 
   @UseGuards(AuthGuard)
@@ -30,7 +48,6 @@ export class OperateurDtwController {
 
   @Get(':id/pdf')
   async generatePDF(@Param('id') id: string, @Res() res: Response) {
-
     const filePath = await this.operateurDtwService.generatePDF(id);
 
     res.download(filePath);
@@ -38,7 +55,10 @@ export class OperateurDtwController {
 
   @UseGuards(AuthGuard)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOperateurDtwDto: UpdateOperateurDtwDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateOperateurDtwDto: UpdateOperateurDtwDto,
+  ) {
     return this.operateurDtwService.update(id, updateOperateurDtwDto);
   }
 
@@ -50,7 +70,8 @@ export class OperateurDtwController {
 
   @Get('download')
   async downloadExcel(@Res() res: Response, @Query() filterDto: any) {
-    const filePath = await this.operateurDtwService.exportUsersToExcel(filterDto);
+    const filePath =
+      await this.operateurDtwService.exportUsersToExcel(filterDto);
     res.download(filePath, 'Operateurs.xlsx', (err) => {
       if (err) {
         console.error('خطأ أثناء تحميل الملف:', err);
@@ -59,13 +80,16 @@ export class OperateurDtwController {
     });
   }
 
-  @Get("export-stats")
+  @Get('export-stats')
   async exportStatsToExcel(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
-    const stats = await this.operateurDtwService.getRegistrationStats(startDate, endDate);
+    const stats = await this.operateurDtwService.getRegistrationStats(
+      startDate,
+      endDate,
+    );
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('إحصائيات المسجلين');
@@ -79,25 +103,29 @@ export class OperateurDtwController {
 
     res.setHeader(
       'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename=registration_stats_${startDate}_to_${endDate}.xlsx`
+      `attachment; filename=registration_stats_${startDate}_to_${endDate}.xlsx`,
     );
 
     const buffer = await workbook.xlsx.writeBuffer();
     res.end(buffer);
   }
 
-
   @Get('generate')
   generate(@Query('id') id: string, @Res() res: Response) {
     return this.operateurDtwService.generatepdfs(id, res);
   }
 
-  @Get("generate-pdf")
-  async generatepdf(@Query('id') id: string,@Res() res: Response) {
-    return this.operateurDtwService.generatePdf(res,id);
-  } 
+  @Get('generate-pdf')
+  async generatepdf(@Query('id') id: string, @Res() res: Response) {
+    return this.operateurDtwService.generatePdf(res, id);
+  }
+  // @Get('generate-pdf-created')
+  // async generatePDFCreated(@Res() res: Response) {
+  //   const filePath = await this.operateurDtwService.generatePDFCreated();
+  //   res.download(filePath, 'Operateur-Static.pdf');
+  // }
 }

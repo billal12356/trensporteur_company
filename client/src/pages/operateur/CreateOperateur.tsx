@@ -719,7 +719,7 @@ const FormOperateur: React.FC = () => {
                 onChange={(e) =>
                   handleChange(
                     "num_adherent_caise_national_non_salaire",
-                    e.target.value
+                     Number(e.target.value)
                   )
                 }
               />

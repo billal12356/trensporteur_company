@@ -228,7 +228,7 @@ export const exportVihicules = createAsyncThunk<
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "Operateurs.xlsx");
+    link.setAttribute("download", "Vehicles.xlsx");
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -238,11 +238,11 @@ export const exportVihicules = createAsyncThunk<
 });
 
 export const deleteVihicules = createAsyncThunk(
-  "operateur/deleteVihicules",
+  "vihicules/deleteVihicules",
   async (id: string, { rejectWithValue }) => {
     try {
       const response = await axios.delete(
-        `${API_URL}/api/v1/operateur-dtw/${id}`,
+        `${API_URL}/api/v1/vehicles/${id}`,
         { withCredentials: true }
       );
       console.log(response.data);

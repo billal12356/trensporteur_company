@@ -3,7 +3,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { Link, useParams } from "react-router-dom";
-import { FindOneOperateur, generatePDF } from "@/redux/slice/operateurSlice";
+import {
+  FindOneOperateur,
+  generatePDF,
+  generatePDFs,
+} from "@/redux/slice/operateurSlice";
 import MainContainer from "@/components/MainContainer";
 import { Button } from "@/components/ui/button";
 import { IoCaretBackSharp, IoCaretForwardSharp } from "react-icons/io5";
@@ -11,7 +15,7 @@ import { DownloadOperateurPDF } from "@/redux/slice/vihiculeSlice";
 import { Helmet } from "react-helmet-async";
 
 export default function OperateurDetails() {
-  const { operateur, vihicules, chauffeurs ,loading } = useSelector(
+  const { operateur, vihicules, chauffeurs, loading } = useSelector(
     (state: RootState) => state.operateur
   );
   const dispatch = useDispatch<AppDispatch>();
@@ -37,6 +41,9 @@ export default function OperateurDetails() {
 
   const handleClick = () => {
     dispatch(generatePDF(id ?? " "));
+  };
+  const handleClickPfds = () => {
+    dispatch(generatePDFs(id ?? " "));
   };
 
   return (
@@ -65,6 +72,19 @@ export default function OperateurDetails() {
         >
           {loading ? "Generating..." : "Download PDF"}
         </button>
+
+        {loading ? (
+          <div className="text-blue-600 font-semibold mt-4">
+            جاري إنشاء الملف...
+          </div>
+        ) : (
+          <button
+            onClick={handleClickPfds}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+          >
+            إنشاء PDF
+          </button>
+        )}
         <Card className="shadow-lg">
           <CardContent className="space-y-6">
             {/* Header */}

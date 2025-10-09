@@ -11,7 +11,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Operateur } from './operateur-dtw.schema';
 import { Model, Types } from 'mongoose';
 import { ResponseBuilder } from 'src/common/builder/response.builder';
-import { UserQueryBuilder } from 'src/common/builder/pagination.builder';
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { Workbook } from 'exceljs';
@@ -20,14 +19,14 @@ import { ChauffeursService } from 'src/chauffeurs/chauffeurs.service';
 import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from 'pdf-lib';
 const fontkit = require('@pdf-lib/fontkit');
 import { getVisualString } from 'bidi-js';
-const arabicReshaper = require('arabic-reshaper');
 import * as fs from 'fs';
 import * as path from 'path';
 import { OperateurQueryBuilder } from 'src/common/builder/OperateurQueryBuilder';
 import { Response } from 'express';
 
 import { Document, Packer, Paragraph, TextRun } from 'docx';
-function convertToArabicWords(num: number): string {
+import { promisify } from 'util';
+function convertToArabicWords(number: number): string {
   const ones = [
     '',
     'واحد',
@@ -40,7 +39,6 @@ function convertToArabicWords(num: number): string {
     'ثمانية',
     'تسعة',
   ];
-
   const tens = [
     '',
     'عشرة',
@@ -54,29 +52,19 @@ function convertToArabicWords(num: number): string {
     'تسعون',
   ];
 
-  const teens = [
-    'أحد عشر',
-    'اثنا عشر',
-    'ثلاثة عشر',
-    'أربعة عشر',
-    'خمسة عشر',
-    'ستة عشر',
-    'سبعة عشر',
-    'ثمانية عشر',
-    'تسعة عشر',
-  ];
+  if (number === 0) return 'صفر';
+  if (number < 10) return ones[number];
+  if (number < 20) {
+    if (number === 10) return 'عشرة';
+    return ones[number - 10] + ' عشر';
+  }
+  if (number < 100) {
+    const ten = Math.floor(number / 10);
+    const one = number % 10;
+    return (one ? ones[one] + ' و' : '') + tens[ten];
+  }
 
-  if (num === 0) return 'صفر';
-  if (num === 10) return 'عشرة';
-  if (num === 11) return teens[0];
-  if (num === 12) return teens[1];
-  if (num > 12 && num < 20) return teens[num - 11];
-
-  const ten = Math.floor(num / 10);
-  const one = num % 10;
-
-  if (one === 0) return tens[ten];
-  return `${ones[one]} و${tens[ten]}`;
+  return number.toString(); // fallback للأعداد الكبيرة
 }
 
 type Alignment = 'left' | 'center' | 'right';
@@ -209,13 +197,49 @@ export class OperateurDtwService {
     private readonly chauffeursService: ChauffeursService,
   ) {}
 
-  async create(createOperateurDtwDto: CreateOperateurDto) {
-    const operateur = await this.OperateurModel.create(createOperateurDtwDto);
-    return new ResponseBuilder()
-      .setStatus(201)
-      .setMessage('تم تسجيل المتعامل بنجاح')
-      .setData(operateur)
-      .build();
+  async create(createOperateurDtwDto: CreateOperateurDto, res: Response) {
+    try {
+      // ✅ Validate input (NestJS ValidationPipe should already handle this)
+      // If DTO validation fails, this won't even run.
+
+      // Create the operateur in DB
+      const operateur = await this.OperateurModel.create(createOperateurDtwDto);
+
+      if (!operateur) {
+        return res.status(404).json({
+          message: 'لم يتم إنشاء المتعامل. يرجى التحقق من البيانات.',
+        });
+      }
+
+      // Generate PDF after successful creation
+      const filePath = await this.generatePDFCreated(
+        operateur.fullName_arabe,
+        operateur.address_arabe,
+      );
+
+      // Send PDF as download
+      return res.download(filePath, 'Operateur-Static.pdf', (err) => {
+        if (err) {
+          console.error('❌ Error downloading PDF:', err);
+          res.status(500).json({ message: 'حدث خطأ أثناء تحميل الملف' });
+        }
+      });
+    } catch (error) {
+      console.error('❌ Validation or Server Error:', error);
+
+      // If validation error from DTO
+      if (error?.response?.message) {
+        return res.status(400).json({
+          message: 'خطأ في البيانات المدخلة',
+          errors: error, // this will contain all field errors
+        });
+      }
+
+      // Fallback server error
+      return res.status(500).json({
+        message: 'حدث خطأ أثناء إنشاء المتعامل',
+      });
+    }
   }
 
   async findAll(params: any) {
@@ -267,7 +291,7 @@ export class OperateurDtwService {
     };
   }
 
-  async drawArabicText(page, text, x, y, font, size =10) {
+  async drawArabicText(page, text, x, y, font, size = 10) {
     const visual = getVisualString(text);
     page.drawText(visual, { x, y, font, size, color: rgb(0, 0, 0) });
   }
@@ -280,9 +304,7 @@ export class OperateurDtwService {
     const vihicules =
       await this.vihiculeService.findVihiculeByOperateur(num_docier_client);
 
-    console.log(vihicules.length);
-
-    if (!vihicules) {
+    if (!vihicules || vihicules.length === 0) {
       throw new BadRequestException(
         new ResponseBuilder()
           .setStatus(400)
@@ -291,6 +313,7 @@ export class OperateurDtwService {
           .build(),
       );
     }
+
     const pdfDoc = await PDFDocument.create();
     pdfDoc.registerFontkit(fontkit);
 
@@ -303,26 +326,34 @@ export class OperateurDtwService {
     );
     const customFont = await pdfDoc.embedFont(fs.readFileSync(fontPath));
 
-    // تحميل الصورة الخلفية
-    const bgPath = path.join(process.cwd(), 'dist', 'assets', 'jpg.jpg');
-    const bgImageBytes = fs.readFileSync(bgPath);
-    const bgImage = await pdfDoc.embedJpg(bgImageBytes);
+    // /** 🖼️ تحميل صورة الخلفية للصفحة الأولى */
+    // const bgPath1 = path.join(process.cwd(), 'dist', 'assets', 'rifiPdf.png');
+    // if (!fs.existsSync(bgPath1)) {
+    //   throw new Error(`❌ لم يتم العثور على الصورة: ${bgPath1}`);
+    // }
+    // const bgImage1 = await pdfDoc.embedPng(fs.readFileSync(bgPath1));
 
-    // إضافة الصفحة
-    const page = pdfDoc.addPage([595, 842]); // A4
+    // /** 🖼️ تحميل صورة الخلفية للصفحة الثانية */
+    // const bgPath2 = path.join(process.cwd(), 'dist', 'assets', 'tablepdf.png');
+    // if (!fs.existsSync(bgPath2)) {
+    //   throw new Error(`❌ لم يتم العثور على الصورة: ${bgPath2}`);
+    // }
+    // const bgImage2 = await pdfDoc.embedPng(fs.readFileSync(bgPath2));
 
-    // رسم الخلفية لتغطي الصفحة كاملة
-    const { width, height } = page.getSize();
-    page.drawImage(bgImage, {
-      x: 0,
-      y: 0,
-      width,
-      height,
-    });
-    // دالة لطباعة النص العربي من اليمين لليسار
-    const drawArabic = (text: any, x: number, y: number, size = 12) => {
+    /** 📄 الصفحة الأولى */
+    const page1 = pdfDoc.addPage([595, 842]); // A4
+    // const { width: w1, height: h1 } = page1.getSize();
+    // page1.drawImage(bgImage1, { x: 0, y: 0, width: w1, height: h1 });
+
+    // دالة لكتابة النص بالعربية في صفحة معينة
+    const drawArabic = (
+      page: any,
+      text: any,
+      x: number,
+      y: number,
+      size = 12,
+    ) => {
       let str: string;
-
       if (text instanceof Date) {
         const day = text.getDate().toString().padStart(2, '0');
         const month = (text.getMonth() + 1).toString().padStart(2, '0');
@@ -333,8 +364,7 @@ export class OperateurDtwService {
       }
 
       const reversed = str.split('').join('');
-      const pageHeight = 842;
-      const adjustedY = pageHeight - y;
+      const adjustedY = 842 - y;
 
       page.drawText(reversed, {
         x,
@@ -345,70 +375,90 @@ export class OperateurDtwService {
       });
     };
 
-    // ✅ كتابة بيانات المشغل فقط في الصفحة الأولى
-    drawArabic('عين الدفلة', 380, 115, 14); // الولاية
-    drawArabic(operateur?.fullName_arabe, 300, 235); // الاسم الكامل
-    drawArabic(operateur?.date_debut_activite, 280, 325); // تاريخ بداية النشاط
-    drawArabic(operateur?.num_cate_enregistement, 430, 325); // رقم بطاقة التسجيل
-    if (
-      vihicules[0].font_type === 'بين البلديات' ||
-      vihicules[0].font_type === 'بين الولايات'
-    ) {
-      drawArabic(vihicules[0]?.point_depart, 350, 340); // نقطة الانطلاق
-      drawArabic(vihicules[0]?.point_arrive, 350, 380); // نقطة الوصول
-      drawArabic(vihicules[0]?.point_Traffic1, 350, 420); // نقطة الوصول
-      drawArabic(vihicules[0]?.point_Traffic2, 250, 420); // نقطة الوصول
-      drawArabic(vihicules[0]?.point_Traffic3, 150, 420); // نقطة الوصول
-      drawArabic(vihicules[0]?.point_Traffic4, 50, 420); // نقطة الوصول
-      drawArabic('21:00', 230, 540);
-      drawArabic('5:00', 500, 540);
-    }
-    if (vihicules[0].font_type === 'ريـفي') {
-      drawArabic('', 350, 340);
-      drawArabic(vihicules[0]?.point_depart, 180, 375);
-      drawArabic(vihicules[0]?.point_arrive,40, 375);
-      drawArabic('5:00', 370, 395);
-      drawArabic('22:00', 210, 395);
-      drawArabic('06', 110, 395);
-    }
-    drawArabic(vihicules[0]?.point_Traffic1, 490, 470); // نقطة الوصول
-    drawArabic(vihicules[0]?.point_Traffic2, 430, 470); // نقطة الوصول
-    drawArabic(vihicules[0]?.point_Traffic3, 370, 470); // نقطة الوصول
-    drawArabic(vihicules[0]?.point_Traffic4, 310, 470);
-    drawArabic(vihicules[0]?.point_depart, 200, 470); // نقطة الانطلاق
-    drawArabic(vihicules[0]?.point_arrive, 80, 470);
-
-    if (vihicules.length === 1) {
-      const [vehicule] = vihicules;
-
-      if (vehicule.Number_of_seats !== undefined)
-        drawArabic(vehicule.Number_of_seats.toString(), 80, 620);
-
-      if (vehicule.Style) drawArabic(vehicule.Style, 150, 620);
-
-      if (vehicule.type) drawArabic(vehicule.type, 230, 620);
-
-      if (vehicule.category) drawArabic(vehicule.category, 300, 620);
-
-      if (vehicule.num_bus_registration)
-        drawArabic(vehicule.num_bus_registration, 405, 620);
-    }
+    const firstVehicule = vihicules[0];
 
     if (
-      vihicules[0].font_type === 'بين البلديات' ||
-      vihicules[0].font_type === 'بين الولايات'
+      firstVehicule.font_type === 'بين البلديات' ||
+      firstVehicule.font_type === 'بين الولايات'
     ) {
-      drawArabic('عين الدفلة', 150, 777);
+      // ✅ كتابة بيانات المشغل في الصفحة الأولى
+      drawArabic(page1, 'عين الدفلة', 380, 105, 14);
+      drawArabic(page1, operateur?.fullName_arabe, 300, 215);
+      drawArabic(page1, operateur?.date_debut_activite, 285, 307);
+      drawArabic(page1, operateur?.num_cate_enregistement, 430, 307);
+      drawArabic(page1, firstVehicule?.point_depart, 300, 353);
+      drawArabic(page1, firstVehicule?.point_arrive, 320, 375);
+      drawArabic(page1, firstVehicule?.point_Traffic1, 342, 400);
+      drawArabic(page1, firstVehicule?.point_Traffic2, 270, 400);
+      drawArabic(page1, firstVehicule?.point_Traffic3, 190, 400);
+      drawArabic(page1, firstVehicule?.point_Traffic4, 110, 400);
+      drawArabic(page1, '21:00', 255, 483);
+      drawArabic(page1, '5:00', 500, 483);
     }
 
-    // ✅ في حالة وجود مركبات، أضف صفحة جديدة فيها الجدول
+    if (firstVehicule.font_type === 'ريـفي') {
+      // ✅ كتابة بيانات المشغل في الصفحة الأولى
+      drawArabic(page1, 'عين الدفلة', 380, 115, 14);
+      drawArabic(page1, operateur?.fullName_arabe, 300, 235);
+      drawArabic(page1, operateur?.date_debut_activite, 290, 328);
+      drawArabic(page1, operateur?.num_cate_enregistement, 430, 328);
+      drawArabic(page1, '', 350, 340);
+      drawArabic(page1, firstVehicule?.point_depart, 200, 373);
+      drawArabic(page1, firstVehicule?.point_arrive, 65, 373);
+      drawArabic(page1, '5:00', 370, 398);
+      drawArabic(page1, '22:00', 210, 398);
+      drawArabic(page1, '06', 110, 398);
+
+      drawArabic(page1, firstVehicule?.point_Traffic1, 490, 470);
+      drawArabic(page1, firstVehicule?.point_Traffic2, 440, 470);
+      drawArabic(page1, firstVehicule?.point_Traffic3, 380, 470);
+      drawArabic(page1, firstVehicule?.point_Traffic4, 320, 470);
+      drawArabic(page1, firstVehicule?.point_depart, 200, 470);
+      drawArabic(page1, firstVehicule?.point_arrive, 80, 470);
+    }
+
+    if (vihicules.length === 1 && firstVehicule.font_type === 'ريـفي') {
+      const v = vihicules[0];
+      if (v.Number_of_seats !== undefined)
+        drawArabic(page1, v.Number_of_seats.toString(), 100, 620);
+      if (v.Style) drawArabic(page1, v.Style, 175, 620);
+      if (v.type) drawArabic(page1, v.type, 250, 620);
+      if (v.category) drawArabic(page1, v.category, 315, 620);
+      if (v.num_bus_registration)
+        drawArabic(page1, v.num_bus_registration, 405, 620);
+    }
+    if (
+      (vihicules.length === 1 && firstVehicule.font_type === 'بين البلديات') ||
+      firstVehicule.font_type === 'بين الولايات'
+    ) {
+      const v = vihicules[0];
+      if (v.Number_of_seats !== undefined)
+        drawArabic(page1, v.Number_of_seats.toString(), 100, 627);
+      if (v.Style) drawArabic(page1, v.Style, 175, 627);
+      if (v.type) drawArabic(page1, v.type, 255, 627);
+      if (v.category) drawArabic(page1, v.category, 325, 627);
+      if (v.num_bus_registration)
+        drawArabic(page1, v.num_bus_registration, 405, 627);
+    }
+
+    if (firstVehicule.font_type === 'ريـفي') {
+      drawArabic(page1, 'عين الدفلة', 200, 670);
+    }
+    if (
+      firstVehicule.font_type === 'بين البلديات' ||
+      firstVehicule.font_type === 'بين الولايات'
+    ) {
+      drawArabic(page1, 'عين الدفلة', 210, 660);
+    }
+
+    /** 📄 الصفحة الثانية (الجدول) */
     if (vihicules.length > 1) {
       const page2 = pdfDoc.addPage([595, 842]);
+      // const { width: w2, height: h2 } = page2.getSize();
+      // page2.drawImage(bgImage2, { x: 0, y: 0, width: w2, height: h2 });
 
-      const tableStartY = 740;
+      const tableStartY = 710;
       const rowHeight = 25;
-
-      const headerX = [420, 330, 240, 160, 60];
 
       vihicules.forEach((v, index) => {
         const y = tableStartY - rowHeight * (index + 1);
@@ -425,14 +475,14 @@ export class OperateurDtwService {
           font: customFont,
         });
         page2.drawText(String(v.type || ''), {
-          x: 240,
+          x: 260,
           y,
           size: 10,
           font: customFont,
         });
-        page2.drawText('حافلة', { x: 160, y, size: 10, font: customFont });
+        page2.drawText('حافلة', { x: 180, y, size: 10, font: customFont });
         page2.drawText(String(v.Number_of_seats || ''), {
-          x: 60,
+          x: 100,
           y,
           size: 10,
           font: customFont,
@@ -440,17 +490,17 @@ export class OperateurDtwService {
       });
 
       const total = vihicules.length;
-      const arabicNumber = convertToArabicWords(total); // دالة لتحويل الرقم إلى كلمات عربية
+      const arabicNumber = convertToArabicWords(total);
       page2.drawText(`${arabicNumber} (${total}) حافلة`, {
-        x: 460,
+        x: 420,
         y: 150,
         size: 12,
         font: customFont,
       });
     }
 
+    /** 💾 حفظ PDF */
     const pdfBytes = await pdfDoc.save();
-
     const outputPath = path.join(
       process.cwd(),
       'dist',
@@ -1033,7 +1083,7 @@ export class OperateurDtwService {
       String(v.num_bus_registration),
       String(v.font_symbol),
       String(v.Number_of_seats),
-      String(v.note_chef_departement),
+      v.font_type === 'نقل المدري' ? String(v.note_chef_departement || '') : '',
     ]);
 
     // تعريف عرض الأعمدة
@@ -1162,19 +1212,35 @@ export class OperateurDtwService {
       columnWidths,
     ));
 
-    ({ page, y: nextY } = drawTable(
-      pdfDoc,
-      page,
-      '',
-      startX,
-      nextY,
-      48,
-      tableHeader,
-      excludedLines,
-      cairoSemiBoldFont,
-      12,
-      columnWidths,
-    ));
+    const workerLines = vihicles
+      .map((v, i) => [
+        String(i + 1),
+        `${v.point_depart} - ${v.point_arrive}`,
+        formatDate(v.driving_license_history),
+        String(v.num_bus_registration),
+        String(v.font_symbol),
+        String(v.Number_of_seats),
+        v.font_type === 'نقل العمال'
+          ? String(v.note_chef_departement || '')
+          : '',
+      ])
+      .filter((row) => row[6] !== ''); // keep only rows where font_type === "نقل العمال"
+
+    if (workerLines.length > 0) {
+      ({ page, y: nextY } = drawTable(
+        pdfDoc,
+        page,
+        'نقل العمال',
+        startX,
+        nextY,
+        48,
+        tableHeader,
+        workerLines,
+        cairoSemiBoldFont,
+        12,
+        columnWidths,
+      ));
+    }
 
     // Save and send response
     const pdfBytes = await pdfDoc.save();
@@ -1316,6 +1382,75 @@ export class OperateurDtwService {
 
     res.end(Buffer.from(pdfBytes));
   }
+
+  async generatePDFCreated(
+    fullName_arabe: string,
+    address_arabe: string,
+  ): Promise<string> {
+    // إنشاء PDF جديد
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
+
+    // تحميل الخط العربي
+    const fontPath = path.join(
+      process.cwd(),
+      'dist',
+      'assets',
+      'fonts',
+      'Cairo-Bold.ttf',
+    );
+    const customFont = await pdfDoc.embedFont(fs.readFileSync(fontPath));
+
+    // إنشاء صفحة A4
+    const page = pdfDoc.addPage([595, 842]);
+
+    // دالة لكتابة النص بالعربية (من اليمين لليسار)
+    const drawArabic = (text: string, x: number, y: number, size = 14) => {
+      const adjustedY = 842 - y;
+      page.drawText(text, {
+        x,
+        y: adjustedY - size,
+        font: customFont,
+        size,
+        color: rgb(0, 0, 0),
+      });
+    };
+
+    // ---------------------------
+    // 📝 المحتوى الثابت + الديناميكي
+    // ---------------------------
+
+    drawArabic('2022/06/19', 60, 198, 12);
+    drawArabic('سليم فرحات', 95, 217, 12);
+    drawArabic('عين الدفلى', 90, 262, 12);
+
+    // البيانات القادمة من قاعدة البيانات
+    drawArabic(fullName_arabe || 'غير معروف', 297, 412, 16);
+    drawArabic(address_arabe || 'بدون عنوان', 354, 462, 14);
+
+    drawArabic('خدمة', 420, 514, 14);
+    drawArabic('عين الدفلى', 90, 670, 10);
+
+    // ---------------------------
+    // 💾 حفظ PDF مؤقتًا
+    // ---------------------------
+
+    const pdfBytes = await pdfDoc.save();
+    const outputDir = path.join(process.cwd(), 'dist', 'output');
+    fs.mkdirSync(outputDir, { recursive: true });
+
+    const fileName = `Operateur-${fullName_arabe || 'Static'}.pdf`;
+    const outputPath = path.join(outputDir, fileName);
+
+    fs.writeFileSync(outputPath, pdfBytes);
+
+    // ---------------------------
+    // 📤 إرسال الملف مباشرة إلى الـ Frontend
+    // ---------------------------
+
+    return outputPath;
+  }
+
   async findOperateurByNumClient(num_client: number) {
     return await this.OperateurModel.find({ num_docier_client: num_client });
   }

@@ -269,27 +269,58 @@ export const updateOperateur = createAsyncThunk(
 );
 
 export const createOperateur = createAsyncThunk<
-  Operateur,
+  void, // لا نرجع JSON بل نحمل ملف
   Partial<Operateur>,
   { rejectValue: string }
 >("operateurs/createOperateur", async (data, { rejectWithValue }) => {
   try {
-    const response = await axios.post<Operateur>(
+    // نطلب الملف كـ Blob
+    const response = await axios.post(
       `${API_URL}/api/v1/operateur-dtw/create`,
       data,
-      { withCredentials: true }
+      {
+        withCredentials: true,
+        responseType: "blob", // 👈 مهم جداً لتحميل ملف PDF
+      }
     );
+
+    // إنشاء رابط تحميل للـ PDF
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "Operateur-Static.pdf");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
     toast.success("تم تسجيل المتعامل بنجاح");
-    return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
-      return rejectWithValue(
-        error.response?.data?.message[0] ?? "حدث خطأ غير معروف"
-      );
+      return rejectWithValue(error.response?.data?.message);
     }
     return rejectWithValue("حدث خطأ غير معروف");
   }
 });
+
+export const generatePDFs = createAsyncThunk(
+  "pdfs/generate",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/v1/operateur-dtw/generate-pdf?id=${id}`,
+        { responseType: "blob" } // مهم جدًا للحصول على PDF
+      );
+
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url); // فتح الملف في نافذة جديدة
+
+      return true;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data || "PDF generation failed");
+    }
+  }
+);
 
 // Create Slice
 const operateurSlice = createSlice({
@@ -409,10 +440,9 @@ const operateurSlice = createSlice({
         toast.success("تم تسجيل العميل بنجاح");
         //state.message = action.payload.message
       })
-      .addCase(createOperateur.rejected, (state, action) => {
+      .addCase(createOperateur.rejected, (state) => {
         state.loading = false;
-        state.error = action.payload as string;
-        toast.error(action.payload as string);
+        toast.error("يرجى ملئ البيانات الناقصة");
       });
 
     builder
@@ -438,6 +468,20 @@ const operateurSlice = createSlice({
         state.loading = false;
       })
       .addCase(generatePDF.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+    builder
+      .addCase(generatePDFs.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(generatePDFs.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("تم تحميل ملف pdf بنجاح");
+      })
+      .addCase(generatePDFs.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
