@@ -396,7 +396,7 @@ export class OperateurDtwService {
       drawArabic(page1, '5:00', 500, 483);
     }
 
-    if (firstVehicule.font_type === 'ريـفي') {
+    if (firstVehicule.font_type === 'ريـفي' || firstVehicule.font_type === 'نقل حضري') {
       // ✅ كتابة بيانات المشغل في الصفحة الأولى
       drawArabic(page1, 'عين الدفلة', 380, 115, 14);
       drawArabic(page1, operateur?.fullName_arabe, 300, 235);
@@ -417,7 +417,7 @@ export class OperateurDtwService {
       drawArabic(page1, firstVehicule?.point_arrive, 80, 470);
     }
 
-    if (vihicules.length === 1 && firstVehicule.font_type === 'ريـفي') {
+    if (vihicules.length === 1 && firstVehicule.font_type === 'ريـفي' || firstVehicule.font_type === 'نقل حضري') {
       const v = vihicules[0];
       if (v.Number_of_seats !== undefined)
         drawArabic(page1, v.Number_of_seats.toString(), 100, 620);
@@ -441,7 +441,7 @@ export class OperateurDtwService {
         drawArabic(page1, v.num_bus_registration, 405, 627);
     }
 
-    if (firstVehicule.font_type === 'ريـفي') {
+    if (firstVehicule.font_type === 'ريـفي' || firstVehicule.font_type === 'نقل حضري') {
       drawArabic(page1, 'عين الدفلة', 200, 670);
     }
     if (
