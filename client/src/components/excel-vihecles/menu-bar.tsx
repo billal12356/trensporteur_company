@@ -1,7 +1,14 @@
 "use client"
 
-import { downloadBaladyExcel, downloadHadariExcel, downloadRifiExcel, downloadWilayExcel } from "@/redux/slice/vihiculeSlice"
-import { AppDispatch, RootState } from "@/redux/store"
+import type React from "react"
+
+import {
+  downloadBaladyExcel,
+  downloadHadariExcel,
+  downloadRifiExcel,
+  downloadWilayExcel,
+} from "@/redux/slice/vihiculeSlice"
+import type { AppDispatch, RootState } from "@/redux/store"
 import { motion } from "framer-motion"
 import { FileSpreadsheet, Map, Bus } from "lucide-react"
 import { useDispatch, useSelector } from "react-redux"
@@ -51,36 +58,31 @@ export function MenuBar() {
       icon: <FileSpreadsheet className="h-5 w-5" />,
       label: "بين البلديات ",
       action: () => dispatch(downloadBaladyExcel()),
-      gradient:
-        "radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(37,99,235,0.06) 50%, rgba(29,78,216,0) 100%)",
+      gradient: "radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(37,99,235,0.06) 50%, rgba(29,78,216,0) 100%)",
       iconColor: "text-blue-500",
     },
     {
       icon: <Map className="h-5 w-5" />,
       label: "ريفي",
       action: () => dispatch(downloadRifiExcel()),
-      gradient:
-        "radial-gradient(circle, rgba(249,115,22,0.15) 0%, rgba(234,88,12,0.06) 50%, rgba(194,65,12,0) 100%)",
+      gradient: "radial-gradient(circle, rgba(249,115,22,0.15) 0%, rgba(234,88,12,0.06) 50%, rgba(194,65,12,0) 100%)",
       iconColor: "text-orange-500",
     },
     {
       icon: <Bus className="h-5 w-5" />,
       label: "بين الولايات",
       action: () => dispatch(downloadWilayExcel()),
-      gradient:
-        "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.06) 50%, rgba(21,128,61,0) 100%)",
+      gradient: "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.06) 50%, rgba(21,128,61,0) 100%)",
       iconColor: "text-green-500",
     },
     {
       icon: <Bus className="h-5 w-5" />,
       label: "حضري",
       action: () => dispatch(downloadHadariExcel()),
-      gradient:
-        "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.06) 50%, rgba(21,128,61,0) 100%)",
+      gradient: "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.06) 50%, rgba(21,128,61,0) 100%)",
       iconColor: "text-green-500",
     },
   ]
-
 
   return (
     <motion.nav

@@ -396,7 +396,10 @@ export class OperateurDtwService {
       drawArabic(page1, '5:00', 500, 483);
     }
 
-    if (firstVehicule.font_type === 'ريـفي' || firstVehicule.font_type === 'نقل حضري') {
+    if (
+      firstVehicule.font_type === 'ريـفي' ||
+      firstVehicule.font_type === 'حضري او شبه حضري'
+    ) {
       // ✅ كتابة بيانات المشغل في الصفحة الأولى
       drawArabic(page1, 'عين الدفلة', 380, 115, 14);
       drawArabic(page1, operateur?.fullName_arabe, 300, 235);
@@ -417,7 +420,10 @@ export class OperateurDtwService {
       drawArabic(page1, firstVehicule?.point_arrive, 80, 470);
     }
 
-    if (vihicules.length === 1 && firstVehicule.font_type === 'ريـفي' || firstVehicule.font_type === 'نقل حضري') {
+    if (
+      (vihicules.length === 1 && firstVehicule.font_type === 'ريـفي') ||
+      firstVehicule.font_type === 'حضري او شبه حضري'
+    ) {
       const v = vihicules[0];
       if (v.Number_of_seats !== undefined)
         drawArabic(page1, v.Number_of_seats.toString(), 100, 620);
@@ -441,7 +447,10 @@ export class OperateurDtwService {
         drawArabic(page1, v.num_bus_registration, 405, 627);
     }
 
-    if (firstVehicule.font_type === 'ريـفي' || firstVehicule.font_type === 'نقل حضري') {
+    if (
+      firstVehicule.font_type === 'ريـفي' ||
+      firstVehicule.font_type === 'حضري او شبه حضري'
+    ) {
       drawArabic(page1, 'عين الدفلة', 200, 670);
     }
     if (
@@ -801,6 +810,9 @@ export class OperateurDtwService {
     const fullNameOperateur = operateur.fullName_francais;
     const chauffeur =
       await this.chauffeursService.findChauffeurByOperateur(fullNameOperateur);
+    if (!chauffeur || chauffeur.length === 0) {
+      throw new NotFoundException('لا يوجد سائق مرتبط بهذا المتعامل');
+    }
     const num_op = operateur?.num_docier_client;
     const vihicles = await this.vihiculeService.findVihiculeByOperateur(num_op);
     const pdfDoc = await PDFDocument.create();
@@ -930,7 +942,8 @@ export class OperateurDtwService {
         : formattedDate;
     }
 
-    const fullNameChauffeur = chauffeur[0].nom_prenom_chauffeur?.trim() || '';
+    const fullNameChauffeur =
+      chauffeur[0].nom_prenom_chauffeur?.trim() || 'غير محدد';
     const nameParts = fullNameChauffeur.split(' ');
 
     const lastNameChauffeur = nameParts
