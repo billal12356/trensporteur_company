@@ -296,14 +296,21 @@ export class OperateurDtwService {
     page.drawText(visual, { x, y, font, size, color: rgb(0, 0, 0) });
   }
 
-  async generatePDF(id: string): Promise<string> {
+  async generatePDF(id: string, vehicleIds?: string[]): Promise<string> {
     const operateur = await this.OperateurModel.findById(id);
     const num_docier_client = operateur?.num_docier_client;
     const fullName_francais = operateur?.fullName_francais;
 
-    const vihicules =
+    let vihicules =
       await this.vihiculeService.findVihiculeByOperateur(num_docier_client);
 
+    // ✅ Filter by selected vehicle IDs (if provided)
+    if (vehicleIds && vehicleIds.length > 0) {
+      vihicules = vihicules.filter((v) =>
+        vehicleIds.includes(v._id.toString()),
+      );
+    }
+    console.log("vihicules " ,vihicules);
     if (!vihicules || vihicules.length === 0) {
       throw new BadRequestException(
         new ResponseBuilder()
@@ -421,7 +428,7 @@ export class OperateurDtwService {
     }
 
     if (
-      (vihicules.length === 1 && firstVehicule.font_type === 'ريـفي') ||
+      (firstVehicule.font_type === 'ريـفي') ||
       firstVehicule.font_type === 'حضري او شبه حضري'
     ) {
       const v = vihicules[0];
@@ -434,7 +441,7 @@ export class OperateurDtwService {
         drawArabic(page1, v.num_bus_registration, 405, 620);
     }
     if (
-      (vihicules.length === 1 && firstVehicule.font_type === 'بين البلديات') ||
+      (firstVehicule.font_type === 'بين البلديات') ||
       firstVehicule.font_type === 'بين الولايات'
     ) {
       const v = vihicules[0];

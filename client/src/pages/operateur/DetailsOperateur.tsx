@@ -18,6 +18,8 @@ export default function OperateurDetails() {
   const { operateur, vihicules, chauffeurs, loading } = useSelector(
     (state: RootState) => state.operateur
   );
+
+  const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const dispatch = useDispatch<AppDispatch>();
   const { id } = useParams();
 
@@ -27,6 +29,19 @@ export default function OperateurDetails() {
     }
   }, [dispatch]);
 
+  const toggleVehicle = (id: string) => {
+    setSelectedVehicles((prev) =>
+      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllVehicles = () => {
+    if (selectedVehicles.length === vihicules.length) {
+      setSelectedVehicles([]); // deselect all
+    } else {
+      setSelectedVehicles(vihicules.map((v) => v._id));
+    }
+  };
   const [index, setIndex] = useState(0);
 
   const total = Math.min(chauffeurs.length, vihicules.length);
@@ -59,7 +74,11 @@ export default function OperateurDetails() {
       </Helmet>
       <div className="p-6 space-y-6">
         <Button
-          onClick={() => dispatch(DownloadOperateurPDF(id!))}
+          onClick={() =>
+            dispatch(
+              DownloadOperateurPDF({ id: id!, vehicleIds: selectedVehicles })
+            )
+          }
           className="mt-4"
         >
           تحميل PDF
@@ -243,6 +262,14 @@ export default function OperateurDetails() {
           <table className="min-w-full table-auto">
             <thead className="bg-gray-100">
               <tr className="flex">
+                <input
+                  type="checkbox"
+                  checked={
+                    vihicules.length > 0 &&
+                    selectedVehicles.length === vihicules.length
+                  }
+                  onChange={selectAllVehicles}
+                />
                 <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
                   رقم الولاية
                 </th>
@@ -396,6 +423,13 @@ export default function OperateurDetails() {
               {vihicules.length ? (
                 vihicules.map((vehicule) => (
                   <tr key={vehicule._id} className="flex">
+                    <td className="px-4 py-2 w-16 flex items-center justify-center border-r border-b">
+                      <input
+                        type="checkbox"
+                        checked={selectedVehicles.includes(vehicule._id)}
+                        onChange={() => toggleVehicle(vehicule._id)}
+                      />
+                    </td>
                     <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
                       {vehicule.num_wilaya}
                     </td>

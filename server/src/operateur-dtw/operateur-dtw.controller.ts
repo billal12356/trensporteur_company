@@ -47,8 +47,22 @@ export class OperateurDtwController {
   }
 
   @Get(':id/pdf')
-  async generatePDF(@Param('id') id: string, @Res() res: Response) {
-    const filePath = await this.operateurDtwService.generatePDF(id);
+  async generatePDF(
+    @Param('id') id: string,
+    @Query('vehicleIds') vehicleIds: string | string[],
+    @Res() res: Response,
+  ) {
+    // Ensure vehicleIds is always an array
+    const vehicleIdsArray = Array.isArray(vehicleIds)
+      ? vehicleIds
+      : vehicleIds
+        ? vehicleIds.split(',')
+        : [];
+
+    const filePath = await this.operateurDtwService.generatePDF(
+      id,
+      vehicleIdsArray,
+    );
 
     res.download(filePath);
   }

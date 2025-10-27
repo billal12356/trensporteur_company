@@ -241,10 +241,9 @@ export const deleteVihicules = createAsyncThunk(
   "vihicules/deleteVihicules",
   async (id: string, { rejectWithValue }) => {
     try {
-      const response = await axios.delete(
-        `${API_URL}/api/v1/vehicles/${id}`,
-        { withCredentials: true }
-      );
+      const response = await axios.delete(`${API_URL}/api/v1/vehicles/${id}`, {
+        withCredentials: true,
+      });
       console.log(response.data);
       return response.data;
     } catch (error: unknown) {
@@ -331,27 +330,32 @@ export const FindOneVihicule = createAsyncThunk(
 
 export const DownloadOperateurPDF = createAsyncThunk<
   void,
-  string,
+  { id: string; vehicleIds?: string[] }, // 👈 allow sending selected vehicles
   { rejectValue: string }
->("operateur/downloadPDF", async (id, { rejectWithValue }) => {
+>("operateur/downloadPDF", async ({ id, vehicleIds }, { rejectWithValue }) => {
   try {
+    const query = vehicleIds?.length
+      ? `?vehicleIds=${vehicleIds.join(",")}`
+      : "";
     const response = await axios.get(
-      `${API_URL}/api/v1/operateur-dtw/${id}/pdf`,
-      {
-        responseType: "blob",
-      }
+      `${API_URL}/api/v1/operateur-dtw/${id}/pdf${query}`,
+      { responseType: "blob" }
     );
 
     const blob = new Blob([response.data], { type: "application/pdf" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "operateur.pdf";
+
+    // 👇 dynamic file name (use operator ID or timestamp)
+    a.download = vehicleIds?.length
+      ? `operateur_${id}_selected.pdf`
+      : `operateur_${id}.pdf`;
+
     a.click();
     window.URL.revokeObjectURL(url);
   } catch (error) {
-    console.log(error);
-
+    console.error("Download PDF Error:", error);
     return rejectWithValue("فشل تحميل الملف");
   }
 });
