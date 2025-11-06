@@ -429,7 +429,7 @@ export class OperateurDtwService {
     }
 
     if (
-      firstVehicule.font_type === 'ريـفي' ||
+      firstVehicule.font_type === 'ريفي' ||
       firstVehicule.font_type === 'حضري او شبه حضري'
     ) {
       const v = vihicules[0];
@@ -456,7 +456,7 @@ export class OperateurDtwService {
     }
 
     if (
-      firstVehicule.font_type === 'ريـفي' ||
+      firstVehicule.font_type === 'ريفي' ||
       firstVehicule.font_type === 'حضري او شبه حضري'
     ) {
       drawArabic(page1, 'عين الدفلة', 200, 670);
