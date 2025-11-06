@@ -392,16 +392,16 @@ export class OperateurDtwService {
       // ✅ كتابة بيانات المشغل في الصفحة الأولى
       drawArabic(page1, 'عين الدفلة', 380, 105, 14);
       drawArabic(page1, operateur?.fullName_arabe, 300, 215);
-      drawArabic(page1, operateur?.date_debut_activite, 285, 307);
-      drawArabic(page1, operateur?.num_cate_enregistement, 430, 307);
-      drawArabic(page1, firstVehicule?.point_depart, 300, 353);
-      drawArabic(page1, firstVehicule?.point_arrive, 320, 375);
-      drawArabic(page1, firstVehicule?.point_Traffic1, 342, 400);
-      drawArabic(page1, firstVehicule?.point_Traffic2, 270, 400);
-      drawArabic(page1, firstVehicule?.point_Traffic3, 190, 400);
-      drawArabic(page1, firstVehicule?.point_Traffic4, 110, 400);
-      drawArabic(page1, '21:00', 255, 483);
-      drawArabic(page1, '5:00', 500, 483);
+      drawArabic(page1, operateur?.date_debut_activite, 285, 315);
+      drawArabic(page1, operateur?.num_cate_enregistement, 430, 315);
+      drawArabic(page1, firstVehicule?.point_depart, 300, 360);
+      drawArabic(page1, firstVehicule?.point_arrive, 320, 382);
+      drawArabic(page1, firstVehicule?.point_Traffic1, 342, 415);
+      drawArabic(page1, firstVehicule?.point_Traffic2, 270, 415);
+      drawArabic(page1, firstVehicule?.point_Traffic3, 190, 415);
+      drawArabic(page1, firstVehicule?.point_Traffic4, 110, 415);
+      drawArabic(page1, '21:00', 255, 490);
+      drawArabic(page1, '5:00', 515, 490);
     }
 
     if (
@@ -447,12 +447,12 @@ export class OperateurDtwService {
     ) {
       const v = vihicules[0];
       if (v.Number_of_seats !== undefined)
-        drawArabic(page1, v.Number_of_seats.toString(), 100, 627);
-      if (v.Style) drawArabic(page1, v.Style, 175, 627);
-      if (v.type) drawArabic(page1, v.type, 255, 627);
-      if (v.category) drawArabic(page1, v.category, 325, 627);
+        drawArabic(page1, v.Number_of_seats.toString(), 80, 640);
+      if (v.Style) drawArabic(page1, v.Style, 175, 640);
+      if (v.type) drawArabic(page1, v.type, 250, 640);
+      if (v.category) drawArabic(page1, v.category, 335, 640);
       if (v.num_bus_registration)
-        drawArabic(page1, v.num_bus_registration, 405, 627);
+        drawArabic(page1, v.num_bus_registration, 420, 640);
     }
 
     if (
@@ -465,7 +465,7 @@ export class OperateurDtwService {
       firstVehicule.font_type === 'بين البلديات' ||
       firstVehicule.font_type === 'بين الولايات'
     ) {
-      drawArabic(page1, 'عين الدفلة', 210, 660);
+      drawArabic(page1, 'عين الدفلة', 205, 680);
     }
 
     /** 📄 الصفحة الثانية (الجدول) */
