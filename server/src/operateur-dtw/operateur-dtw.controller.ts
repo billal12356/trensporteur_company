@@ -9,6 +9,8 @@ import {
   Query,
   UseGuards,
   Res,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { OperateurDtwService } from './operateur-dtw.service';
 import { CreateOperateurDto } from './dto/create-operateur-dtw.dto';
@@ -17,6 +19,9 @@ import { AuthGuard } from 'src/common/gaurds/auth.guard';
 import * as fs from 'fs';
 import { Response } from 'express';
 import * as ExcelJS from 'exceljs';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 @Controller('operateur-dtw')
 export class OperateurDtwController {
   constructor(private readonly operateurDtwService: OperateurDtwService) {}
@@ -74,6 +79,10 @@ export class OperateurDtwController {
     @Body() updateOperateurDtwDto: UpdateOperateurDtwDto,
   ) {
     return this.operateurDtwService.update(id, updateOperateurDtwDto);
+  }
+  @Delete('removeAll')
+  async removeAll() {
+    return await this.operateurDtwService.removeAll();
   }
 
   @UseGuards(AuthGuard)
@@ -142,4 +151,20 @@ export class OperateurDtwController {
   //   const filePath = await this.operateurDtwService.generatePDFCreated();
   //   res.download(filePath, 'Operateur-Static.pdf');
   // }
+
+  @Post('upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          const randomName = Date.now() + extname(file.originalname);
+          cb(null, randomName);
+        },
+      }),
+    }),
+  )
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+    return this.operateurDtwService.convertAndSave(file);
+  }
 }

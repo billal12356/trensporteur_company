@@ -21,6 +21,7 @@ const fontkit = require('@pdf-lib/fontkit');
 import { getVisualString } from 'bidi-js';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as XLSX from 'xlsx';
 import { OperateurQueryBuilder } from 'src/common/builder/OperateurQueryBuilder';
 import { Response } from 'express';
 
@@ -310,7 +311,7 @@ export class OperateurDtwService {
         vehicleIds.includes(v._id.toString()),
       );
     }
-    console.log("vihicules " ,vihicules);
+    console.log('vihicules ', vihicules);
     if (!vihicules || vihicules.length === 0) {
       throw new BadRequestException(
         new ResponseBuilder()
@@ -404,7 +405,7 @@ export class OperateurDtwService {
     }
 
     if (
-      firstVehicule.font_type === 'ريـفي' ||
+      firstVehicule.font_type === 'ريفي' ||
       firstVehicule.font_type === 'حضري او شبه حضري'
     ) {
       // ✅ كتابة بيانات المشغل في الصفحة الأولى
@@ -428,7 +429,7 @@ export class OperateurDtwService {
     }
 
     if (
-      (firstVehicule.font_type === 'ريـفي') ||
+      firstVehicule.font_type === 'ريـفي' ||
       firstVehicule.font_type === 'حضري او شبه حضري'
     ) {
       const v = vihicules[0];
@@ -441,7 +442,7 @@ export class OperateurDtwService {
         drawArabic(page1, v.num_bus_registration, 405, 620);
     }
     if (
-      (firstVehicule.font_type === 'بين البلديات') ||
+      firstVehicule.font_type === 'بين البلديات' ||
       firstVehicule.font_type === 'بين الولايات'
     ) {
       const v = vihicules[0];
@@ -583,6 +584,13 @@ export class OperateurDtwService {
       .setStatus(200)
       .setMessage('تم حذف المشغل بنجاح!')
       .build();
+  }
+
+  async removeAll() {
+    const result = await this.OperateurModel.deleteMany({});
+    return {
+      message: `✅ Deleted ${result.deletedCount} opérateurs.`,
+    };
   }
 
   async exportUsersToExcel(filterDto: any): Promise<string> {
@@ -1469,6 +1477,41 @@ export class OperateurDtwService {
     // ---------------------------
 
     return outputPath;
+  }
+
+  async convertAndSave(file: Express.Multer.File) {
+    // Step 1: Read the Excel file
+    const workbook = XLSX.readFile(file.path);
+
+    // Step 2: Convert first sheet to JSON
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+    // Step 3: Ensure json folder exists
+    const jsonDir = path.join(__dirname, '../../uploads/json');
+    if (!fs.existsSync(jsonDir)) {
+      fs.mkdirSync(jsonDir, { recursive: true });
+    }
+
+    // Step 4: Create a JSON file with same name as uploaded file
+    const jsonFileName =
+      path.basename(file.filename, path.extname(file.filename)) + '.json';
+    const jsonFilePath = path.join(jsonDir, jsonFileName);
+
+    // Step 5: Write JSON data to file
+    fs.writeFileSync(jsonFilePath, JSON.stringify(jsonData, null, 2), 'utf-8');
+
+    // Step 6 (optional): delete Excel file after conversion
+    fs.unlinkSync(file.path);
+
+    // Step 7: Return response
+    return {
+      message: 'Excel file converted and saved to JSON successfully',
+      jsonFile: jsonFileName,
+      count: jsonData.length,
+      path: jsonFilePath,
+    };
   }
 
   async findOperateurByNumClient(num_client: number) {
