@@ -275,23 +275,23 @@ export const createOperateur = createAsyncThunk<
 >("operateurs/createOperateur", async (data, { rejectWithValue }) => {
   try {
     // نطلب الملف كـ Blob
-    const response = await axios.post(
+    await axios.post(
       `${API_URL}/api/v1/operateur-dtw/create`,
       data,
       {
         withCredentials: true,
-        responseType: "blob", // 👈 مهم جداً لتحميل ملف PDF
+        // responseType: "blob", // 👈 مهم جداً لتحميل ملف PDF
       }
     );
 
-    // إنشاء رابط تحميل للـ PDF
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "Operateur-Static.pdf");
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    // // إنشاء رابط تحميل للـ PDF
+    // const url = window.URL.createObjectURL(new Blob([response.data]));
+    // const link = document.createElement("a");
+    // link.href = url;
+    // link.setAttribute("download", "Operateur-Static.pdf");
+    // document.body.appendChild(link);
+    // link.click();
+    // link.remove();
 
     toast.success("تم تسجيل المتعامل بنجاح");
   } catch (error: unknown) {
