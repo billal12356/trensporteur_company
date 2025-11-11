@@ -68,7 +68,6 @@ const Statistique = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // ✅ Fetch all stats
   const fetchAllStats = () => {
     dispatch(fetchInterCommuneStats({ startDate, endDate }));
     dispatch(fetchInterWilayaStats({ startDate, endDate }));
@@ -78,7 +77,6 @@ const Statistique = () => {
     dispatch(fetchtravailleursStats({ startDate, endDate }));
   };
 
-  // ✅ Only run once at mount
   useEffect(() => {
     fetchAllStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -93,11 +91,9 @@ const Statistique = () => {
     formatData("Travailleurs", travailleur),
   ];
 
-  // ✅ Fix total calculation (avoid wrong avgAge computation)
   const totalRow: StatData = data.reduce(
     (acc, curr) => {
       const totalVehicules = acc.nbVehicules + curr.nbVehicules;
-
       const totalAgeSum =
         acc.tranche_0_5 * 2.5 +
         acc.tranche_6_10 * 8 +
@@ -154,7 +150,6 @@ const Statistique = () => {
     }
   );
 
-  // ✅ Print table
   const handlePrint = () => {
     const printContents = tableRef.current?.innerHTML;
     const printWindow = window.open("", "", "width=1000,height=700");
@@ -205,7 +200,7 @@ const Statistique = () => {
           <h2 className="text-xl text-center font-bold">الاحصائيات العامة</h2>
         </div>
 
-        {/* ✅ Filter controls */}
+        {/* Filter controls */}
         <div className="flex flex-col md:flex-row justify-center items-center md:items-end w-full md:justify-end gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium">تاريخ البداية</label>
@@ -233,7 +228,7 @@ const Statistique = () => {
           </button>
         </div>
 
-        {/* ✅ Table */}
+        {/* Table */}
         {loading ? (
           <div className="flex justify-center items-center flex-col mt-72">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -249,44 +244,74 @@ const Statistique = () => {
             <table className="min-w-full border-collapse text-sm">
               <thead className="bg-gradient-to-r from-blue-100 to-blue-200 text-gray-800">
                 <tr>
-                  <th rowSpan={2}>Transport</th>
-                  <th rowSpan={2}>Nb Véhicules</th>
-                  <th rowSpan={2}>Nb Opérateurs</th>
-                  <th rowSpan={2}>Nb Sièges</th>
-                  <th colSpan={7}>Tranche d'âge des véhicules</th>
-                  <th rowSpan={2}>En Activité</th>
-                  <th rowSpan={2}>Arrêt</th>
-                  <th rowSpan={2}>Âge Moyen</th>
-                  <th rowSpan={2}>Nb Lignes</th>
-                  <th rowSpan={2}>Abs</th>
+                  <th
+                    rowSpan={2}
+                    className="px-4 py-3 text-left font-semibold border border-gray-300"
+                  >
+                    Transport
+                  </th>
+                  <th rowSpan={2} className="px-4 py-3 font-semibold border border-gray-300">
+                    Nb Véhicules
+                  </th>
+                  <th rowSpan={2} className="px-4 py-3 font-semibold border border-gray-300">
+                    Nb Opérateurs
+                  </th>
+                  <th rowSpan={2} className="px-4 py-3 font-semibold border border-gray-300">
+                    Nb Sièges
+                  </th>
+                  <th
+                    colSpan={7}
+                    className="px-4 py-3 font-semibold border border-gray-300 text-center"
+                  >
+                    Tranche d'âge des véhicules
+                  </th>
+                  <th rowSpan={2} className="px-4 py-3 font-semibold border border-gray-300">
+                    En Activité
+                  </th>
+                  <th rowSpan={2} className="px-4 py-3 font-semibold border border-gray-300">
+                    Arrêt
+                  </th>
+                  <th rowSpan={2} className="px-4 py-3 font-semibold border border-gray-300">
+                    Âge Moyen
+                  </th>
+                  <th rowSpan={2} className="px-4 py-3 font-semibold border border-gray-300">
+                    Nb Lignes
+                  </th>
+                  <th rowSpan={2} className="px-4 py-3 font-semibold border border-gray-300">
+                    Abs
+                  </th>
                 </tr>
                 <tr>
-                  {["0-5", "6-10", "11-15", "15-20", "20-25", "25-30", "+30"].map(
-                    (label, i) => (
-                      <th key={i}>{label}</th>
-                    )
-                  )}
+                  {["0-5", "6-10", "11-15", "15-20", "20-25", "25-30", "+30"].map((label, i) => (
+                    <th
+                      key={i}
+                      className="px-4 py-2 font-semibold border border-gray-300"
+                    >
+                      {label}
+                    </th>
+                  ))}
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-gray-100 text-gray-700">
                 {data.map((row, i) => (
-                  <tr
-                    key={i}
-                    className="hover:bg-blue-50 transition-colors duration-150"
-                  >
+                  <tr key={i} className="hover:bg-blue-50 transition-colors duration-150">
                     {Object.values(row).map((value, j) => (
-                      <td key={j}>{value}</td>
+                      <td key={j} className="px-4 py-2 border border-gray-200 text-center">
+                        {typeof value === "number" ? value : `${value}`}
+                      </td>
                     ))}
-                    <td>/</td>
+                    <td className="px-4 py-2 border border-gray-200 text-center">/</td>
                   </tr>
                 ))}
 
                 <tr className="bg-blue-50 text-blue-900 font-bold">
                   {Object.values(totalRow).map((value, j) => (
-                    <td key={j}>{value}</td>
+                    <td key={j} className="px-4 py-2 border border-gray-300 text-center">
+                      {typeof value === "number" ? value : `${value}`}
+                    </td>
                   ))}
-                  <td>/</td>
+                  <td className="px-4 py-2 border border-gray-300 text-center">/</td>
                 </tr>
               </tbody>
             </table>

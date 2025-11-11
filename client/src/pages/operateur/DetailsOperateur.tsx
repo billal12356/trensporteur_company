@@ -73,37 +73,39 @@ export default function OperateurDetails() {
         />
       </Helmet>
       <div className="p-6 space-y-6">
-        <Button
-          onClick={() =>
-            dispatch(
-              DownloadOperateurPDF({ id: id!, vehicleIds: selectedVehicles })
-            )
-          }
-          className="mt-4"
-        >
-          بطاقة المسارات و التوقيت
-        </Button>
-
-        <button
-          onClick={handleClick}
-          disabled={loading}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg disabled:opacity-50 transition duration-300"
-        >
-          {loading ? " جاري إنشاء الملف..." : "البطاقة الفنية"}
-        </button>
-
-        {loading ? (
-          <div className="text-blue-600 font-semibold mt-4">
-            جاري إنشاء الملف...
-          </div>
-        ) : (
-          <button
-            onClick={handleClickPfds}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+        <div className="flex gap-4">
+          <Button
+            onClick={() =>
+              dispatch(
+                DownloadOperateurPDF({ id: id!, vehicleIds: selectedVehicles })
+              )
+            }
+            className="mt-4"
           >
-            مقررة
+            بطاقة المسارات و التوقيت
+          </Button>
+
+          <button
+            onClick={handleClick}
+            disabled={loading}
+            className="px-6  py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg disabled:opacity-50 transition duration-300"
+          >
+            {loading ? " جاري إنشاء الملف..." : "البطاقة الفنية"}
           </button>
-        )}
+
+          {loading ? (
+            <div className="text-blue-600 font-semibold mt-4">
+              جاري إنشاء الملف...
+            </div>
+          ) : (
+            <button
+              onClick={handleClickPfds}
+              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+            >
+              مقررة
+            </button>
+          )}
+        </div>
         <Card className="shadow-lg">
           <CardContent className="space-y-6">
             {/* Header */}
