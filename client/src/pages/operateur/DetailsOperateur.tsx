@@ -73,7 +73,7 @@ export default function OperateurDetails() {
         />
       </Helmet>
       <div className="p-6 space-y-6">
-        <div className="flex gap-4">
+        <div className="flex gap-4 h-12">
           <Button
             onClick={() =>
               dispatch(
