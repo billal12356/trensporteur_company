@@ -33,6 +33,7 @@ interface StatsState {
   rural: TransportStats | null;
   urbain: TransportStats | null;
   scolaire: TransportStats | null;
+  travailleur: TransportStats | null;
   anneeStats: AnneeStats | null;
   loading: boolean;
   error: string | null;
@@ -49,6 +50,7 @@ const initialState: StatsState = {
   rural: null,
   urbain: null,
   scolaire: null,
+  travailleur: null,
   anneeStats: null,
   loading: false,
   error: null,
@@ -114,6 +116,16 @@ export const fetchScolaireStats = createAsyncThunk(
   'stats/fetchScolaire',
   async ({ startDate, endDate }: { startDate?: string; endDate?: string }) => {
     let url = `${API_URL}/api/v1/state/statsInterScolaire`;
+    if (startDate && endDate) url += `?startDate=${startDate}&endDate=${endDate}`;
+    const response = await axios.get(url);
+    return response.data[0];
+  }
+);
+
+export const fetchtravailleursStats = createAsyncThunk(
+  'stats/fetchtravailleurs',
+  async ({ startDate, endDate }: { startDate?: string; endDate?: string }) => {
+    let url = `${API_URL}/api/v1/state/transportTravailleurs`;
     if (startDate && endDate) url += `?startDate=${startDate}&endDate=${endDate}`;
     const response = await axios.get(url);
     return response.data[0];
@@ -221,6 +233,23 @@ const statsSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Error loading Scolaire stats';
       })
+
+      
+      // Travailleurs
+      .addCase(fetchtravailleursStats.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchtravailleursStats.fulfilled, (state, action) => {
+        state.loading = false;
+        state.travailleur = action.payload;
+      })
+      .addCase(fetchtravailleursStats.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Error loading Scolaire stats';
+      })
+
+
 
       // annee 
       .addCase(fetchAnneeStats.pending, (state) => {

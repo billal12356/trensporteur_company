@@ -5,6 +5,7 @@ import {
   fetchInterWilayaStats,
   fetchRuralStats,
   fetchScolaireStats,
+  fetchtravailleursStats,
   fetchUrbainStats,
 } from "@/redux/slice/stateSlice";
 import { RootState } from "@/redux/store";
@@ -21,7 +22,8 @@ function formatData(type: string, stats: any) {
     tranche_6_10: stats?.age_6_10 ?? 0,
     tranche_11_15: stats?.age_11_15 ?? 0,
     tranche_15_20: stats?.age_15_20 ?? 0,
-    tranche_20_30: stats?.age_20_30 ?? 0,
+    tranche_20_25: stats?.age_20_25 ?? 0,
+    tranche_25_30: stats?.age_25_30 ?? 0,
     tranche_plus_30: stats?.age_plus_30 ?? 0,
     en_activite: stats?.en_activite ?? 0,
     arret: stats?.arret ?? 0,
@@ -34,8 +36,16 @@ const Statistique = () => {
   const dispatch = useDispatch();
   const tableRef = useRef<HTMLDivElement>(null);
 
-  const { interCommune, interWilaya, rural, urbain, scolaire, loading, error } =
-    useSelector((state: RootState) => state.stats);
+  const {
+    interCommune,
+    interWilaya,
+    rural,
+    urbain,
+    scolaire,
+    travailleur,
+    loading,
+    error,
+  } = useSelector((state: RootState) => state.stats);
 
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
@@ -47,6 +57,7 @@ const Statistique = () => {
     dispatch(fetchRuralStats({ startDate, endDate }) as any);
     dispatch(fetchUrbainStats({ startDate, endDate }) as any);
     dispatch(fetchScolaireStats({ startDate, endDate }) as any);
+    dispatch(fetchtravailleursStats({ startDate, endDate }) as any);
   };
 
   // ✅ only run once when component mounts
@@ -61,6 +72,7 @@ const Statistique = () => {
     formatData("Rural", rural),
     formatData("Urbain", urbain),
     formatData("Scolaire", scolaire),
+    formatData("Travailleurs", travailleur),
   ];
 
   // ✅ fix: corrected wrong accumulation logic (tranche_20_30)
@@ -74,14 +86,16 @@ const Statistique = () => {
         acc.tranche_6_10 * 8 +
         acc.tranche_11_15 * 13 +
         acc.tranche_15_20 * 17.5 +
-        acc.tranche_20_30 * 25 +
+        acc.tranche_20_25 * 25 +
+        acc.tranche_25_30 * 25 +
         acc.tranche_plus_30 * 30 +
         curr.tranche_0_5 * 2.5 +
         curr.tranche_6_10 * 8 +
         curr.tranche_11_15 * 13 +
         curr.tranche_15_20 * 17.5 +
-        curr.tranche_20_30 * 25 +
-        curr.tranche_plus_30 * 30;
+        curr.tranche_20_25 * 22.5 +
+        curr.tranche_25_30 * 27.5 +
+        curr.tranche_plus_30 * 35;
 
       const avgAge =
         totalVehicules > 0 ? (totalAgeSum / totalVehicules).toFixed(1) : "-";
@@ -95,7 +109,8 @@ const Statistique = () => {
         tranche_6_10: acc.tranche_6_10 + curr.tranche_6_10,
         tranche_11_15: acc.tranche_11_15 + curr.tranche_11_15,
         tranche_15_20: acc.tranche_15_20 + curr.tranche_15_20,
-        tranche_20_30: acc.tranche_20_30 + curr.tranche_20_30, // ✅ fixed bug
+        tranche_20_25: acc.tranche_20_25 + curr.tranche_20_25,
+        tranche_25_30: acc.tranche_25_30 + curr.tranche_25_30,
         tranche_plus_30: acc.tranche_plus_30 + curr.tranche_plus_30,
         en_activite: acc.en_activite + curr.en_activite,
         arret: acc.arret + curr.arret,
@@ -112,7 +127,8 @@ const Statistique = () => {
       tranche_6_10: 0,
       tranche_11_15: 0,
       tranche_15_20: 0,
-      tranche_20_30: 0,
+      tranche_20_25: 0,
+      tranche_25_30: 0,
       tranche_plus_30: 0,
       en_activite: 0,
       arret: 0,
@@ -275,16 +291,22 @@ const Statistique = () => {
                   </th>
                 </tr>
                 <tr>
-                  {["0-5", "6-10", "11-15", "15-20", "20-30", "+30"].map(
-                    (label, i) => (
-                      <th
-                        key={i}
-                        className="px-4 py-2 font-semibold border border-gray-300"
-                      >
-                        {label}
-                      </th>
-                    )
-                  )}
+                  {[
+                    "0-5",
+                    "6-10",
+                    "11-15",
+                    "15-20",
+                    "20-25",
+                    "25-30",
+                    "+30",
+                  ].map((label, i) => (
+                    <th
+                      key={i}
+                      className="px-4 py-2 font-semibold border border-gray-300"
+                    >
+                      {label}
+                    </th>
+                  ))}
                 </tr>
               </thead>
 

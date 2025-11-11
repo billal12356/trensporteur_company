@@ -213,18 +213,24 @@ export class OperateurDtwService {
       }
 
       // Generate PDF after successful creation
-      const filePath = await this.generatePDFCreated(
-        operateur.fullName_arabe,
-        operateur.address_arabe,
-      );
+      // const filePath = await this.generatePDFCreated(
+      //   operateur.fullName_arabe,
+      //   operateur.address_arabe,
+      // );
 
-      // Send PDF as download
-      return res.download(filePath, 'Operateur-Static.pdf', (err) => {
-        if (err) {
-          console.error('❌ Error downloading PDF:', err);
-          res.status(500).json({ message: 'حدث خطأ أثناء تحميل الملف' });
-        }
-      });
+      // // Send PDF as download
+      // return res.download(filePath, 'Operateur-Static.pdf', (err) => {
+      //   if (err) {
+      //     console.error('❌ Error downloading PDF:', err);
+      //     res.status(500).json({ message: 'حدث خطأ أثناء تحميل الملف' });
+      //   }
+      // });
+
+      return new ResponseBuilder()
+        .setStatus(201)
+        .setMessage('تم تسجيل المتعامل بنجاح')
+        .setData(operateur)
+        .build();
     } catch (error) {
       console.error('❌ Validation or Server Error:', error);
 
@@ -410,7 +416,7 @@ export class OperateurDtwService {
     ) {
       // ✅ كتابة بيانات المشغل في الصفحة الأولى
       drawArabic(page1, 'عين الدفلة', 380, 115, 14);
-      drawArabic(page1, operateur?.fullName_arabe, 300, 235);
+      drawArabic(page1, operateur?.fullName_arabe, 290, 235);
       drawArabic(page1, operateur?.date_debut_activite, 290, 328);
       drawArabic(page1, operateur?.num_cate_enregistement, 430, 328);
       drawArabic(page1, '', 350, 340);
@@ -420,12 +426,12 @@ export class OperateurDtwService {
       drawArabic(page1, '22:00', 210, 398);
       drawArabic(page1, '06', 110, 398);
 
-      drawArabic(page1, firstVehicule?.point_Traffic1, 490, 470);
-      drawArabic(page1, firstVehicule?.point_Traffic2, 440, 470);
-      drawArabic(page1, firstVehicule?.point_Traffic3, 380, 470);
-      drawArabic(page1, firstVehicule?.point_Traffic4, 320, 470);
-      drawArabic(page1, firstVehicule?.point_depart, 200, 470);
-      drawArabic(page1, firstVehicule?.point_arrive, 80, 470);
+      drawArabic(page1, firstVehicule?.point_Traffic1, 490, 470, 10);
+      drawArabic(page1, firstVehicule?.point_Traffic2, 440, 470, 10);
+      drawArabic(page1, firstVehicule?.point_Traffic3, 380, 470, 10);
+      drawArabic(page1, firstVehicule?.point_Traffic4, 320, 470, 10);
+      drawArabic(page1, firstVehicule?.point_depart, 220, 470);
+      drawArabic(page1, firstVehicule?.point_arrive, 90, 470);
     }
 
     if (
@@ -434,12 +440,12 @@ export class OperateurDtwService {
     ) {
       const v = vihicules[0];
       if (v.Number_of_seats !== undefined)
-        drawArabic(page1, v.Number_of_seats.toString(), 100, 620);
-      if (v.Style) drawArabic(page1, v.Style, 175, 620);
-      if (v.type) drawArabic(page1, v.type, 250, 620);
-      if (v.category) drawArabic(page1, v.category, 315, 620);
+        drawArabic(page1, v.Number_of_seats.toString(), 90, 620);
+      if (v.Style) drawArabic(page1, v.Style, 173, 620);
+      if (v.type) drawArabic(page1, v.type, 240, 620);
+      if (v.category) drawArabic(page1, v.category, 325, 620);
       if (v.num_bus_registration)
-        drawArabic(page1, v.num_bus_registration, 405, 620);
+        drawArabic(page1, v.num_bus_registration, 420, 620);
     }
     if (
       firstVehicule.font_type === 'بين البلديات' ||
@@ -1383,7 +1389,7 @@ export class OperateurDtwService {
 
     // 🖋️ كتابة اسم / لقب المتعامل
     page.drawText(reverseWords(`${operateur.fullName_arabe || ''}`), {
-      x: 420,
+      x: 350,
       y: 410,
       size: 14,
       font: customFont,
@@ -1392,8 +1398,8 @@ export class OperateurDtwService {
 
     // 🏠 كتابة العنوان
     page.drawText(reverseWords(`${operateur.address_arabe || ''}`), {
-      x: 400,
-      y: 380,
+      x: 380,
+      y: 390,
       size: 14,
       font: customFont,
       color: rgb(0, 0, 0),
@@ -1483,31 +1489,35 @@ export class OperateurDtwService {
     // Step 1: Read the Excel file
     const workbook = XLSX.readFile(file.path);
 
-    // Step 2: Convert first sheet to JSON
+    // Step 2: Get the first sheet
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
-    const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-    // Step 3: Ensure json folder exists
+    // Step 3: Convert sheet to JSON while keeping empty attributes
+    const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+    // Step 4: Ensure uploads/json folder exists
     const jsonDir = path.join(__dirname, '../../uploads/json');
     if (!fs.existsSync(jsonDir)) {
       fs.mkdirSync(jsonDir, { recursive: true });
     }
 
-    // Step 4: Create a JSON file with same name as uploaded file
+    // Step 5: Generate JSON file name and path
     const jsonFileName =
       path.basename(file.filename, path.extname(file.filename)) + '.json';
     const jsonFilePath = path.join(jsonDir, jsonFileName);
 
-    // Step 5: Write JSON data to file
+    // Step 6: Write JSON data to file
     fs.writeFileSync(jsonFilePath, JSON.stringify(jsonData, null, 2), 'utf-8');
 
-    // Step 6 (optional): delete Excel file after conversion
-    fs.unlinkSync(file.path);
+    // Step 7 (optional): delete Excel file after conversion
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
 
-    // Step 7: Return response
+    // Step 8: Return response
     return {
-      message: 'Excel file converted and saved to JSON successfully',
+      message: '✅ Excel file converted and saved to JSON successfully',
       jsonFile: jsonFileName,
       count: jsonData.length,
       path: jsonFilePath,

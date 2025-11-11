@@ -63,6 +63,16 @@ export class StateController {
     return await this.stateService.getInter_scolaire(start, end);
   }
 
+  @Get('transportTravailleurs')
+  async transport_travailleurs(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const start = startDate ? new Date(startDate) : undefined;
+    const end = endDate ? new Date(endDate) : undefined;
+    return await this.stateService.transport_travailleurs(start, end);
+  }
+
 
   @Get('statistique-annee')
   async statistiqueAnnee(

@@ -81,7 +81,7 @@ export default function OperateurDetails() {
           }
           className="mt-4"
         >
-          تحميل PDF
+          بطاقة المسارات و التوقيت
         </Button>
 
         <button
@@ -89,7 +89,7 @@ export default function OperateurDetails() {
           disabled={loading}
           className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg disabled:opacity-50 transition duration-300"
         >
-          {loading ? "Generating..." : "Download PDF"}
+          {loading ? " جاري إنشاء الملف..." : "البطاقة الفنية"}
         </button>
 
         {loading ? (
@@ -101,7 +101,7 @@ export default function OperateurDetails() {
             onClick={handleClickPfds}
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
           >
-            إنشاء PDF
+            مقررة
           </button>
         )}
         <Card className="shadow-lg">

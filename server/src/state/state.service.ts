@@ -167,12 +167,26 @@ export class StateService {
               ],
             },
           },
-          age_20_30: {
+          age_20_25: {
             $sum: {
               $cond: [
                 {
                   $and: [
                     { $gt: ['$vehicleAge', 20] },
+                    { $lte: ['$vehicleAge', 25] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          age_25_30: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $gt: ['$vehicleAge', 25] },
                     { $lte: ['$vehicleAge', 30] },
                   ],
                 },
@@ -208,7 +222,8 @@ export class StateService {
           age_6_10: 1,
           age_11_15: 1,
           age_15_20: 1,
-          age_20_30: 1,
+          age_20_25: 1,
+          age_25_30: 1,
           age_plus_30: 1,
           _id: 0,
         },
@@ -341,12 +356,26 @@ export class StateService {
               ],
             },
           },
-          age_20_30: {
+          age_20_25: {
             $sum: {
               $cond: [
                 {
                   $and: [
                     { $gt: ['$vehicleAge', 20] },
+                    { $lte: ['$vehicleAge', 25] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          age_25_30: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $gt: ['$vehicleAge', 25] },
                     { $lte: ['$vehicleAge', 30] },
                   ],
                 },
@@ -382,7 +411,8 @@ export class StateService {
           age_6_10: 1,
           age_11_15: 1,
           age_15_20: 1,
-          age_20_30: 1,
+          age_20_25: 1,
+          age_25_30: 1,
           age_plus_30: 1,
           _id: 0,
         },
@@ -514,12 +544,26 @@ export class StateService {
               ],
             },
           },
-          age_20_30: {
+          age_20_25: {
             $sum: {
               $cond: [
                 {
                   $and: [
                     { $gt: ['$vehicleAge', 20] },
+                    { $lte: ['$vehicleAge', 25] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          age_25_30: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $gt: ['$vehicleAge', 25] },
                     { $lte: ['$vehicleAge', 30] },
                   ],
                 },
@@ -555,7 +599,8 @@ export class StateService {
           age_6_10: 1,
           age_11_15: 1,
           age_15_20: 1,
-          age_20_30: 1,
+          age_20_25: 1,
+          age_25_30: 1,
           age_plus_30: 1,
           _id: 0,
         },
@@ -687,12 +732,26 @@ export class StateService {
               ],
             },
           },
-          age_20_30: {
+          age_20_25: {
             $sum: {
               $cond: [
                 {
                   $and: [
                     { $gt: ['$vehicleAge', 20] },
+                    { $lte: ['$vehicleAge', 25] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          age_25_30: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $gt: ['$vehicleAge', 25] },
                     { $lte: ['$vehicleAge', 30] },
                   ],
                 },
@@ -728,7 +787,8 @@ export class StateService {
           age_6_10: 1,
           age_11_15: 1,
           age_15_20: 1,
-          age_20_30: 1,
+          age_20_25: 1,
+          age_25_30: 1,
           age_plus_30: 1,
           _id: 0,
         },
@@ -860,12 +920,26 @@ export class StateService {
               ],
             },
           },
-          age_20_30: {
+          age_20_25: {
             $sum: {
               $cond: [
                 {
                   $and: [
                     { $gt: ['$vehicleAge', 20] },
+                    { $lte: ['$vehicleAge', 25] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          age_25_30: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $gt: ['$vehicleAge', 25] },
                     { $lte: ['$vehicleAge', 30] },
                   ],
                 },
@@ -901,7 +975,195 @@ export class StateService {
           age_6_10: 1,
           age_11_15: 1,
           age_15_20: 1,
-          age_20_30: 1,
+          age_20_25: 1,
+          age_25_30: 1,
+          age_plus_30: 1,
+          _id: 0,
+        },
+      },
+    ]);
+  }
+
+  async transport_travailleurs(startDate, endDate) {
+    const matchConditions: any = {
+      font_type: 'نقل العمال',
+    };
+
+    if (startDate && endDate) {
+      matchConditions.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    }
+    return this.vehiculeModel.aggregate([
+      {
+        $addFields: {
+          uniqueTrafficPoints: {
+            $setUnion: [
+              [],
+              [
+                '$point_Traffic1',
+                '$point_Traffic2',
+                '$point_Traffic3',
+                '$point_Traffic4',
+                '$point_Traffic5',
+              ],
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          trafficPointsCount: {
+            $size: {
+              $filter: {
+                input: '$uniqueTrafficPoints',
+                as: 'point',
+                cond: { $ne: ['$$point', ''] },
+              },
+            },
+          },
+        },
+      },
+      {
+        $match: matchConditions,
+      },
+      {
+        $group: {
+          _id: '$font_type',
+          nbVehicules: { $sum: 1 },
+          nbPlaces: { $sum: '$Number_of_seats' },
+          uniqueClients: { $addToSet: '$num_docier_client' },
+          totalAge: {
+            $sum: {
+              $subtract: [
+                { $year: new Date() },
+                {
+                  $convert: {
+                    input: '$First_year_of_use',
+                    to: 'int',
+                    onError: 0,
+                    onNull: 0,
+                  },
+                },
+              ],
+            },
+          },
+          en_activite: {
+            $sum: {
+              $cond: [{ $eq: ['$vihicile_parked', 'في الخدمة'] }, 1, 0],
+            },
+          },
+          arret: {
+            $sum: {
+              $cond: [{ $eq: ['$vihicile_parked', 'موقفة'] }, 1, 0],
+            },
+          },
+          totalTrajets: { $sum: '$trafficPointsCount' },
+          age_0_5: {
+            $sum: {
+              $cond: [{ $lte: ['$vehicleAge', 5] }, 1, 0],
+            },
+          },
+          age_6_10: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $gt: ['$vehicleAge', 5] },
+                    { $lte: ['$vehicleAge', 10] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          age_11_15: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $gt: ['$vehicleAge', 10] },
+                    { $lte: ['$vehicleAge', 15] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          age_15_20: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $gt: ['$vehicleAge', 15] },
+                    { $lte: ['$vehicleAge', 20] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          age_20_25: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $gt: ['$vehicleAge', 20] },
+                    { $lte: ['$vehicleAge', 25] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          age_25_30: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $gt: ['$vehicleAge', 25] },
+                    { $lte: ['$vehicleAge', 30] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          age_plus_30: {
+            $sum: {
+              $cond: [{ $gt: ['$vehicleAge', 30] }, 1, 0],
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          type: '$_id',
+          nbVehicules: 1,
+          nbPlaces: 1,
+          nbOperators: { $size: '$uniqueClients' },
+          avgAge: {
+            $cond: [
+              { $eq: ['$nbVehicules', 0] },
+              0,
+              { $divide: ['$totalAge', '$nbVehicules'] },
+            ],
+          },
+          en_activite: 1,
+          arret: 1,
+          totalTrajets: 1,
+          age_0_5: 1,
+          age_6_10: 1,
+          age_11_15: 1,
+          age_15_20: 1,
+          age_20_25: 1,
+          age_25_30: 1,
           age_plus_30: 1,
           _id: 0,
         },
@@ -1041,8 +1303,6 @@ export class StateService {
       0,
     );
     const totalNP = total_tpv + total_tpc;
-
-  
 
     CAPACITÉ = {
       transport_public_voyageurs: {
