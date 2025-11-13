@@ -25,168 +25,12 @@ import * as XLSX from 'xlsx';
 import { OperateurQueryBuilder } from 'src/common/builder/OperateurQueryBuilder';
 import { Response } from 'express';
 
+import { convertToArabicWords, drawAlignedText, drawRetiredLinesTable, drawArabicReversed } from 'src/common/utils/pdf-utils';
+
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { promisify } from 'util';
-function convertToArabicWords(number: number): string {
-  const ones = [
-    '',
-    'واحد',
-    'اثنان',
-    'ثلاثة',
-    'أربعة',
-    'خمسة',
-    'ستة',
-    'سبعة',
-    'ثمانية',
-    'تسعة',
-  ];
-  const tens = [
-    '',
-    'عشرة',
-    'عشرون',
-    'ثلاثون',
-    'أربعون',
-    'خمسون',
-    'ستون',
-    'سبعون',
-    'ثمانون',
-    'تسعون',
-  ];
-
-  if (number === 0) return 'صفر';
-  if (number < 10) return ones[number];
-  if (number < 20) {
-    if (number === 10) return 'عشرة';
-    return ones[number - 10] + ' عشر';
-  }
-  if (number < 100) {
-    const ten = Math.floor(number / 10);
-    const one = number % 10;
-    return (one ? ones[one] + ' و' : '') + tens[ten];
-  }
-
-  return number.toString(); // fallback للأعداد الكبيرة
-}
-
-type Alignment = 'left' | 'center' | 'right';
-
-function drawAlignedText({
-  page,
-  text,
-  y,
-  font,
-  fontSize,
-  color = rgb(0, 0, 0),
-  pageWidth,
-  align = 'left',
-  margin = 50,
-}: {
-  page: any;
-  text: string;
-  y: number;
-  font: any;
-  fontSize: number;
-  color?: any;
-  pageWidth: number;
-  align?: Alignment;
-  margin?: number;
-}) {
-  const textWidth = font.widthOfTextAtSize(text, fontSize);
-  let x = margin;
-
-  if (align === 'center') {
-    x = (pageWidth - textWidth) / 2;
-  } else if (align === 'right') {
-    x = pageWidth - textWidth - margin;
-  } else if (align === 'left') {
-    x = margin;
-  }
-
-  page.drawText(text, {
-    x,
-    y,
-    size: fontSize,
-    font,
-    color,
-  });
-}
-
-function drawRetiredLinesTable(page, font, fontSize, data, startX, startY) {
-  const rowHeight = 60;
-  const columnWidths = [40, 120, 80, 90, 80, 45, 160]; // من اليمين لليسار
-  const headers = [
-    'الرقم',
-    'الخط المستغل',
-    'تاريخ الرخصة',
-    'رقم تسجيل الشركة',
-    'رقم التسليم',
-    'المقاعد',
-    'ملاحظـة',
-  ];
-
-  // رسم رأس الجدول
-  let y = startY;
-  let x = startX;
-  for (let i = 0; i < headers.length; i++) {
-    page.drawRectangle({
-      x,
-      y,
-      width: columnWidths[i],
-      height: rowHeight,
-      borderWidth: 1,
-    });
-
-    page.drawText(headers[i], {
-      x: x + 3,
-      y: y + rowHeight - 15,
-      font,
-      size: fontSize,
-    });
-
-    x += columnWidths[i];
-  }
-
-  // رسم الصفوف
-  y -= rowHeight;
-
-  data.forEach((row, index) => {
-    let x = startX;
-    const values = [
-      `${index + 1}`,
-      row.line,
-      row.licenseDate,
-      row.companyCode,
-      row.deliveryNumber,
-      row.seats.toString(),
-      row.note,
-    ];
-
-    for (let i = 0; i < values.length; i++) {
-      page.drawRectangle({
-        x,
-        y,
-        width: columnWidths[i],
-        height: rowHeight,
-        borderWidth: 1,
-      });
-
-      // تقسيم النص لعدة أسطر إذا لزم الأمر
-      const lines = values[i].split('\n');
-      lines.forEach((line, j) => {
-        page.drawText(line, {
-          x: x + 3,
-          y: y + rowHeight - 15 - j * 12,
-          font,
-          size: fontSize,
-        });
-      });
-
-      x += columnWidths[i];
-    }
-
-    y -= rowHeight;
-  });
-}
+// PDF utilities (convertToArabicWords, drawAlignedText, drawRetiredLinesTable, drawArabicReversed)
+// are implemented in src/common/utils/pdf-utils.ts and imported above.
 
 @Injectable()
 export class OperateurDtwService {
@@ -390,6 +234,7 @@ export class OperateurDtwService {
     };
 
     const firstVehicule = vihicules[0];
+    console.log("firstVehicule.font_type",firstVehicule.font_type);
 
     if (
       firstVehicule.font_type === 'بين البلديات' ||
@@ -411,9 +256,10 @@ export class OperateurDtwService {
     }
 
     if (
-      firstVehicule.font_type === 'ريفي' ||
+      firstVehicule.font_type === 'ريـفي' ||
       firstVehicule.font_type === 'حضري او شبه حضري'
     ) {
+      console.log("dadadada");
       // ✅ كتابة بيانات المشغل في الصفحة الأولى
       drawArabic(page1, 'عين الدفلة', 380, 115, 14);
       drawArabic(page1, operateur?.fullName_arabe, 290, 235);
@@ -435,7 +281,7 @@ export class OperateurDtwService {
     }
 
     if (
-      firstVehicule.font_type === 'ريفي' ||
+      firstVehicule.font_type === 'ريـفي' ||
       firstVehicule.font_type === 'حضري او شبه حضري'
     ) {
       const v = vihicules[0];
@@ -462,7 +308,7 @@ export class OperateurDtwService {
     }
 
     if (
-      firstVehicule.font_type === 'ريفي' ||
+      firstVehicule.font_type === 'ريـفي' ||
       firstVehicule.font_type === 'حضري او شبه حضري'
     ) {
       drawArabic(page1, 'عين الدفلة', 200, 670);
@@ -863,29 +709,6 @@ export class OperateurDtwService {
 
     let page = pdfDoc.addPage([750, 842]);
     const { width, height } = page.getSize();
-
-    const drawAlignedText = ({
-      page,
-      text,
-      y,
-      font,
-      fontSize,
-      align,
-    }: {
-      page: any;
-      text: string;
-      y: number;
-      font: any;
-      fontSize: number;
-      align: 'left' | 'center' | 'right';
-    }) => {
-      const textWidth = font.widthOfTextAtSize(text, fontSize);
-      let x = 0;
-      if (align === 'center') x = (page.getWidth() - textWidth) / 2;
-      else if (align === 'right') x = page.getWidth() - textWidth - 30;
-      else x = 30;
-      page.drawText(text, { x, y, size: fontSize, font, color: rgb(0, 0, 0) });
-    };
 
     // HEADER
     drawAlignedText({

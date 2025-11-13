@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { IoCaretBackSharp, IoCaretForwardSharp } from "react-icons/io5";
 import { DownloadOperateurPDF } from "@/redux/slice/vihiculeSlice";
 import { Helmet } from "react-helmet-async";
+import { ListTable, useTableColumns, useTableActions } from "@/components";
+import { formatters } from "@/lib/formatters";
 
 export default function OperateurDetails() {
   const { operateur, vihicules, chauffeurs, loading } = useSelector(
@@ -35,13 +37,96 @@ export default function OperateurDetails() {
     );
   };
 
-  const selectAllVehicles = () => {
-    if (selectedVehicles.length === vihicules.length) {
-      setSelectedVehicles([]); // deselect all
-    } else {
-      setSelectedVehicles(vihicules.map((v) => v._id));
+  const colsBuilder = useTableColumns<any>();
+
+  // Define all vehicle columns for details view
+  const vehicleColumns = [
+    ["num_wilaya", "رقم الولاية"],
+    ["num_docier_client", "رقم ملف المتعامل في سجل الناقلين"],
+    ["fullName_arabe", "اسم ولقب المتعامل (بالعربية)"],
+    ["fullName_francais", "اسم ولقب المتعامل (بالفرنسية)"],
+    ["activite", "النشاط"],
+    ["colonne1", "العمود 1"],
+    ["nature_activite", "طبيعة النشاط"],
+    ["colonne2", "العمود 2"],
+    ["status_activite", "حالة النشاط"],
+    ["colonne3", "العمود 3"],
+    ["num_bus_registration", "رقم تسجيل الحافلة او الشاحنة"],
+    ["circle", "الدائرة"],
+    ["Municipality", "البلدية"],
+    ["Style", "الطراز"],
+    ["category", "الصنف"],
+    ["type", "النوع"],
+    ["First_year_of_use", "اول سنة استعمال"],
+    ["Number_of_seats", "عدد المقاعد"],
+    ["Energy", "الطاقة"],
+    ["num_driving_license", "رقم رخصة سير المركبة"],
+    ["driving_license_history", "تاريخ رخصة السير"],
+    ["driving_license_dure", "مدة صلاحية الرخصة"],
+    ["line_activity_start_date", "تاريخ بداية نشاط الخط"],
+    ["Vehicle_activity_start_date", "تاريخ بداية نشاط المركبة"],
+    ["font_type", "نوع الخط"],
+    ["colonne4", "العمود 4"],
+    ["font_symbol", "رمز الخط"],
+    ["point_depart", "نقطة الانطلاق"],
+    ["point_arrive", "نقطة الوصول"],
+    ["point_Traffic1", "نقطة المرور 1"],
+    ["point_Traffic2", "نقطة المرور 2"],
+    ["point_Traffic3", "نقطة المرور 3"],
+    ["point_Traffic4", "نقطة المرور 4"],
+    ["point_Traffic5", "نقطة المرور 5"],
+    ["line_start_time", "توقيت بداية الخط"],
+    ["line_end_time", "توقيت نهاية الخدمة"],
+    ["Pace_per_minute", "الوتيرة بالدقائق"],
+    ["time_depart1", "تاريخ الانطلاق 1"],
+    ["time_depart2", "تاريخ الانطلاق 2"],
+    ["time_depart3", "تاريخ الانطلاق 3"],
+    ["time_depart4", "تاريخ الانطلاق 4"],
+    ["vihicile_parked", "المركبة (متوقفة أم لا)"],
+    ["type_parked", "نوع التوقف"],
+    ["hestoire_parked", "تاريخ التوقف"],
+    ["hestoire_parked_end", "تاريخ نهاية توقيف مؤقت"],
+    ["comments", "ملاحظات"],
+    ["person_concerned", "المعني بالتحديث"],
+    ["note_chef_departement", "ملاحظات رئيس المصلحة"],
+    ["path", "المسار"],
+  ] as const;
+
+  // Add a selection checkbox column at the start so users can choose vehicles
+  const selectColumn = colsBuilder.custom("_select" as any, "", (_val: any, item: any) => (
+    <div className="flex items-center justify-end">
+      <input
+        type="checkbox"
+        checked={selectedVehicles.includes(item._id)}
+        onChange={(e) => {
+          e.stopPropagation()
+          toggleVehicle(item._id)
+        }}
+        className="w-4 h-4"
+      />
+    </div>
+  ))
+
+  const columns = [
+    selectColumn,
+    ...vehicleColumns.map(([key, label]) => {
+    const keyStr = String(key);
+    if (
+      keyStr.toLowerCase().includes("date") ||
+      keyStr.toLowerCase().includes("history") ||
+      keyStr.toLowerCase().includes("_start_") ||
+      keyStr.toLowerCase().includes("_end_") ||
+      keyStr.toLowerCase().includes("depart") ||
+      keyStr.toLowerCase().includes("parked")
+    ) {
+      return colsBuilder.date(key, label, true);
     }
-  };
+    return colsBuilder.text(key, label, true);
+  }),
+  ];
+
+  // No action button for toggle any more; selection is handled via checkboxes
+  const actions = useTableActions<any>(undefined, undefined, undefined);
   const [index, setIndex] = useState(0);
 
   const total = Math.min(chauffeurs.length, vihicules.length);
@@ -73,37 +158,37 @@ export default function OperateurDetails() {
         />
       </Helmet>
       <div className="p-6 space-y-6">
-        <div className="flex gap-4 h-12">
+        <div className="flex gap-4 h-12 items-center">
           <Button
             onClick={() =>
               dispatch(
                 DownloadOperateurPDF({ id: id!, vehicleIds: selectedVehicles })
               )
             }
-            className="mt-4"
+            className=" h-12"
           >
             بطاقة المسارات و التوقيت
           </Button>
 
-          <button
+          <Button
             onClick={handleClick}
             disabled={loading}
-            className="px-6  py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg disabled:opacity-50 transition duration-300"
+            className="px-6  h-12 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg disabled:opacity-50 transition duration-300"
           >
             {loading ? " جاري إنشاء الملف..." : "البطاقة الفنية"}
-          </button>
+          </Button>
 
           {loading ? (
             <div className="text-blue-600 font-semibold mt-4">
               جاري إنشاء الملف...
             </div>
           ) : (
-            <button
+            <Button
               onClick={handleClickPfds}
-              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+              className="bg-green-600 text-white px-4 h-12 py-2 rounded-md hover:bg-blue-700 transition"
             >
               مقررة
-            </button>
+            </Button>
           )}
         </div>
         <Card className="shadow-lg">
@@ -131,9 +216,7 @@ export default function OperateurDetails() {
               [
                 {
                   label: "تاريخ بداية النشاط",
-                  value: new Date(
-                    operateur.date_debut_activite
-                  ).toLocaleDateString("fr-FR"),
+                  value: formatters.dateFrench(operateur.date_debut_activite),
                 },
                 {
                   label: "رقم القيد سجل في الناقلين ",
@@ -144,9 +227,7 @@ export default function OperateurDetails() {
               [
                 {
                   label: "تاريخ اصدار الرخصة",
-                  value: new Date(
-                    chauffeurs[index]?.date_sortie
-                  ).toLocaleDateString("fr-FR"),
+                  value: formatters.dateFrench(chauffeurs[index]?.date_sortie),
                 },
                 {
                   label: "رقم التسلسلي للرخصة",
@@ -176,9 +257,7 @@ export default function OperateurDetails() {
                 },
                 {
                   label: "تاريخ الميلاد",
-                  value: new Date(operateur.date_naissance).toLocaleDateString(
-                    "fr-FR"
-                  ),
+                  value: formatters.dateFrench(operateur.date_naissance),
                 },
               ],
               // Section 5
@@ -230,9 +309,7 @@ export default function OperateurDetails() {
                 },
                 {
                   label: "تاريخ بداية النشاط",
-                  value: new Date(
-                    operateur.date_debut_activite
-                  ).toLocaleDateString("fr-FR"),
+                  value: formatters.dateFrench(operateur.date_debut_activite),
                 },
                 {
                   label: "رقم السجل التجاري",
@@ -260,346 +337,15 @@ export default function OperateurDetails() {
         </Card>
 
         <h2 className="text-xl text-center font-bold">قائمة المركبة </h2>
-        <div className="overflow-x-auto rounded-md border">
-          <table className="min-w-full table-auto">
-            <thead className="bg-gray-100">
-              <tr className="flex">
-                <input
-                  type="checkbox"
-                  checked={
-                    vihicules.length > 0 &&
-                    selectedVehicles.length === vihicules.length
-                  }
-                  onChange={selectAllVehicles}
-                />
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  رقم الولاية
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  رقم ملف المتعامل في سجل الناقلين
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  اسم ولقب المتعامل (بالعربية)
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  اسم ولقب المتعامل (بالفرنسية)
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  النشاط
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  العمود 1
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  طبيعة النشاط
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  العمود 2
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  حالة النشاط
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  العمود 3
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  رقم تسجيل الحافلة او الشاحنة
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  الدائرة
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  البلدية
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  الطراز
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  الصنف
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  النوع
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  اول سنة استعمال
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  عدد المقاعد
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  الطاقة
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  رقم رخصة سير المركبة
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  تاريخ رخصة السير
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  مدة صلاحية الرخصة
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  تاريخ بداية نشاط الخط
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  تاريخ بداية نشاط المركبة
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  نوع الخط
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  العمود 4
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  رمز الخط
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  نقطة الانطلاق
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  نقطة الوصول
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  نقطة المرور 1
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  نقطة المرور 2
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  نقطة المرور 3
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  نقطة المرور 4
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  نقطة المرور 5
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  توقيت بداية الخط
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  توقيت نهاية الخدمة
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  الوتيرة بالدقائق بالنسبة للحضري
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  تاريخ الانطلاق 1
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  تاريخ الانطلاق 2
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  تاريخ الانطلاق 3
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  تاريخ الانطلاق 4
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  لمركبة (متوقفة أم لا)
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  نوع التوقف
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  تاريخ التوقف
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  تاريخ نهاية توقيف مؤقت
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  ملاحظات
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  المعني بالتحديث
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  ملاحظات رئيس المصلحة
-                </th>
-                <th className="px-4 py-2 text-right font-bold w-48 flex items-center justify-center border-r">
-                  المسار
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {vihicules.length ? (
-                vihicules.map((vehicule) => (
-                  <tr key={vehicule._id} className="flex">
-                    <td className="px-4 py-2 w-16 flex items-center justify-center border-r border-b">
-                      <input
-                        type="checkbox"
-                        checked={selectedVehicles.includes(vehicule._id)}
-                        onChange={() => toggleVehicle(vehicule._id)}
-                      />
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.num_wilaya}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.num_docier_client}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.fullName_arabe}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.fullName_francais}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.activite}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.colonne1 || ""}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.nature_activite}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.colonne2 || ""}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.status_activite}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.colonne3 || ""}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.num_bus_registration}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.circle || ""}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.Municipality || ""}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.Style || ""}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.category}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.type}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.First_year_of_use}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.Number_of_seats}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.Energy}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.num_driving_license}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {new Date(
-                        vehicule.driving_license_history
-                      ).toLocaleDateString("fr-FR")}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.driving_license_dure}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {new Date(
-                        vehicule.line_activity_start_date
-                      ).toLocaleDateString("fr-FR")}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {new Date(
-                        vehicule.Vehicle_activity_start_date
-                      ).toLocaleDateString("fr-FR")}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.font_type}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.colonne4}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.font_symbol}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.point_depart}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.point_arrive}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.point_Traffic1}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.point_Traffic2}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.point_Traffic3}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.point_Traffic4}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.point_Traffic5}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.line_start_time || ""}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.line_end_time || ""}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.Pace_per_minute || ""}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.time_depart1}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.time_depart2}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.time_depart3 || ""}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.time_depart4 || ""}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.vihicile_parked || ""}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.type_parked}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {new Date(vehicule.hestoire_parked).toLocaleDateString(
-                        "fr-FR"
-                      )}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {new Date(
-                        vehicule.hestoire_parked_end
-                      ).toLocaleDateString("fr-FR")}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.comments}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.person_concerned}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.note_chef_departement || ""}
-                    </td>
-                    <td className="px-4 py-2 w-48 flex items-center justify-center border-r border-b">
-                      {vehicule.path}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={40} className="px-4 py-2 text-center">
-                    لا توجد نتائج.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div className="rounded-md border">
+          <ListTable
+            columns={columns}
+            data={vihicules}
+            isLoading={loading}
+            isEmpty={!loading && vihicules.length === 0}
+            emptyMessage="لا توجد نتائج"
+            actions={actions}
+          />
         </div>
       </div>
     </MainContainer>

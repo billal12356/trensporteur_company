@@ -2,23 +2,15 @@
 
 import React from "react";
 import type { ReactElement } from "react";
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   Download,
-  Trash2,
-  Edit3,
-  Filter,
   RefreshCw,
   Truck,
-  ChevronLeft,
-  ChevronRight,
-  Calendar,
   MapPin,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,57 +22,54 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import type { AppDispatch, RootState } from "@/redux/store";
 import {
   deleteVihicules,
   ExportLines,
   exportVihicules,
   fetchVihicules,
 } from "@/redux/slice/vihiculeSlice";
-import { logout } from "@/redux/slice/authSlice";
 import MainContainer from "@/components/MainContainer";
 
+import { useListPage } from "@/hooks/useListPage";
+import { ListTable, useTableColumns, useTableActions } from "@/components";
+import { formatters } from "@/lib/formatters";
+
 const EnhancedVehicle = React.memo((): ReactElement => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { vihicules, totalVc, loading, limit, error } = useSelector(
-    (state: RootState) => state.vihicule
-  );
-  const [page, setPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchQueryLine, setSearchQueryLine] = useState("");
-  const [isExporting, setIsExporting] = useState(false);
-  const [isExportingLine, setIsExportingLine] = useState(false);
+  const navigate = useNavigate();
+  const [searchQueryLine, setSearchQueryLine] = React.useState("");
+  const [isExportingLine, setIsExportingLine] = React.useState(false);
 
-  useEffect(() => {
-    dispatch(fetchVihicules({ search: searchQuery, page, limit: 10 }));
-  }, [dispatch, searchQuery, page]);
-
-  const handleSignout = () => {
-    dispatch(logout());
-  };
-
-  const handleExport = async () => {
-    setIsExporting(true);
-    try {
-      await dispatch(exportVihicules({ search: searchQuery }));
-    } finally {
-      setIsExporting(false);
-    }
-  };
+  const {
+    page,
+    setPage,
+    searchQuery,
+    setSearchQuery,
+    loading,
+    isExporting,
+    data: vihicules,
+    total: totalVc,
+    limit,
+    handleDelete,
+    handleExport,
+    handleRefresh,
+  } = useListPage({
+    fetchThunk: fetchVihicules,
+    deleteThunk: deleteVihicules,
+    exportThunk: exportVihicules,
+    stateSelector: (state) => ({
+      data: state.vihicule.vihicules,
+      total: state.vihicule.totalVc,
+      loading: state.vihicule.loading,
+      limit: 10,
+    }),
+    limit: 10,
+  });
 
   const handleExportLine = async () => {
     setIsExportingLine(true);
     try {
-      await dispatch(ExportLines({ search: searchQueryLine }));
+      // @ts-ignore - ExportLines thunk not yet typed
+      await ExportLines({ search: searchQueryLine });
       setSearchQueryLine("");
     } finally {
       setIsExportingLine(false);
@@ -88,66 +77,116 @@ const EnhancedVehicle = React.memo((): ReactElement => {
     }
   };
 
-  const handleRefresh = () => {
-    dispatch(fetchVihicules({ search: searchQuery, page, limit: 10 }));
-  };
+  const colsBuilder = useTableColumns<any>();
 
-  const handlePrev = () => {
-    if (page > 1) {
-      setPage(page - 1);
+  const columnDefinitions: Array<[keyof any, string]> = [
+    ["num_wilaya", "رقم الولاية"],
+    ["num_docier_client", "رقم ملف المتعامل"],
+    ["fullName_arabe", "اسم المتعامل (عربي)"],
+    ["fullName_francais", "اسم المتعامل (فرنسي)"],
+    ["activite", "النشاط"],
+    ["nature_activite", "طبيعة النشاط"],
+    ["status_activite", "حالة النشاط"],
+    ["num_bus_registration", "رقم تسجيل المركبة"],
+    ["circle", "الدائرة"],
+    ["Municipality", "البلدية"],
+    ["Style", "الطراز"],
+    ["category", "الصنف"],
+    ["type", "النوع"],
+    ["First_year_of_use", "أول سنة استعمال"],
+    ["Number_of_seats", "عدد المقاعد"],
+    ["Energy", "الطاقة"],
+    ["num_driving_license", "رقم رخصة السير"],
+    ["driving_license_history", "تاريخ رخصة السير"],
+    ["driving_license_dure", "مدة صلاحية الرخصة"],
+    ["line_activity_start_date", "تاريخ بداية نشاط الخط"],
+    ["Vehicle_activity_start_date", "تاريخ بداية نشاط المركبة"],
+    ["font_type", "نوع الخط"],
+    ["font_symbol", "رمز الخط"],
+    ["point_depart", "نقطة الانطلاق"],
+    ["point_arrive", "نقطة الوصول"],
+    ["point_Traffic1", "نقطة المرور 1"],
+    ["point_Traffic2", "نقطة المرور 2"],
+    ["point_Traffic3", "نقطة المرور 3"],
+    ["point_Traffic4", "نقطة المرور 4"],
+    ["point_Traffic5", "نقطة المرور 5"],
+    ["line_start_time", "توقيت بداية الخط"],
+    ["line_end_time", "توقيت نهاية الخدمة"],
+    ["Pace_per_minute", "الوتيرة بالدقائق"],
+    ["time_depart1", "تاريخ الانطلاق 1"],
+    ["time_depart2", "تاريخ الانطلاق 2"],
+    ["time_depart3", "تاريخ الانطلاق 3"],
+    ["time_depart4", "تاريخ الانطلاق 4"],
+    ["vihicile_parked", "حالة المركبة"],
+    ["type_parked", "نوع التوقف"],
+    ["hestoire_parked", "تاريخ التوقف"],
+    ["hestoire_parked_end", "تاريخ نهاية التوقف"],
+    ["comments", "ملاحظات"],
+    ["person_concerned", "المعني بالتحديث"],
+    ["note_chef_departement", "ملاحظات رئيس المصلحة"],
+    ["path", "المسار"],
+  ];
+
+  const columns = columnDefinitions.map(([key, label]) => {
+    const keyStr = String(key);
+    if (
+      keyStr.toLowerCase().includes("date") ||
+      keyStr.toLowerCase().includes("history") ||
+      keyStr.toLowerCase().includes("_start_") ||
+      keyStr.toLowerCase().includes("_end_") ||
+      keyStr.toLowerCase().includes("depart")
+    ) {
+      return colsBuilder.date(key, label, true);
     }
-  };
-
-  const handleNext = () => {
-    if (page < Math.ceil(totalVc / limit)) {
-      setPage(page + 1);
+    if (keyStr.includes("status_activite") || keyStr.includes("vihicile_parked")) {
+      return colsBuilder.custom(key, label, (val: any) => {
+        const badge = formatters.status(val);
+        return (
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium ${
+              badge.variant === "default"
+                ? "bg-green-100 text-green-800"
+                : badge.variant === "secondary"
+                ? "bg-yellow-100 text-yellow-800"
+                : badge.variant === "destructive"
+                ? "bg-red-100 text-red-800"
+                : "bg-gray-100 text-gray-800"
+            }`}
+          >
+            {badge.label}
+          </span>
+        );
+      });
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ar-DZ", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<
-      string,
-      {
-        variant: "default" | "secondary" | "destructive" | "outline";
-        label: string;
-      }
-    > = {
-      active: { variant: "default", label: "نشط" },
-      inactive: { variant: "secondary", label: "غير نشط" },
-      suspended: { variant: "destructive", label: "معلق" },
-      stopped: { variant: "destructive", label: "متوقف" },
-    };
-    const statusInfo = statusMap[status] || {
-      variant: "outline" as const,
-      label: status || "غير محدد",
-    };
-    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
-  };
-
-  if (error) {
-    return (
-      <MainContainer>
-        <div className="flex justify-center items-center h-screen">
-          <div className="text-center space-y-4">
-            <div className="text-red-600 text-xl font-bold">
-              حدث خطأ في تحميل البيانات
-            </div>
-            <Button onClick={handleSignout} variant="destructive">
-              تسجيل الخروج
-            </Button>
-          </div>
+    if (keyStr.includes("activite")) {
+      return colsBuilder.custom(key, label, (val: any) => (
+        <Badge variant="secondary">{val}</Badge>
+      ));
+    }
+    if (keyStr.includes("point_depart") || keyStr.includes("point_arrive")) {
+      return colsBuilder.custom(key, label, (val: any) => (
+        <div className="flex items-center gap-1">
+          <MapPin className="w-3 h-3 text-green-500" />
+          <span className="text-sm">{val}</span>
         </div>
-      </MainContainer>
-    );
-  }
+      ));
+    }
+    if (keyStr.includes("Number_of_seats")) {
+      return colsBuilder.custom(key, label, (val: any) => (
+        <div className="flex items-center gap-1">
+          <span>{val}</span>
+          <span className="text-xs text-gray-500">مقعد</span>
+        </div>
+      ));
+    }
+    return colsBuilder.text(key, label, true);
+  });
+
+  const actions = useTableActions<any>(
+    (item) => navigate(`/update-vihicule/${item._id}`),
+    undefined,
+    (item) => handleDelete(item._id)
+  );
 
   return (
     <MainContainer>
@@ -169,7 +208,6 @@ const EnhancedVehicle = React.memo((): ReactElement => {
         dir="rtl"
       >
         <div className="container mx-auto p-6 space-y-8">
-          {/* Header Section */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -188,7 +226,6 @@ const EnhancedVehicle = React.memo((): ReactElement => {
             </p>
           </motion.div>
 
-          {/* Controls Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -197,7 +234,6 @@ const EnhancedVehicle = React.memo((): ReactElement => {
             <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-                  {/* Search Section */}
                   <div className="flex-1 max-w-md">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -210,7 +246,6 @@ const EnhancedVehicle = React.memo((): ReactElement => {
                       />
                     </div>
                   </div>
-                  {/* Action Buttons */}
                   <div className="flex items-center gap-3">
                     <Button
                       variant="outline"
@@ -225,14 +260,6 @@ const EnhancedVehicle = React.memo((): ReactElement => {
                       تحديث
                     </Button>
                     <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-2 bg-transparent"
-                    >
-                      <Filter className="w-4 h-4" />
-                      فلترة
-                    </Button>
-                    <Button
                       onClick={handleExport}
                       disabled={isExporting}
                       className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
@@ -242,8 +269,7 @@ const EnhancedVehicle = React.memo((): ReactElement => {
                     </Button>
                   </div>
                 </div>
-                <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-                  {/* Search Section */}
+                <div className="flex flex-col lg:flex-row gap-4 items-center justify-between mt-4">
                   <div className="flex-1 max-w-md">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -256,8 +282,7 @@ const EnhancedVehicle = React.memo((): ReactElement => {
                       />
                     </div>
                   </div>
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-3 mt-4">
+                  <div className="flex items-center gap-3">
                     <Button
                       onClick={handleExportLine}
                       disabled={isExportingLine}
@@ -274,7 +299,6 @@ const EnhancedVehicle = React.memo((): ReactElement => {
             </Card>
           </motion.div>
 
-          {/* Table Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -292,448 +316,19 @@ const EnhancedVehicle = React.memo((): ReactElement => {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="text-right font-bold text-gray-700">
-                          رقم الولاية
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          رقم ملف المتعامل
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          اسم المتعامل (عربي)
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          اسم المتعامل (فرنسي)
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          النشاط
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          طبيعة النشاط
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          حالة النشاط
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          رقم تسجيل المركبة
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          الدائرة
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          البلدية
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          الطراز
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          الصنف
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          النوع
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          أول سنة استعمال
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          عدد المقاعد
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          الطاقة
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          رقم رخصة السير
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          تاريخ رخصة السير
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          مدة صلاحية الرخصة
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          تاريخ بداية نشاط الخط
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          تاريخ بداية نشاط المركبة
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          نوع الخط
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          رمز الخط
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          نقطة الانطلاق
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          نقطة الوصول
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          نقطة المرور 1
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          نقطة المرور 2
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          نقطة المرور 3
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          نقطة المرور 4
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          نقطة المرور 5
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          توقيت بداية الخط
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          توقيت نهاية الخدمة
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          الوتيرة بالدقائق
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          تاريخ الانطلاق 1
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          تاريخ الانطلاق 2
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          تاريخ الانطلاق 3
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          تاريخ الانطلاق 4
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          حالة المركبة
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          نوع التوقف
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          تاريخ التوقف
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          تاريخ نهاية التوقف
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          ملاحظات
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          المعني بالتحديث
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          ملاحظات رئيس المصلحة
-                        </TableHead>
-                        <TableHead className="text-right font-bold text-gray-700">
-                          المسار
-                        </TableHead>
-                        <TableHead className="text-center font-bold text-gray-700">
-                          إجراءات
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <AnimatePresence>
-                        {loading ? (
-                          // Loading Skeletons
-                          Array.from({ length: 5 }).map((_, index) => (
-                            <TableRow key={`skeleton-${index}`}>
-                              {Array.from({ length: 45 }).map(
-                                (_, cellIndex) => (
-                                  <TableCell key={cellIndex}>
-                                    <Skeleton className="h-4 w-full" />
-                                  </TableCell>
-                                )
-                              )}
-                            </TableRow>
-                          ))
-                        ) : vihicules.length > 0 ? (
-                          vihicules.map((vihicule, index) => (
-                            <motion.tr
-                              key={vihicule._id}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -20 }}
-                              transition={{ delay: index * 0.05 }}
-                              className="hover:bg-blue-50/50 transition-colors gap-2"
-                            >
-                              <TableCell className="font-medium">
-                                {vihicule.num_wilaya}
-                              </TableCell>
-                              <TableCell>
-                                {vihicule.num_docier_client}
-                              </TableCell>
-                              <TableCell className="font-medium text-blue-900">
-                                {vihicule.fullName_arabe}
-                              </TableCell>
-                              <TableCell className="text-gray-600">
-                                {vihicule.fullName_francais}
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="secondary">
-                                  {vihicule.activite}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>{vihicule.nature_activite}</TableCell>
-                              <TableCell>
-                                {getStatusBadge(vihicule.status_activite)}
-                              </TableCell>
-                              <TableCell className="font-mono text-sm">
-                                {vihicule.num_bus_registration}
-                              </TableCell>
-                              <TableCell>{vihicule.circle || ""}</TableCell>
-                              <TableCell>
-                                {vihicule.Municipality || ""}
-                              </TableCell>
-                              <TableCell>{vihicule.Style || ""}</TableCell>
-                              <TableCell>{vihicule.category}</TableCell>
-                              <TableCell>{vihicule.type}</TableCell>
-                              <TableCell>
-                                {vihicule.First_year_of_use}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1">
-                                  <span>{vihicule.Number_of_seats}</span>
-                                  <span className="text-xs text-gray-500">
-                                    مقعد
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>{vihicule.Energy}</TableCell>
-                              <TableCell className="font-mono text-sm">
-                                {vihicule.num_driving_license}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3 text-gray-400" />
-                                  <span className="text-sm">
-                                    {formatDate(
-                                      vihicule.driving_license_history
-                                    )}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                {vihicule.driving_license_dure}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3 text-gray-400" />
-                                  <span className="text-sm">
-                                    {formatDate(
-                                      vihicule.line_activity_start_date
-                                    )}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3 text-gray-400" />
-                                  <span className="text-sm">
-                                    {formatDate(
-                                      vihicule.Vehicle_activity_start_date
-                                    )}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>{vihicule.font_type}</TableCell>
-                              <TableCell className="font-mono">
-                                {vihicule.font_symbol}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1">
-                                  <MapPin className="w-3 h-3 text-green-500" />
-                                  <span className="text-sm">
-                                    {vihicule.point_depart}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1">
-                                  <MapPin className="w-3 h-3 text-red-500" />
-                                  <span className="text-sm">
-                                    {vihicule.point_arrive}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>{vihicule.point_Traffic1}</TableCell>
-                              <TableCell>{vihicule.point_Traffic2}</TableCell>
-                              <TableCell>{vihicule.point_Traffic3}</TableCell>
-                              <TableCell>{vihicule.point_Traffic4}</TableCell>
-                              <TableCell>{vihicule.point_Traffic5}</TableCell>
-                              <TableCell>
-                                {vihicule.line_start_time || ""}
-                              </TableCell>
-                              <TableCell>
-                                {vihicule.line_end_time || ""}
-                              </TableCell>
-                              <TableCell>
-                                {vihicule.Pace_per_minute || ""}
-                              </TableCell>
-                              <TableCell>{vihicule.time_depart1}</TableCell>
-                              <TableCell>{vihicule.time_depart2}</TableCell>
-                              <TableCell>
-                                {vihicule.time_depart3 || ""}
-                              </TableCell>
-                              <TableCell>
-                                {vihicule.time_depart4 || ""}
-                              </TableCell>
-                              <TableCell>
-                                {getStatusBadge(vihicule.vihicile_parked || "")}
-                              </TableCell>
-                              <TableCell>{vihicule.type_parked}</TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3 text-gray-400" />
-                                  <span className="text-sm">
-                                    {formatDate(vihicule.hestoire_parked)}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3 text-gray-400" />
-                                  <span className="text-sm">
-                                    {formatDate(vihicule.hestoire_parked_end)}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>{vihicule.comments}</TableCell>
-                              <TableCell>{vihicule.person_concerned}</TableCell>
-                              <TableCell>
-                                {vihicule.note_chef_departement || ""}
-                              </TableCell>
-                              <TableCell>{vihicule.path}</TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2 justify-center">
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() =>
-                                      dispatch(deleteVihicules(vihicule._id))
-                                    }
-                                    className="p-2"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="p-2 bg-transparent"
-                                    asChild
-                                  >
-                                    <Link
-                                      to={`/update-vihicule/${vihicule._id}`}
-                                    >
-                                      <Edit3 className="w-4 h-4 text-yellow-600" />
-                                    </Link>
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </motion.tr>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell
-                              colSpan={45}
-                              className="text-center py-12"
-                            >
-                              <div className="flex flex-col items-center gap-4">
-                                <div className="p-4 bg-gray-100 rounded-full">
-                                  <Truck className="w-12 h-12 text-gray-400" />
-                                </div>
-                                <div>
-                                  <h3 className="text-lg font-semibold text-gray-700">
-                                    لا توجد نتائج
-                                  </h3>
-                                  <p className="text-gray-500">
-                                    لم يتم العثور على أي مركبات
-                                  </p>
-                                </div>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </AnimatePresence>
-                    </TableBody>
-                  </Table>
+                  <ListTable
+                    columns={columns}
+                    data={vihicules}
+                    isLoading={loading}
+                    isEmpty={!loading && vihicules.length === 0}
+                    emptyMessage="لم يتم العثور على أي مركبات"
+                    actions={actions}
+                    pagination={{ page, total: totalVc, limit, onPageChange: setPage }}
+                  />
                 </div>
               </CardContent>
             </Card>
           </motion.div>
-
-          {/* Pagination Section */}
-          {vihicules.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-                <CardContent className="p-6">
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="text-sm text-gray-600">
-                      عرض{" "}
-                      <span className="font-medium">
-                        {(page - 1) * limit + 1}
-                      </span>{" "}
-                      إلى{" "}
-                      <span className="font-medium">
-                        {Math.min(page * limit, totalVc)}
-                      </span>{" "}
-                      من <span className="font-medium">{totalVc}</span> نتيجة
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleNext}
-                        disabled={page >= Math.ceil(totalVc / limit)}
-                        className="gap-2 bg-transparent"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                        التالي
-                      </Button>
-                      <div className="flex items-center gap-1">
-                        {Array.from(
-                          { length: Math.min(5, Math.ceil(totalVc / limit)) },
-                          (_, i) => {
-                            const pageNum = i + 1;
-                            return (
-                              <Button
-                                key={pageNum}
-                                variant={
-                                  page === pageNum ? "default" : "outline"
-                                }
-                                size="sm"
-                                onClick={() => setPage(pageNum)}
-                                className="w-8 h-8 p-0"
-                              >
-                                {pageNum}
-                              </Button>
-                            );
-                          }
-                        )}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handlePrev}
-                        disabled={page === 1}
-                        className="gap-2 bg-transparent"
-                      >
-                        السابق
-                        <ChevronLeft className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
         </div>
       </div>
     </MainContainer>

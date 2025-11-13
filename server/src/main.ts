@@ -12,9 +12,6 @@ async function bootstrap() {
     credentials: true,  
   });
 
-  // const seeder = app.get(ImportOperateurService);
-  // await seeder.run();
-
   app.useGlobalPipes(new ValidationPipe());
   app.use(cookieParser());
   await app.listen(process.env.PORT ?? 3000);
