@@ -333,6 +333,11 @@ export class ChauffeursService {
       saveNext(0);
     });
   }
+
+  async clearAllUsers(): Promise<string> {
+    await this.ChauffeurModel.deleteMany({});
+    return '✅ All users have been deleted successfully';
+  }
 }
 
 function parseDate(dateStr: string): Date | null {

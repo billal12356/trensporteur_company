@@ -40,7 +40,7 @@ export class OperateurDtwService {
     private readonly vihiculeService: VehiclesService,
     @Inject(forwardRef(() => ChauffeursService))
     private readonly chauffeursService: ChauffeursService,
-  ) {}
+  ) { }
 
   async create(createOperateurDtwDto: CreateOperateurDto, res: Response) {
     try {
@@ -234,7 +234,7 @@ export class OperateurDtwService {
     };
 
     const firstVehicule = vihicules[0];
-    console.log("firstVehicule.font_type",firstVehicule.font_type);
+    console.log("firstVehicule.font_type", firstVehicule.font_type);
 
     if (
       firstVehicule.font_type === 'بين البلديات' ||
@@ -1021,9 +1021,9 @@ export class OperateurDtwService {
           const safeText =
             textWidth > maxTextWidth
               ? text.slice(
-                  0,
-                  Math.floor((maxTextWidth / textWidth) * text.length),
-                ) + '…'
+                0,
+                Math.floor((maxTextWidth / textWidth) * text.length),
+              ) + '…'
               : text;
 
           const textX =
@@ -1210,6 +1210,29 @@ export class OperateurDtwService {
     const reverseWords = (text: string) =>
       text ? text.split(' ').reverse().join(' ') : '';
 
+    page.drawText(reverseWords("2022/06/19"), {
+      x: 30,
+      y: 660,
+      size: 14,
+      font: customFont,
+      color: rgb(0, 0, 0),
+    });
+
+    page.drawText(reverseWords("سليم فرحات"), {
+      x: 70,
+      y: 640,
+      size: 14,
+      font: customFont,
+      color: rgb(0, 0, 0),
+    });
+
+    page.drawText(reverseWords('عين الدفلى'), {
+      x: 70,
+      y: 585,
+      size: 14,
+      font: customFont,
+      color: rgb(0, 0, 0),
+    });
     // 🖋️ كتابة اسم / لقب المتعامل
     page.drawText(reverseWords(`${operateur.fullName_arabe || ''}`), {
       x: 350,
@@ -1222,7 +1245,7 @@ export class OperateurDtwService {
     // 🏠 كتابة العنوان
     page.drawText(reverseWords(`${operateur.address_arabe || ''}`), {
       x: 380,
-      y: 340,
+      y: 380,
       size: 14,
       font: customFont,
       color: rgb(0, 0, 0),
