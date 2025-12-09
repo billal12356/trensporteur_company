@@ -80,6 +80,11 @@ const EnhancedChauffeur = React.memo((): ReactElement => {
 
   const columns = columnDefinitions.map(([key, label]) => {
     const keyStr = String(key)
+    // Special-case: treat request history field as a date
+    if (keyStr === 'hestoire_demende' || keyStr.includes('hestoire') || keyStr.includes('histoire')) {
+      return colsBuilder.date(key, label, true)
+    }
+
     if (keyStr.toLowerCase().includes("date")) {
       return colsBuilder.date(key, label, true)
     }

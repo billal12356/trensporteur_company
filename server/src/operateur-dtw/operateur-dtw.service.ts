@@ -675,10 +675,19 @@ export class OperateurDtwService {
     const operateur = await this.OperateurModel.findById(id).lean();
     if (!operateur) throw new NotFoundException('الناقل غير موجود');
     const fullNameOperateur = operateur.fullName_francais;
+    console.log("fullNameOperateur", fullNameOperateur)
     const chauffeur =
       await this.chauffeursService.findChauffeurByOperateur(fullNameOperateur);
+    console.log("chauffeur", chauffeur)
+
     if (!chauffeur || chauffeur.length === 0) {
-      throw new NotFoundException('لا يوجد سائق مرتبط بهذا المتعامل');
+      throw new BadRequestException(
+        new ResponseBuilder()
+          .setStatus(400)
+          .setMessage('لا يوجد سائق مرتبط بهذا المتعامل')
+          .setErrors({ _id: 'Invalid ObjectId format' })
+          .build(),
+      );
     }
     const num_op = operateur?.num_docier_client;
     const vihicles = await this.vihiculeService.findVihiculeByOperateur(num_op);
@@ -1372,5 +1381,10 @@ export class OperateurDtwService {
 
   async findOperateurByNumClient(num_client: number) {
     return await this.OperateurModel.find({ num_docier_client: num_client });
+  }
+
+  async clearOperateur(): Promise<string> {
+    await this.OperateurModel.deleteMany({});
+    return '✅ All users have been deleted successfully';
   }
 }

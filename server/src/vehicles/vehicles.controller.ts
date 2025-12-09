@@ -169,4 +169,9 @@ export class VehiclesController {
     res.setHeader('Content-Disposition', 'attachment; filename=transporter_Wilay.xlsx');
     res.send(buffer);
   }
+
+  @Post('clear-vehicles')
+  async clearVehicles() {
+    return await this.vehiclesService.clearVehicles();
+  }
 }

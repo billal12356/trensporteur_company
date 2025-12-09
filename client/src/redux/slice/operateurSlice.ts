@@ -132,19 +132,45 @@ export const generatePDF = createAsyncThunk(
     try {
       const response = await axios.get(
         `${API_URL}/api/v1/operateur-dtw/generate?id=${id}`,
-        { responseType: "blob" }
+        {
+          responseType: "blob", // IMPORTANT
+          headers: { Accept: "application/pdf" },
+        }
       );
 
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      window.open(url);
+      const file = new Blob([response.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(file);
+
+      window.open(url); // open pdf in new tab
 
       return true;
     } catch (err: any) {
-      return rejectWithValue(err.response?.data || "PDF generation failed");
+      console.log("PDF ERROR:", err);
+      // If server returned a JSON body as a Blob (common when responseType='blob'),
+      // read the blob and extract a message.
+      const respData = err?.response?.data;
+      if (respData) {
+        try {
+          if (typeof respData.text === 'function') {
+            const txt = await respData.text();
+            try {
+              const j = JSON.parse(txt);
+              return rejectWithValue(j.message || txt || 'PDF generation failed');
+            } catch {
+              return rejectWithValue(txt || 'PDF generation failed');
+            }
+          }
+          // fallback for normal object
+          return rejectWithValue(respData?.message || err.message || 'PDF generation failed');
+        } catch (e) {
+          return rejectWithValue(err.message || 'PDF generation failed');
+        }
+      }
+      return rejectWithValue(err.message || 'PDF generation failed');
     }
   }
 );
+
 
 export const fetchOperateurs = createAsyncThunk(
   "operateur/fetchOperateurs",
@@ -317,7 +343,24 @@ export const generatePDFs = createAsyncThunk(
 
       return true;
     } catch (err: any) {
-      return rejectWithValue(err.response?.data || "PDF generation failed");
+      const respData = err?.response?.data;
+      if (respData) {
+        try {
+          if (typeof respData.text === 'function') {
+            const txt = await respData.text();
+            try {
+              const j = JSON.parse(txt);
+              return rejectWithValue(j.message || txt || 'PDF generation failed');
+            } catch {
+              return rejectWithValue(txt || 'PDF generation failed');
+            }
+          }
+          return rejectWithValue(respData?.message || err.message || 'PDF generation failed');
+        } catch {
+          return rejectWithValue(err.message || 'PDF generation failed');
+        }
+      }
+      return rejectWithValue(err.message || 'PDF generation failed');
     }
   }
 );
@@ -333,6 +376,9 @@ const operateurSlice = createSlice({
     resetDownloadState: (state) => {
       state.fileURL = null;
       state.loading = false;
+      state.error = null;
+    },
+    clearError: (state) => {
       state.error = null;
     },
     clearSuccessMessage: (state) => {
@@ -355,10 +401,10 @@ const operateurSlice = createSlice({
       })
       .addCase(fetchOperateurs.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
-        console.log(action.payload as string);
-
-        toast.error(action.payload as string);
+        const errMsg = (action.payload as string) || action.error?.message || 'حدث خطأ غير متوقع';
+        state.error = errMsg;
+        console.log(errMsg);
+        toast.error(errMsg);
       });
 
     builder
@@ -373,7 +419,8 @@ const operateurSlice = createSlice({
       })
       .addCase(exportOperateurs.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        const errMsg = (action.payload as string) || action.error?.message || 'فشل في تحميل الملف';
+        state.error = errMsg;
       });
 
     // remove operateur
@@ -389,7 +436,8 @@ const operateurSlice = createSlice({
       })
       .addCase(deleteOperateur.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        const errMsg = (action.payload as string) || action.error?.message || 'فشل في حذف المتعامل';
+        state.error = errMsg;
       });
 
     // find  one operateur
@@ -406,7 +454,8 @@ const operateurSlice = createSlice({
       })
       .addCase(FindOneOperateur.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        const errMsg = (action.payload as string) || action.error?.message || 'حدث خطأ غير معروف';
+        state.error = errMsg;
       });
 
     // update operateur
@@ -424,8 +473,9 @@ const operateurSlice = createSlice({
 
       .addCase(updateOperateur.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
-        toast.error(action.payload as string);
+        const errMsg = (action.payload as string) || action.error?.message || 'حدث خطأ غير معروف';
+        state.error = errMsg;
+        toast.error(errMsg);
       });
 
     builder
@@ -440,9 +490,10 @@ const operateurSlice = createSlice({
         toast.success("تم تسجيل العميل بنجاح");
         //state.message = action.payload.message
       })
-      .addCase(createOperateur.rejected, (state) => {
+      .addCase(createOperateur.rejected, (state, action) => {
         state.loading = false;
-        toast.error("يرجى ملئ البيانات الناقصة");
+        const errMsg = (action.payload as string) || action.error?.message || 'يرجى ملئ البيانات الناقصة';
+        toast.error(errMsg);
       });
 
     builder
@@ -456,7 +507,8 @@ const operateurSlice = createSlice({
       })
       .addCase(downloadRegistrationStats.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        const errMsg = (action.payload as string) || action.error?.message || 'فشل في تحميل الملف';
+        state.error = errMsg;
       });
 
     builder
@@ -469,7 +521,8 @@ const operateurSlice = createSlice({
       })
       .addCase(generatePDF.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        const errMsg = (action.payload as string) || action.error?.message || 'فشل في إنشاء الPDF';
+        state.error = errMsg;
       });
 
     builder
@@ -483,11 +536,12 @@ const operateurSlice = createSlice({
       })
       .addCase(generatePDFs.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        const errMsg = (action.payload as string) || action.error?.message || 'فشل في إنشاء الPDF';
+        state.error = errMsg;
       });
   },
 });
 
 // Export Actions & Reducer
-export const { setMessage, resetDownloadState } = operateurSlice.actions;
+export const { setMessage, resetDownloadState, clearError } = operateurSlice.actions;
 export default operateurSlice.reducer;

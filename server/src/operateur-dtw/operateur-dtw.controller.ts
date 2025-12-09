@@ -24,7 +24,7 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 @Controller('operateur-dtw')
 export class OperateurDtwController {
-  constructor(private readonly operateurDtwService: OperateurDtwService) {}
+  constructor(private readonly operateurDtwService: OperateurDtwService) { }
 
   @UseGuards(AuthGuard)
   @Post('create')
@@ -166,5 +166,10 @@ export class OperateurDtwController {
   )
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
     return this.operateurDtwService.convertAndSave(file);
+  }
+
+  @Post('clear-operateurs')
+  async clearChauffeurs() {
+    return await this.operateurDtwService.clearOperateur();
   }
 }

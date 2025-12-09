@@ -15,11 +15,14 @@ import { DownloadOperateurPDF } from "@/redux/slice/vihiculeSlice";
 import { Helmet } from "react-helmet-async";
 import { ListTable, useTableColumns, useTableActions } from "@/components";
 import { formatters } from "@/lib/formatters";
+import { clearError } from "@/redux/slice/operateurSlice";
 
 export default function OperateurDetails() {
-  const { operateur, vihicules, chauffeurs, loading } = useSelector(
+  const { operateur, vihicules, chauffeurs, loading,error } = useSelector(
     (state: RootState) => state.operateur
   );
+
+  console.log("error",error)
 
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const dispatch = useDispatch<AppDispatch>();
@@ -158,6 +161,21 @@ export default function OperateurDetails() {
         />
       </Helmet>
       <div className="p-6 space-y-6">
+        {/* Error banner */}
+        {error && (
+          <div className="flex items-center justify-between bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded">
+            <div className="text-sm">{error}</div>
+            <div>
+              <Button
+                variant="ghost"
+                className="text-red-800"
+                onClick={() => dispatch(clearError())}
+              >
+                إغلاق
+              </Button>
+            </div>
+          </div>
+        )}
         <div className="flex gap-4 h-12 items-center">
           <Button
             onClick={() =>

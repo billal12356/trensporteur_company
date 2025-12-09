@@ -85,4 +85,9 @@ export class ChauffeursController {
     // const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));    
     return await this.chauffeursService.importExcel(chauffeurs);
   }
+
+  @Post('clear-chauffeurs')
+  async clearChauffeurs() {
+    return await this.chauffeursService.clearChauffeurs();
+  }
 }
