@@ -1201,6 +1201,7 @@ export class StateService {
     const tpv = filtered.filter((v) =>
       ['بين البلديات', 'بين الولايات', 'حضري', 'ريفي'].includes(v.font_type),
     );
+    console.log("tpv",tpv)
     const publicCount = tpv.filter(
       (v) => v.status_activite === 'PUBLICE',
     ).length;
@@ -1209,6 +1210,8 @@ export class StateService {
     const tpc = filtered.filter((v) =>
       ['مدرسي', 'نقل العمال'].includes(v.font_type),
     );
+
+    console.log("tpc",tpc)
 
     const cPub = tpc.filter((c) => c.status_activite === 'PUBLICE').length;
     const cPrv = tpc.filter((c) => c.status_activite === 'PRIVE').length;
@@ -1275,13 +1278,13 @@ export class StateService {
 
     const publicCountNP = tpvNP
       .filter((v) => v.status_activite === 'PUBLICE' && v.Number_of_seats)
-      .reduce((sum, v) => sum + v.Number_of_seats, 0);
+      .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
 
     console.log('publicCountNP ', publicCountNP);
 
     const priveCountNP = tpvNP
       .filter((v) => v.status_activite === 'PRIVE' && v.Number_of_seats)
-      .reduce((sum, v) => sum + v.Number_of_seats, 0);
+      .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
 
     const tpcNP = vehicles.filter((v) =>
       ['مدرسي', 'نقل العمال'].includes(v.font_type),
@@ -1289,29 +1292,29 @@ export class StateService {
 
     const cPubNP = tpcNP
       .filter((c) => c.status_activite === 'PUBLICE' && c.Number_of_seats)
-      .reduce((sum, v) => sum + v.Number_of_seats, 0);
+      .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
     console.log('cPubNP ', cPubNP);
     const cPrvNP = tpcNP
       .filter((c) => c.status_activite === 'PRIVE' && c.Number_of_seats)
-      .reduce((sum, v) => sum + v.Number_of_seats, 0);
+      .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
     const total_tpv = tpvNP.reduce(
-      (sum, v) => sum + (v.Number_of_seats || 0),
+      (sum, v) => sum + (Number(v.Number_of_seats) || 0),
       0,
     );
     const total_tpc = tpcNP.reduce(
-      (sum, v) => sum + (v.Number_of_seats || 0),
+      (sum, v) => sum + (Number(v.Number_of_seats) || 0),
       0,
     );
     const totalNP = total_tpv + total_tpc;
 
     CAPACITÉ = {
       transport_public_voyageurs: {
-        total: tpvNP.reduce((sum, v) => sum + (v.Number_of_seats || 0), 0),
+        total: tpvNP.reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0),
         public: publicCountNP,
         prive: priveCountNP,
       },
       transport_propre_compte: {
-        total: tpcNP.reduce((sum, v) => sum + (v.Number_of_seats || 0), 0),
+        total: tpcNP.reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0),
         pubC: cPubNP,
         PrvC: cPrvNP,
       },

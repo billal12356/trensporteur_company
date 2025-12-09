@@ -232,7 +232,23 @@ export const exportVihicules = createAsyncThunk<
     document.body.appendChild(link);
     link.click();
     link.remove();
-  } catch (error) {
+  } catch (error: any) {
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const data = error.response.data;
+      if (data instanceof Blob) {
+        try {
+          const text = await data.text();
+          const parsed = JSON.parse(text);
+          return rejectWithValue(parsed.message || text || "فشل في تحميل الملف");
+        } catch (e) {
+          const text = await data.text();
+          return rejectWithValue(text || "فشل في تحميل الملف");
+        }
+      }
+      if (typeof error.response.data === "object" && error.response.data.message) {
+        return rejectWithValue(error.response.data.message);
+      }
+    }
     return rejectWithValue("فشل في تحميل الملف");
   }
 });
@@ -356,6 +372,22 @@ export const DownloadOperateurPDF = createAsyncThunk<
     window.URL.revokeObjectURL(url);
   } catch (error) {
     console.error("Download PDF Error:", error);
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const data = error.response.data;
+      if (data instanceof Blob) {
+        try {
+          const text = await data.text();
+          const parsed = JSON.parse(text);
+          return rejectWithValue(parsed.message || text || "فشل تحميل الملف");
+        } catch (e) {
+          const text = await data.text();
+          return rejectWithValue(text || "فشل تحميل الملف");
+        }
+      }
+      if (typeof error.response.data === "object" && error.response.data.message) {
+        return rejectWithValue(error.response.data.message);
+      }
+    }
     return rejectWithValue("فشل تحميل الملف");
   }
 });
@@ -392,6 +424,22 @@ export const ExportLines = createAsyncThunk<
     link.remove();
   } catch (error) {
     console.log(error);
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const data = error.response.data;
+      if (data instanceof Blob) {
+        try {
+          const text = await data.text();
+          const parsed = JSON.parse(text);
+          return rejectWithValue(parsed.message || text || "فشل في تحميل الملف");
+        } catch (e) {
+          const text = await data.text();
+          return rejectWithValue(text || "فشل في تحميل الملف");
+        }
+      }
+      if (typeof error.response.data === "object" && error.response.data.message) {
+        return rejectWithValue(error.response.data.message);
+      }
+    }
     return rejectWithValue("فشل في تحميل الملف");
   }
 });
@@ -420,6 +468,22 @@ export const downloadBaladyExcel = createAsyncThunk<
     link.click();
     link.remove();
   } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const data = error.response.data;
+      if (data instanceof Blob) {
+        try {
+          const text = await data.text();
+          const parsed = JSON.parse(text);
+          return rejectWithValue(parsed.message || text || "فشل في تحميل ملف البلدي");
+        } catch (e) {
+          const text = await data.text();
+          return rejectWithValue(text || "فشل في تحميل ملف البلدي");
+        }
+      }
+      if (typeof error.response.data === "object" && error.response.data.message) {
+        return rejectWithValue(error.response.data.message);
+      }
+    }
     return rejectWithValue("فشل في تحميل ملف البلدي");
   }
 });
@@ -448,6 +512,22 @@ export const downloadRifiExcel = createAsyncThunk<
     link.click();
     link.remove();
   } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const data = error.response.data;
+      if (data instanceof Blob) {
+        try {
+          const text = await data.text();
+          const parsed = JSON.parse(text);
+          return rejectWithValue(parsed.message || text || "فشل في تحميل ملف الريفي");
+        } catch (e) {
+          const text = await data.text();
+          return rejectWithValue(text || "فشل في تحميل ملف الريفي");
+        }
+      }
+      if (typeof error.response.data === "object" && error.response.data.message) {
+        return rejectWithValue(error.response.data.message);
+      }
+    }
     return rejectWithValue("فشل في تحميل ملف الريفي");
   }
 });
@@ -476,6 +556,22 @@ export const downloadWilayExcel = createAsyncThunk<
     link.click();
     link.remove();
   } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const data = error.response.data;
+      if (data instanceof Blob) {
+        try {
+          const text = await data.text();
+          const parsed = JSON.parse(text);
+          return rejectWithValue(parsed.message || text || "فشل في تحميل ملف الولائي");
+        } catch (e) {
+          const text = await data.text();
+          return rejectWithValue(text || "فشل في تحميل ملف الولائي");
+        }
+      }
+      if (typeof error.response.data === "object" && error.response.data.message) {
+        return rejectWithValue(error.response.data.message);
+      }
+    }
     return rejectWithValue("فشل في تحميل ملف الولائي");
   }
 });
@@ -503,6 +599,22 @@ export const downloadHadariExcel = createAsyncThunk<
     link.click();
     link.remove();
   } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const data = error.response.data;
+      if (data instanceof Blob) {
+        try {
+          const text = await data.text();
+          const parsed = JSON.parse(text);
+          return rejectWithValue(parsed.message || text || "فشل في تحميل ملف الولائي");
+        } catch (e) {
+          const text = await data.text();
+          return rejectWithValue(text || "فشل في تحميل ملف الولائي");
+        }
+      }
+      if (typeof error.response.data === "object" && error.response.data.message) {
+        return rejectWithValue(error.response.data.message);
+      }
+    }
     return rejectWithValue("فشل في تحميل ملف الولائي");
   }
 });

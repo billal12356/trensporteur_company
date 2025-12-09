@@ -334,7 +334,7 @@ export class ChauffeursService {
     });
   }
 
-  async clearAllUsers(): Promise<string> {
+  async clearChauffeurs(): Promise<string> {
     await this.ChauffeurModel.deleteMany({});
     return '✅ All users have been deleted successfully';
   }

@@ -475,50 +475,161 @@ export class VehiclesService {
     return find;
   }
 
-  importExcel(filePath: any[]): Promise<void> {
-    return new Promise((resolve) => {
-      const saveNext = (index: number) => {
-        if (index >= filePath.length) {
-          console.log('✅ تم استيراد جميع المركبات بنجاح!');
-          return resolve();
+  importExcel(filePath: any[]): Promise<{ successCount: number; failed: any[] }> {
+    return new Promise(async (resolve) => {
+      const records = Array.isArray(filePath)
+        ? filePath
+        : Array.isArray((filePath as any)?.default)
+        ? (filePath as any).default
+        : [];
+
+      if (records.length === 0) {
+        console.warn('⚠️ importExcel received 0 records. Input type:', typeof filePath, Object.keys(filePath || {}).length ? 'has keys' : 'no keys');
+      }
+
+      const excelDateToJSDate = (serial: number) => {
+        // Convert Excel serial date to JS Date (approximate)
+        try {
+          const utcDays = serial - 25569;
+          const utcValue = Math.floor(utcDays * 86400 * 1000);
+          return new Date(utcValue);
+        } catch (e) {
+          return new Date(serial);
         }
-
-        const rawData = filePath[index];
-        console.log('🚐 Vihicle Row:', rawData);
-
-        const cleanedData = {
-          ...rawData,
-          Vehicle_activity_start_date: rawData.Vehicle_activity_start_date
-            ? new Date(rawData.Vehicle_activity_start_date)
-            : null,
-          driving_license_history: rawData.driving_license_history
-            ? new Date(rawData.driving_license_history)
-            : null,
-          line_activity_start_date: rawData.line_activity_start_date
-            ? new Date(rawData.line_activity_start_date)
-            : null,
-          hestoire_parked: rawData.hestoire_parked
-            ? new Date(rawData.hestoire_parked)
-            : null,
-          hestoire_parked_end: rawData.hestoire_parked_end
-            ? new Date(rawData.hestoire_parked_end)
-            : null,
-        };
-
-        const doc = new this.VihicileModel(cleanedData);
-        doc
-          .save()
-          .then(() => saveNext(index + 1))
-          .catch((error) => {
-            console.error(
-              `❌ خطأ أثناء الحفظ في السطر ${index + 1}:`,
-              error.message,
-            );
-            saveNext(index + 1); // تابع رغم الخطأ
-          });
       };
 
-      saveNext(0);
+      const parseDate = (val: any) => {
+        if (!val && val !== 0) return undefined;
+        if (typeof val === 'number') return excelDateToJSDate(val);
+        if (val instanceof Date) return val;
+        if (typeof val === 'string') {
+          const s = val.trim();
+          // dd/mm/yyyy or dd-mm-yyyy
+          const dm = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+          if (dm) {
+            const day = Number(dm[1]);
+            const month = Number(dm[2]) - 1;
+            let year = Number(dm[3]);
+            if (year < 100) year += 2000;
+            return new Date(year, month, day);
+          }
+          const maybe = new Date(s);
+          if (!isNaN(maybe.getTime())) return maybe;
+          return undefined;
+        }
+        return undefined;
+      };
+
+      const parseNumber = (val: any) => {
+        if (val === undefined || val === null || val === '') return undefined;
+        if (typeof val === 'number') return val;
+        const cleaned = String(val).replace(/[^0-9\-\.]/g, '');
+        const n = Number(cleaned);
+        return isNaN(n) ? undefined : n;
+      };
+
+      const allowedTypeParked = ['مؤقت', 'نهائي'];
+
+      const failed: any[] = [];
+      let successCount = 0;
+
+      for (let i = 0; i < records.length; i++) {
+        const raw = records[i] || {};
+        console.log('🚐 Import vehicle row:', i + 1);
+
+        const cleaned: any = {};
+
+        // Map and coerce common fields, with fallbacks
+        cleaned.num_wilaya = parseNumber(raw.num_wilaya) ?? 0;
+        cleaned.num_docier_client = parseNumber(raw.num_docier_client) ?? parseNumber(raw.num_dossier_client) ?? 0;
+
+        cleaned.fullName_arabe = raw.fullName_arabe || raw.full_name_ar || raw.fullname_ar || raw['اللقب و الإسم'] || raw['الاسم الكامل بالعربية'] || '';
+        cleaned.fullName_francais = raw.fullName_francais || raw.full_name_fr || raw.fullname_fr || raw['الاسم الكامل بالفرنسية'] || cleaned.fullName_arabe || '';
+
+        cleaned.activite = raw.activite || raw.activity || raw['النشاط'] || '';
+        cleaned.colonne1 = raw.colonne1 || raw.col1 || raw['العمود 1'] || '';
+        cleaned.nature_activite = raw.nature_activite || raw.nature || raw['طبيعة النشاط'] || '';
+        cleaned.colonne2 = raw.colonne2 || raw.col2 || raw['العمود 2'] || '';
+        cleaned.status_activite = raw.status_activite || raw.status || raw['حالة النشاط'] || '';
+        cleaned.colonne3 = raw.colonne3 || raw.col3 || raw['العمود 3'] || '';
+
+        cleaned.num_bus_registration = String(raw.num_bus_registration || raw.registration || raw['رقم تسجيل الحافلة او الشاحنة'] || '').trim();
+
+        cleaned.circle = raw.circle || raw['الدائرة'] || '';
+        cleaned.Municipality = raw.Municipality || raw['البلدية'] || '';
+        cleaned.Style = raw.Style || raw.style || '';
+        cleaned.category = raw.category || raw['الصنف'] || '';
+        cleaned.type = raw.type || raw['النوع'] || '';
+
+        cleaned.First_year_of_use = parseNumber(raw.First_year_of_use) ?? new Date().getFullYear();
+        cleaned.Number_of_seats = parseNumber(raw.Number_of_seats) ?? undefined;
+        cleaned.Energy = raw.Energy || raw.energy || undefined;
+
+        cleaned.num_driving_license = parseNumber(raw.num_driving_license) ?? 0;
+
+        const drivingHistory = parseDate(raw.driving_license_history || raw.driving_history || raw['تاريخ رخصة السير']);
+        if (drivingHistory) cleaned.driving_license_history = drivingHistory;
+
+        cleaned.driving_license_dure = raw.driving_license_dure || raw.driving_dure || undefined;
+
+        const parsedLineActivityStart = parseDate(raw.line_activity_start_date || raw['تاريخ بداية نشاط الخط']);
+        if (parsedLineActivityStart) cleaned.line_activity_start_date = parsedLineActivityStart;
+
+        const parsedVehicleActivityStart = parseDate(raw.Vehicle_activity_start_date || raw.vehicle_activity_start_date || raw['تاريخ بداية نشاط المركبة'] || raw.createdAt || raw['date']);
+        cleaned.Vehicle_activity_start_date = parsedVehicleActivityStart ?? new Date();
+
+        cleaned.font_type = raw.font_type || raw['نوع الخط'] || undefined;
+        cleaned.colonne4 = raw.colonne4 || raw.col4 || 'N/A';
+
+        // font_symbol required: derive from known fields or generate a fallback
+        cleaned.font_symbol = raw.font_symbol || raw.fontSymbol || raw['رمز الخط'] || cleaned.num_bus_registration || `FONT_${i + 1}`;
+
+        cleaned.point_depart = raw.point_depart || raw['نقطة الانطلاق'] || raw.start_point || 'N/A';
+        cleaned.point_arrive = raw.point_arrive || raw['نقطة الوصول'] || raw.end_point || 'N/A';
+        cleaned.point_Traffic1 = raw.point_Traffic1 || raw['نقطة المرور 1'] || undefined;
+        cleaned.point_Traffic2 = raw.point_Traffic2 || raw['نقطة المرور 2'] || undefined;
+        cleaned.point_Traffic3 = raw.point_Traffic3 || raw['نقطة المرور 3'] || undefined;
+        cleaned.point_Traffic4 = raw.point_Traffic4 || raw['نقطة المرور 4'] || undefined;
+        cleaned.point_Traffic5 = raw.point_Traffic5 || raw['نقطة المرور 5'] || undefined;
+
+        cleaned.line_start_time = raw.line_start_time || raw['توقيت بداية الخط'] || undefined;
+        cleaned.line_end_time = raw.line_end_time || raw['توقيت نهاية الخدمة'] || undefined;
+        cleaned.Pace_per_minute = raw.Pace_per_minute || raw['الوتيرة بالدقائق بالنسبة للحضري'] || undefined;
+
+        cleaned.time_depart1 = raw.time_depart1 || raw['تاريخ الانطلاق 1'] || undefined;
+        cleaned.time_depart2 = raw.time_depart2 || raw['تاريخ الانطلاق 2'] || undefined;
+        cleaned.time_depart3 = raw.time_depart3 || raw['تاريخ الانطلاق 3'] || undefined;
+        cleaned.time_depart4 = raw.time_depart4 || raw['تاريخ الانطلاق 4'] || undefined;
+
+        // sanitize enums: if empty string or invalid value, do not set
+        const tp = raw.type_parked ?? raw.typeParked ?? raw['نوع التوقف'];
+        if (tp && allowedTypeParked.includes(tp)) {
+          cleaned.type_parked = tp;
+        }
+
+        const vh = raw.vihicile_parked ?? raw.vihicule_parked ?? raw[' المركبة (متوقفة أم لا)'];
+        if (vh) cleaned.vihicile_parked = vh;
+
+        cleaned.hestoire_parked = parseDate(raw.hestoire_parked || raw['تاريخ التوقف']) || undefined;
+        cleaned.hestoire_parked_end = parseDate(raw.hestoire_parked_end || raw['تاريخ نهاية توقيف مؤقت']) || undefined;
+
+        cleaned.comments = raw.comments || raw['ملاحظات'] || undefined;
+        cleaned.person_concerned = raw.person_concerned || raw['المعني بالتحديث'] || undefined;
+        cleaned.note_chef_departement = raw.note_chef_departement || raw['ملاحظات رئيس المصلحة'] || undefined;
+        cleaned.path = raw.path || '';
+
+        try {
+          await this.VihicileModel.create(cleaned);
+          successCount++;
+        } catch (err) {
+          const message = err?.message || err;
+          console.error(`❌ خطأ أثناء الحفظ في السطر ${i + 1}:`, message);
+          failed.push({ index: i + 1, error: message, raw, cleaned });
+        }
+      }
+
+      console.log('✅ استيراد المركبات مكتمل (مع تسجيل الأخطاء إن وجدت)');
+      resolve({ successCount, failed });
     });
   }
 
@@ -1245,5 +1356,10 @@ export class VehiclesService {
 
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer);
+  }
+
+  async clearVehicles(): Promise<string> {
+    await this.VihicileModel.deleteMany({});
+    return '✅ All users have been deleted successfully';
   }
 }
