@@ -674,7 +674,7 @@ export class OperateurDtwService {
   async generatepdfs(id: string, res: Response) {
     const operateur = await this.OperateurModel.findById(id).lean();
     if (!operateur) throw new NotFoundException('الناقل غير موجود');
-    const fullNameOperateur = operateur.fullName_francais;
+    const fullNameOperateur = operateur.fullName_arabe;
     console.log("fullNameOperateur", fullNameOperateur)
     const chauffeur =
       await this.chauffeursService.findChauffeurByOperateur(fullNameOperateur);
