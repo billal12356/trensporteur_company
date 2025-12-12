@@ -448,15 +448,41 @@ export class OperateurDtwService {
   async exportUsersToExcel(filterDto: any): Promise<string> {
     const query: any = {};
 
+    console.log("filterDto",filterDto)
     if (filterDto.search && filterDto.search.trim()) {
-      const searchRegex = { $regex: filterDto.search, $options: 'i' };
-      query.$or = [
-        { fullName_arabe: searchRegex },
-        { fullName_francais: searchRegex },
+      // Use the same robust search logic as findAll
+      const orConditions: any[] = [
+        { fullName_arabe: new RegExp(filterDto.search, 'i') },
+        { fullName_francais: new RegExp(filterDto.search, 'i') },
+        { activite: new RegExp(filterDto.search, 'i') },
+        { nature_activite: new RegExp(filterDto.search, 'i') },
+        { status_activite: new RegExp(filterDto.search, 'i') },
+        { type_client: new RegExp(filterDto.search, 'i') },
+        { address_arabe: new RegExp(filterDto.search, 'i') },
+        { address_francais: new RegExp(filterDto.search, 'i') },
+        { nom_pere_arabe: new RegExp(filterDto.search, 'i') },
+        { nom_pere_francais: new RegExp(filterDto.search, 'i') },
+        { fullName_mere_arabe: new RegExp(filterDto.search, 'i') },
+        { fullName_mere_francais: new RegExp(filterDto.search, 'i') },
+        { num_registre_commerce: new RegExp(filterDto.search, 'i') },
+        // numeric fields are matched as numbers below when the search is numeric
       ];
+
+      // If search is numeric, also match by exact number
+      if (!isNaN(Number(filterDto.search))) {
+        orConditions.push({ num_docier_client: Number(filterDto.search) });
+        orConditions.push({ num_dhoraire: Number(filterDto.search) });
+        orConditions.push({ num_wilaya: Number(filterDto.search) });
+        orConditions.push({ num_dacte_naissance: Number(filterDto.search) });
+        orConditions.push({ num_didentification_national_NIN: Number(filterDto.search) });
+      }
+
+      query.$or = orConditions;
     }
+    console.log("query",query)
     const operateurs = await this.OperateurModel.find(query).lean();
 
+    console.log("operateurs",operateurs)
     const workbook = new Workbook();
     const worksheet = workbook.addWorksheet('المتعاملين');
 
