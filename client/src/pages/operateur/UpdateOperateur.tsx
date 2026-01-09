@@ -5,6 +5,7 @@ import { RootState, AppDispatch } from "@/redux/store";
 import {
   FindOneOperateur,
   updateOperateur,
+  clearMessageUpdate,
 } from "@/redux/slice/operateurSlice";
 import { Operateur } from "@/components/types/OperateurTypes";
 import { Input } from "@/components/ui/input";
@@ -36,7 +37,12 @@ const EditOperateur = () => {
   // ✅ Fetch operator by ID
   useEffect(() => {
     if (id) {
+      // Clear the previous success message when switching to a new operateur
+      dispatch(clearMessageUpdate());
       dispatch(FindOneOperateur(id));
+      // Reset form and message when loading a new operateur
+      setFormData({} as Operateur);
+      setHasChanges(false);
     }
   }, [dispatch, id]);
 
@@ -47,12 +53,16 @@ const EditOperateur = () => {
     }
   }, [operateur]);
 
-  // ✅ Redirect after update
+  // ✅ Redirect after update (only when messageUpdate changes from empty to filled)
   useEffect(() => {
-    if (messageUpdate) {
-      navigate("/operateur");
+    if (messageUpdate && id) {
+      // Show toast and redirect after a short delay to let user see the success message
+      const timer = setTimeout(() => {
+        navigate("/operateur");
+      }, 1500);
+      return () => clearTimeout(timer);
     }
-  }, [messageUpdate, navigate]);
+  }, [messageUpdate, id, navigate]);
 
   // ✅ Detect if formData changed from original
   useEffect(() => {
@@ -747,7 +757,7 @@ const EditOperateur = () => {
                   <SelectValue placeholder="اختر" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="متوقف">متوقف</SelectItem>
+                  <SelectItem value="نعم">متوقف</SelectItem>
                   <SelectItem value="لا">لا</SelectItem>
                 </SelectContent>
               </Select>

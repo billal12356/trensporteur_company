@@ -14,10 +14,13 @@ import { OperateurDtwService } from 'src/operateur-dtw/operateur-dtw.service';
 import { ResponseBuilder } from 'src/common/builder/response.builder';
 import { Buffer } from 'buffer';
 import { existsSync, mkdirSync } from 'fs';
-import { join } from 'path';
+import path, { join } from 'path';
 import { Workbook } from 'exceljs';
 import * as ExcelJS from 'exceljs';
+import * as fs from 'fs';
 import { VihiclesQueryBuilder } from 'src/common/builder/VihiclesQueryBuilder';
+
+
 
 @Injectable()
 export class VehiclesService {
@@ -26,85 +29,94 @@ export class VehiclesService {
     @Inject(forwardRef(() => OperateurDtwService))
     private readonly operateurService: OperateurDtwService,
   ) { }
+  private normalizeVihicileParked(val: any): string | undefined {
+    if (!val) return undefined;
+    const v = String(val).trim();
+
+    if (['نعم', 'yes', 'oui', '1', 'true'].includes(v)) return 'موقفة';
+    if (['لا', 'no', 'non', '0', 'false'].includes(v)) return 'لا';
+
+    return undefined;
+  }
 
   async create(createVehicleDto: CreateVihicleDto) {
-  const {
-    num_docier_client,
-    fullName_arabe,
-    fullName_francais,
-    num_bus_registration,
-  } = createVehicleDto;
+    const {
+      num_docier_client,
+      fullName_arabe,
+      fullName_francais,
+      num_bus_registration,
+    } = createVehicleDto;
 
-  // 🔹 Check if operator exists
-  const operateurNum = await this.operateurService.findByVihicilesandChauffer({
-    num_docier_client,
-  });
+    // 🔹 Check if operator exists
+    const operateurNum = await this.operateurService.findByVihicilesandChauffer({
+      num_docier_client,
+    });
 
-  
 
-  if (!operateurNum) {
-    throw new NotFoundException(
-      new ResponseBuilder()
-        .setStatus(404)
-        .setMessage(`لم يتم العثور على ملف المتعامل بهذا الرقم ${num_docier_client}`)
-        .setErrors({ _id: 'Operator not found' })
-        .build(),
-    );
+
+    if (!operateurNum) {
+      throw new NotFoundException(
+        new ResponseBuilder()
+          .setStatus(404)
+          .setMessage(`لم يتم العثور على ملف المتعامل بهذا الرقم ${num_docier_client}`)
+          .setErrors({ _id: 'Operator not found' })
+          .build(),
+      );
+    }
+
+    // 🔹 Check if vehicle already exists
+    const existingVehicle = await this.VihicileModel.findOne({
+      num_bus_registration,
+    });
+
+    if (existingVehicle) {
+      const vehicleInfo = {
+        fullName_arabe: existingVehicle.fullName_arabe,
+        matricule: existingVehicle.num_bus_registration,
+        font_type: existingVehicle.font_type,
+      };
+
+      throw new NotFoundException(
+        new ResponseBuilder()
+          .setStatus(409)
+          .setMessage('المركبة مسجلة من قبل')
+          .setErrors('المركبة مسجلة من قبل')
+          .setData(vehicleInfo)
+          .build(),
+      );
+    }
+
+    // 🔹 Validate operator’s Arabic name
+    if (operateurNum.fullName_arabe !== fullName_arabe) {
+      throw new NotFoundException(
+        new ResponseBuilder()
+          .setStatus(404)
+          .setMessage(`اسم المتعامل بالعربية غير مطابق: ${fullName_arabe}`)
+          .setErrors({ name: 'Arabic name mismatch' })
+          .build(),
+      );
+    }
+
+    // 🔹 Validate operator’s French name
+    if (operateurNum.fullName_francais !== fullName_francais) {
+      throw new NotFoundException(
+        new ResponseBuilder()
+          .setStatus(404)
+          .setMessage(`اسم المتعامل بالفرنسية غير مطابق: ${fullName_francais}`)
+          .setErrors({ name: 'French name mismatch' })
+          .build(),
+      );
+    }
+
+    // 🔹 Create new vehicle
+    const vehicle = await this.VihicileModel.create(createVehicleDto);
+
+    return new ResponseBuilder()
+      .setStatus(201)
+      .setMessage('تم تسجيل المركبة بنجاح')
+      .setData(vehicle)
+      .build();
   }
-
-  // 🔹 Check if vehicle already exists
-  const existingVehicle = await this.VihicileModel.findOne({
-    num_bus_registration,
-  });
-
-  if (existingVehicle) {
-    const vehicleInfo = {
-      fullName_arabe: existingVehicle.fullName_arabe,
-      matricule: existingVehicle.num_bus_registration,
-      font_type: existingVehicle.font_type,
-    };
-
-    throw new NotFoundException(
-      new ResponseBuilder()
-        .setStatus(409)
-        .setMessage('المركبة مسجلة من قبل')
-        .setErrors('المركبة مسجلة من قبل')
-        .setData(vehicleInfo)
-        .build(),
-    );
-  }
-
-  // 🔹 Validate operator’s Arabic name
-  if (operateurNum.fullName_arabe !== fullName_arabe) {
-    throw new NotFoundException(
-      new ResponseBuilder()
-        .setStatus(404)
-        .setMessage(`اسم المتعامل بالعربية غير مطابق: ${fullName_arabe}`)
-        .setErrors({ name: 'Arabic name mismatch' })
-        .build(),
-    );
-  }
-
-  // 🔹 Validate operator’s French name
-  if (operateurNum.fullName_francais !== fullName_francais) {
-    throw new NotFoundException(
-      new ResponseBuilder()
-        .setStatus(404)
-        .setMessage(`اسم المتعامل بالفرنسية غير مطابق: ${fullName_francais}`)
-        .setErrors({ name: 'French name mismatch' })
-        .build(),
-    );
-  }
-
-  // 🔹 Create new vehicle
-  const vehicle = await this.VihicileModel.create(createVehicleDto);
-
-  return new ResponseBuilder()
-    .setStatus(201)
-    .setMessage('تم تسجيل المركبة بنجاح')
-    .setData(vehicle)
-    .build();
-}
 
 
   async findAll(params: any) {
@@ -207,6 +219,8 @@ export class VehiclesService {
       },
     ).exec();
 
+    console.log("updatedVehicle", updatedVehicle)
+
     return new ResponseBuilder()
       .setStatus(200)
       .setMessage('تم تحديث المشغل بنجاح!')
@@ -234,20 +248,19 @@ export class VehiclesService {
   }
 
   async exportVihiculeToExcel(filterDto: any): Promise<string> {
-    const query: any = {};
-    console.log(filterDto);
+    // Extract and sanitize search term
+    const search = filterDto?.search ? String(filterDto.search).trim() : null;
 
-    const search = filterDto?.search?.trim?.();
-    if (search) {
-      const searchRegex = { $regex: search, $options: 'i' };
-      query.$or = [
-        { fullName_arabe: searchRegex },
-        { fullName_francais: searchRegex },
-      ];
-    }
+    const qb = new VihiclesQueryBuilder()
+      .setSearch(search)
+      .build();
 
-    const vihicule = await this.VihicileModel.find(query).lean();
-    console.log(vihicule);
+    console.log('📊 Export Vehicles - Search term:', search || '(empty - showing all records)');
+    console.log('📋 Generated Query:', JSON.stringify(qb.query));
+
+    const vihicule = await this.VihicileModel.find(qb.query).lean();
+
+    console.log(`✅ Found ${vihicule.length} vehicles matching criteria`);
 
     const workbook = new Workbook();
     const worksheet = workbook.addWorksheet('المركبة');
@@ -426,6 +439,7 @@ export class VehiclesService {
     return filePath;
   }
 
+  // ================= Get Registration Stats =================
   async getRegistrationStats(start: string, end: string) {
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -457,6 +471,7 @@ export class VehiclesService {
     }));
   }
 
+  // ================= Find Vihicule By Operateur =================
   async findVihiculeByOperateur(num_docier_client: number) {
     const vihicule = await this.VihicileModel.find({
       num_docier_client,
@@ -464,6 +479,7 @@ export class VehiclesService {
     return vihicule;
   }
 
+  // ================= Find Vihicule By Num Bus Registration =================
   async findVihiculeByNumBus(query: Record<string, any>) {
     console.log(query);
 
@@ -475,164 +491,101 @@ export class VehiclesService {
     return find;
   }
 
-  importExcel(filePath: any[]): Promise<{ successCount: number; failed: any[] }> {
-    return new Promise(async (resolve) => {
-      const records = Array.isArray(filePath)
-        ? filePath
-        : Array.isArray((filePath as any)?.default)
-        ? (filePath as any).default
-        : [];
+  // ================ Import From JSON =================
+  async importJson(data: any[]) {
+    const docs: any[] = [];
+    const failed: any[] = [];
 
-      if (records.length === 0) {
-        console.warn('⚠️ importExcel received 0 records. Input type:', typeof filePath, Object.keys(filePath || {}).length ? 'has keys' : 'no keys');
+    for (let i = 0; i < data.length; i++) {
+      const raw = data[i];
+
+      try {
+        // ✅ DEFAULT VALUE FOR num_bus_registration
+        const numBusRegistration =
+          raw.num_bus_registration && raw.num_bus_registration.toString().trim() !== ''
+            ? raw.num_bus_registration
+            : `UNKNOWN-ROW-${i + 1}`;
+
+        docs.push({
+          ...raw,
+
+          num_bus_registration: numBusRegistration, // 👈 هنا الحل
+
+          num_driving_license: raw.num_driving_license ?? 0,
+
+          Vehicle_activity_start_date: raw.Vehicle_activity_start_date
+            ? new Date(raw.Vehicle_activity_start_date)
+            : new Date(),
+
+          colonne4: raw.colonne4 ?? 'N/A',
+          font_symbol: raw.font_symbol ?? '',
+          point_depart: raw.point_depart ?? 'غير محدد',
+          point_arrive: raw.point_arrive ?? 'غير محدد',
+
+          vihicile_parked: this.normalizeVihicileParked(raw.vihicile_parked),
+
+          type_parked:
+            ['مؤقت', 'نهائي'].includes(raw.type_parked)
+              ? raw.type_parked
+              : undefined,
+
+          __rowIndex: i + 1, // 👈 مهم جدًا
+        });
+
+      } catch (e: any) {
+        failed.push({
+          row: i + 1,
+          reason: e.message,
+        });
       }
+    }
 
-      const excelDateToJSDate = (serial: number) => {
-        // Convert Excel serial date to JS Date (approximate)
-        try {
-          const utcDays = serial - 25569;
-          const utcValue = Math.floor(utcDays * 86400 * 1000);
-          return new Date(utcValue);
-        } catch (e) {
-          return new Date(serial);
-        }
+    // ================= Insert =================
+    try {
+      const result = await this.VihicileModel.insertMany(docs, {
+        ordered: false,
+      });
+
+      return {
+        total: data.length,
+        inserted: result.length,
+        failed: failed.length,
+        failedDetails: failed,
       };
 
-      const parseDate = (val: any) => {
-        if (!val && val !== 0) return undefined;
-        if (typeof val === 'number') return excelDateToJSDate(val);
-        if (val instanceof Date) return val;
-        if (typeof val === 'string') {
-          const s = val.trim();
-          // dd/mm/yyyy or dd-mm-yyyy
-          const dm = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
-          if (dm) {
-            const day = Number(dm[1]);
-            const month = Number(dm[2]) - 1;
-            let year = Number(dm[3]);
-            if (year < 100) year += 2000;
-            return new Date(year, month, day);
+    } catch (e: any) {
+      if (e.writeErrors) {
+        e.writeErrors.forEach((err: any) => {
+          const doc = docs[err.index];
+
+          let reason = 'خطأ غير معروف';
+
+          if (err.code === 11000) {
+            reason = 'رقم تسجيل الحافلة مكرر';
+          } else if (err.errmsg) {
+            reason = err.errmsg;
           }
-          const maybe = new Date(s);
-          if (!isNaN(maybe.getTime())) return maybe;
-          return undefined;
-        }
-        return undefined;
-      };
 
-      const parseNumber = (val: any) => {
-        if (val === undefined || val === null || val === '') return undefined;
-        if (typeof val === 'number') return val;
-        const cleaned = String(val).replace(/[^0-9\-\.]/g, '');
-        const n = Number(cleaned);
-        return isNaN(n) ? undefined : n;
-      };
-
-      const allowedTypeParked = ['مؤقت', 'نهائي'];
-
-      const failed: any[] = [];
-      let successCount = 0;
-
-      for (let i = 0; i < records.length; i++) {
-        const raw = records[i] || {};
-        console.log('🚐 Import vehicle row:', i + 1);
-
-        const cleaned: any = {};
-
-        // Map and coerce common fields, with fallbacks
-        cleaned.num_wilaya = parseNumber(raw.num_wilaya) ?? 0;
-        cleaned.num_docier_client = parseNumber(raw.num_docier_client) ?? parseNumber(raw.num_dossier_client) ?? 0;
-
-        cleaned.fullName_arabe = raw.fullName_arabe || raw.full_name_ar || raw.fullname_ar || raw['اللقب و الإسم'] || raw['الاسم الكامل بالعربية'] || '';
-        cleaned.fullName_francais = raw.fullName_francais || raw.full_name_fr || raw.fullname_fr || raw['الاسم الكامل بالفرنسية'] || cleaned.fullName_arabe || '';
-
-        cleaned.activite = raw.activite || raw.activity || raw['النشاط'] || '';
-        cleaned.colonne1 = raw.colonne1 || raw.col1 || raw['العمود 1'] || '';
-        cleaned.nature_activite = raw.nature_activite || raw.nature || raw['طبيعة النشاط'] || '';
-        cleaned.colonne2 = raw.colonne2 || raw.col2 || raw['العمود 2'] || '';
-        cleaned.status_activite = raw.status_activite || raw.status || raw['حالة النشاط'] || '';
-        cleaned.colonne3 = raw.colonne3 || raw.col3 || raw['العمود 3'] || '';
-
-        cleaned.num_bus_registration = String(raw.num_bus_registration || raw.registration || raw['رقم تسجيل الحافلة او الشاحنة'] || '').trim();
-
-        cleaned.circle = raw.circle || raw['الدائرة'] || '';
-        cleaned.Municipality = raw.Municipality || raw['البلدية'] || '';
-        cleaned.Style = raw.Style || raw.style || '';
-        cleaned.category = raw.category || raw['الصنف'] || '';
-        cleaned.type = raw.type || raw['النوع'] || '';
-
-        cleaned.First_year_of_use = parseNumber(raw.First_year_of_use) ?? new Date().getFullYear();
-        cleaned.Number_of_seats = parseNumber(raw.Number_of_seats) ?? undefined;
-        cleaned.Energy = raw.Energy || raw.energy || undefined;
-
-        cleaned.num_driving_license = parseNumber(raw.num_driving_license) ?? 0;
-
-        const drivingHistory = parseDate(raw.driving_license_history || raw.driving_history || raw['تاريخ رخصة السير']);
-        if (drivingHistory) cleaned.driving_license_history = drivingHistory;
-
-        cleaned.driving_license_dure = raw.driving_license_dure || raw.driving_dure || undefined;
-
-        const parsedLineActivityStart = parseDate(raw.line_activity_start_date || raw['تاريخ بداية نشاط الخط']);
-        if (parsedLineActivityStart) cleaned.line_activity_start_date = parsedLineActivityStart;
-
-        const parsedVehicleActivityStart = parseDate(raw.Vehicle_activity_start_date || raw.vehicle_activity_start_date || raw['تاريخ بداية نشاط المركبة'] || raw.createdAt || raw['date']);
-        cleaned.Vehicle_activity_start_date = parsedVehicleActivityStart ?? new Date();
-
-        cleaned.font_type = raw.font_type || raw['نوع الخط'] || undefined;
-        cleaned.colonne4 = raw.colonne4 || raw.col4 || 'N/A';
-
-        // font_symbol required: derive from known fields or generate a fallback
-        cleaned.font_symbol = raw.font_symbol || raw.fontSymbol || raw['رمز الخط'] || cleaned.num_bus_registration || `FONT_${i + 1}`;
-
-        cleaned.point_depart = raw.point_depart || raw['نقطة الانطلاق'] || raw.start_point || 'N/A';
-        cleaned.point_arrive = raw.point_arrive || raw['نقطة الوصول'] || raw.end_point || 'N/A';
-        cleaned.point_Traffic1 = raw.point_Traffic1 || raw['نقطة المرور 1'] || undefined;
-        cleaned.point_Traffic2 = raw.point_Traffic2 || raw['نقطة المرور 2'] || undefined;
-        cleaned.point_Traffic3 = raw.point_Traffic3 || raw['نقطة المرور 3'] || undefined;
-        cleaned.point_Traffic4 = raw.point_Traffic4 || raw['نقطة المرور 4'] || undefined;
-        cleaned.point_Traffic5 = raw.point_Traffic5 || raw['نقطة المرور 5'] || undefined;
-
-        cleaned.line_start_time = raw.line_start_time || raw['توقيت بداية الخط'] || undefined;
-        cleaned.line_end_time = raw.line_end_time || raw['توقيت نهاية الخدمة'] || undefined;
-        cleaned.Pace_per_minute = raw.Pace_per_minute || raw['الوتيرة بالدقائق بالنسبة للحضري'] || undefined;
-
-        cleaned.time_depart1 = raw.time_depart1 || raw['تاريخ الانطلاق 1'] || undefined;
-        cleaned.time_depart2 = raw.time_depart2 || raw['تاريخ الانطلاق 2'] || undefined;
-        cleaned.time_depart3 = raw.time_depart3 || raw['تاريخ الانطلاق 3'] || undefined;
-        cleaned.time_depart4 = raw.time_depart4 || raw['تاريخ الانطلاق 4'] || undefined;
-
-        // sanitize enums: if empty string or invalid value, do not set
-        const tp = raw.type_parked ?? raw.typeParked ?? raw['نوع التوقف'];
-        if (tp && allowedTypeParked.includes(tp)) {
-          cleaned.type_parked = tp;
-        }
-
-        const vh = raw.vihicile_parked ?? raw.vihicule_parked ?? raw[' المركبة (متوقفة أم لا)'];
-        if (vh) cleaned.vihicile_parked = vh;
-
-        cleaned.hestoire_parked = parseDate(raw.hestoire_parked || raw['تاريخ التوقف']) || undefined;
-        cleaned.hestoire_parked_end = parseDate(raw.hestoire_parked_end || raw['تاريخ نهاية توقيف مؤقت']) || undefined;
-
-        cleaned.comments = raw.comments || raw['ملاحظات'] || undefined;
-        cleaned.person_concerned = raw.person_concerned || raw['المعني بالتحديث'] || undefined;
-        cleaned.note_chef_departement = raw.note_chef_departement || raw['ملاحظات رئيس المصلحة'] || undefined;
-        cleaned.path = raw.path || '';
-
-        try {
-          await this.VihicileModel.create(cleaned);
-          successCount++;
-        } catch (err) {
-          const message = err?.message || err;
-          console.error(`❌ خطأ أثناء الحفظ في السطر ${i + 1}:`, message);
-          failed.push({ index: i + 1, error: message, raw, cleaned });
-        }
+          failed.push({
+            row: doc.__rowIndex,
+            reason,
+          });
+        });
       }
 
-      console.log('✅ استيراد المركبات مكتمل (مع تسجيل الأخطاء إن وجدت)');
-      resolve({ successCount, failed });
-    });
+      return {
+        total: data.length,
+        inserted: e.insertedDocs?.length ?? 0,
+        failed: failed.length,
+        failedDetails: failed,
+      };
+    }
   }
 
+
+
+
+  // ================= Search By Line Code =================
   async searchByLineCode(lineCode: string) {
     const lines = await this.VihicileModel.find({
       font_symbol: lineCode,
@@ -645,9 +598,10 @@ export class VehiclesService {
     return lines;
   }
 
+  // ================= Export To Excel =================
   async exportToExcel(lineCode: string): Promise<Buffer> {
     const vehicles = await this.searchByLineCode(lineCode);
-    console.log("vehicles " ,vehicles);
+    console.log("vehicles ", vehicles);
 
     function formatDate(
       dateInput: Date | string | number,
@@ -859,6 +813,7 @@ export class VehiclesService {
     return Buffer.from(await workbook.xlsx.writeBuffer());
   }
 
+  // ================= Export Urban Transport Excel =================
   async exportUrbanTransportExcel(): Promise<Buffer> {
     const data = await this.VihicileModel.find({
       font_type: 'حضري او شبه حضري',
@@ -984,18 +939,67 @@ export class VehiclesService {
     return Buffer.from(buffer);
   }
 
+  // ================= Export Balady Transport Excel =================
   async exportBaladyExcel(): Promise<Buffer> {
     const vehicles = await this.VihicileModel.find({
       font_type: 'بين البلديات',
     }).exec();
 
-    console.log('vehicles ==> ', vehicles);
+    // ================= Committee Data =================
+    const committeeData = [
+      { font_symbol: '442001', oldVehicles: 26, committeeOpinion: 26, maxLimit: 26 },
+      { font_symbol: '442002', oldVehicles: 14, committeeOpinion: 24, maxLimit: 24 },
+      { font_symbol: '442003', oldVehicles: 27, committeeOpinion: 16, maxLimit: 27 },
+      { font_symbol: '442005', oldVehicles: 30, committeeOpinion: 30, maxLimit: 30 },
+      { font_symbol: '442006', oldVehicles: 31, committeeOpinion: 30, maxLimit: 31 },
+      { font_symbol: '442019', oldVehicles: 32, committeeOpinion: 30, maxLimit: 32 },
+      { font_symbol: '442020', oldVehicles: 12, committeeOpinion: 17, maxLimit: 11 },
+      { font_symbol: '442021', oldVehicles: 6, committeeOpinion: 11, maxLimit: 13 },
+      { font_symbol: '442023', oldVehicles: 1, committeeOpinion: 9, maxLimit: 9 },
+      { font_symbol: '442024', oldVehicles: 12, committeeOpinion: 16, maxLimit: 10 },
+      { font_symbol: '442025', oldVehicles: 4, committeeOpinion: 12, maxLimit: 10 },
+      { font_symbol: '442031', oldVehicles: 10, committeeOpinion: 14, maxLimit: 14 },
+      { font_symbol: '442036', oldVehicles: 28, committeeOpinion: 20, maxLimit: 28 },
+      { font_symbol: '442040', oldVehicles: 33, committeeOpinion: 20, maxLimit: 33 },
+      { font_symbol: '442041', oldVehicles: 4, committeeOpinion: 4, maxLimit: 4 },
+      { font_symbol: '442042', oldVehicles: 8, committeeOpinion: 15, maxLimit: 23 },
+      { font_symbol: '442053', oldVehicles: 2, committeeOpinion: 5, maxLimit: 5 },
+      { font_symbol: '442054', oldVehicles: 11, committeeOpinion: 12, maxLimit: 14 },
+      { font_symbol: '442058', oldVehicles: 37, committeeOpinion: 31, maxLimit: 42 },
+      { font_symbol: '442060', oldVehicles: 6, committeeOpinion: 6, maxLimit: 8 },
+      { font_symbol: '442061', oldVehicles: 33, committeeOpinion: 28, maxLimit: 33 },
+      { font_symbol: '442068', oldVehicles: 9, committeeOpinion: 10, maxLimit: 13 },
+      { font_symbol: '442070', oldVehicles: 0, committeeOpinion: 1, maxLimit: 1 },
+      { font_symbol: '442071', oldVehicles: 16, committeeOpinion: 21, maxLimit: 16 },
+      { font_symbol: '442079', oldVehicles: 14, committeeOpinion: 19, maxLimit: 19 },
+      { font_symbol: '442082', oldVehicles: 3, committeeOpinion: 5, maxLimit: 8 },
+      { font_symbol: '442083', oldVehicles: 26, committeeOpinion: 15, maxLimit: 26 },
+      { font_symbol: '442097', oldVehicles: 0, committeeOpinion: 4, maxLimit: 4 },
+      { font_symbol: '442098', oldVehicles: 3, committeeOpinion: 5, maxLimit: 7 },
+      { font_symbol: '442103', oldVehicles: 27, committeeOpinion: 15, maxLimit: 32 },
+      { font_symbol: '442104', oldVehicles: 25, committeeOpinion: 23, maxLimit: 25 },
+      { font_symbol: '442108', oldVehicles: 10, committeeOpinion: 10, maxLimit: 13 },
+      { font_symbol: '442110', oldVehicles: 1, committeeOpinion: 6, maxLimit: 6 },
+      { font_symbol: '442111', oldVehicles: 3, committeeOpinion: 3, maxLimit: 3 },
+      { font_symbol: '442128', oldVehicles: 5, committeeOpinion: 5, maxLimit: 5 },
+      { font_symbol: '442129', oldVehicles: 18, committeeOpinion: 15, maxLimit: 23 },
+      { font_symbol: '442147', oldVehicles: 9, committeeOpinion: 9, maxLimit: 9 },
+      { font_symbol: '442153', oldVehicles: 5, committeeOpinion: 5, maxLimit: 10 },
+      { font_symbol: '442156', oldVehicles: 2, committeeOpinion: 6, maxLimit: 6 },
+      { font_symbol: '442176', oldVehicles: 12, committeeOpinion: 12, maxLimit: 20 },
+      { font_symbol: '442184', oldVehicles: 3, committeeOpinion: 5, maxLimit: 7 },
+      { font_symbol: '442187', oldVehicles: 1, committeeOpinion: 3, maxLimit: 3 },
+      { font_symbol: '442191', oldVehicles: 0, committeeOpinion: 5, maxLimit: 5 },
+    ];
 
+    const committeeMap = new Map<string, any>();
+    committeeData.forEach((c) => committeeMap.set(c.font_symbol, c));
+
+    // ================= Workbook =================
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Vehicles');
 
-    // --- Header title (merged row) ---
-    worksheet.mergeCells('A1:L1'); // عندك 12 عمود في الهيدر
+    worksheet.mergeCells('A1:L1');
     const titleCell = worksheet.getCell('A1');
     titleCell.value = 'مخطط النقل الخاص بالخطوط البلدية';
     titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -1012,12 +1016,11 @@ export class VehiclesService {
     };
     worksheet.getRow(1).height = 40;
 
-    // --- Column headers ---
     const headerRow = worksheet.addRow([
       'راي المدير',
-      'اتفاق اللجنة',
+      'راي اللجنة',
       'عدد الرخص التي تم تعويضها',
-      'العدد المتفق عليه باخر محضر',
+      'العدد المتفق عليه',
       'ملاحظات رئيس المصلحة',
       'عدد المركبات سابقا',
       'عدد المركبات في الوقت الحالي',
@@ -1028,13 +1031,8 @@ export class VehiclesService {
       'الرقم',
     ]);
 
-    // --- Style headers ---
-    headerRow.eachCell((cell, colNumber) => {
-      cell.alignment = {
-        vertical: 'middle',
-        horizontal: 'center',
-        wrapText: true,
-      };
+    headerRow.eachCell((cell, col) => {
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
       cell.font = { name: 'Cairo', size: 13, bold: true };
       cell.fill = {
         type: 'pattern',
@@ -1047,70 +1045,88 @@ export class VehiclesService {
         bottom: { style: 'thin' },
         right: { style: 'thin' },
       };
-
-      // عرض الأعمدة بناءً على طول الكلمة (min 15, max 40)
-      const headerText = cell.value?.toString() || '';
-      worksheet.getColumn(colNumber).width = Math.min(
-        Math.max(headerText.length + 5, 15),
-        40,
-      );
+      worksheet.getColumn(col).width = 22;
     });
 
-    headerRow.height = 30;
+    // ================= Group Vehicles =================
+    const groupedVehicles = new Map<string, any>();
 
-    // --- Data rows ---
-    let idx = 0;
     for (const v of vehicles) {
+      const fontSymbol = v.font_symbol?.replace(/-/g, '') ?? 'UNKNOWN';
+
       const op = await this.operateurService.findOperateurByNumClient(
         v.num_docier_client,
       );
       const opCount = op?.length ?? 0;
 
+      if (!groupedVehicles.has(fontSymbol)) {
+        groupedVehicles.set(fontSymbol, {
+          fontSymbol,
+          point_depart: v.point_depart ?? '',
+          point_arrive: v.point_arrive ?? '',
+          note: v.note_chef_departement ?? '',
+          operateurs: opCount,
+          totalVehicles: 1,
+        });
+      } else {
+        const g = groupedVehicles.get(fontSymbol);
+        g.operateurs += opCount;
+        g.totalVehicles += 1;
+        if (v.note_chef_departement && !g.note.includes(v.note_chef_departement)) {
+          g.note += ` | ${v.note_chef_departement}`;
+        }
+      }
+    }
+
+    // ================= SORT BY font_symbol ASC =================
+    const sortedVehicles = Array.from(groupedVehicles.values()).sort(
+      (a, b) => Number(a.fontSymbol) - Number(b.fontSymbol),
+    );
+
+    // ================= Rows =================
+    let idx = 1;
+    for (const v of sortedVehicles) {
+      const committee = committeeMap.get(v.fontSymbol);
+
       const row = worksheet.addRow([
-        '', // راي المدير
-        '', // اتفاق اللجنة
-        '', // عدد الرخص التي تم تعويضها
-        '', // العدد المتفق عليه باخر محضر
-        v.note_chef_departement ?? '', // ملاحظات رئيس المصلحة
-        '', // عدد المركبات سابقا
-        '', // عدد المركبات حاليا
-        opCount, // عدد المتعاملين حاليا
-        v.point_arrive ?? '', // الوصول
-        v.point_depart ?? '', // الانطلاق
-        v.font_type ?? '', // رمز الخط
-        idx + 1, // الرقم
+        '',
+        committee?.committeeOpinion ?? '',
+        '',
+        committee?.maxLimit ?? '',
+        v.note,
+        committee?.oldVehicles ?? '',
+        v.totalVehicles,
+        v.operateurs,
+        v.point_arrive,
+        v.point_depart,
+        v.fontSymbol,
+        idx,
       ]);
 
-      // Style rows + alternate colors
-      worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber > 2) {
-          // بعد العنوان والهيدر
-          row.height = 20;
-          row.eachCell((cell) => {
-            cell.alignment = { vertical: 'middle', horizontal: 'center' };
-            cell.font = { name: 'Cairo', size: 11 };
-            cell.border = {
-              top: { style: 'thin' },
-              left: { style: 'thin' },
-              bottom: { style: 'thin' },
-              right: { style: 'thin' },
-            };
-          });
-        }
+      row.eachCell((cell) => {
+        cell.alignment = {
+          vertical: 'middle',
+          horizontal: 'center',
+          wrapText: true,
+        };
+        cell.font = { name: 'Cairo', size: 11 };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' },
+        };
       });
 
       idx++;
     }
 
-    // --- Auto column widths ---
-    worksheet.columns.forEach((col) => {
-      col.width = 20;
-    });
-
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer);
   }
 
+
+  // ================= Export Rifi Transport Excel =================
   async exportRifiExcel(): Promise<Buffer> {
     const vehicles = await this.VihicileModel.find({
       font_type: 'ريفي',
@@ -1233,6 +1249,7 @@ export class VehiclesService {
     return Buffer.from(buffer);
   }
 
+  // ================= Export Wilay Transport Excel =================
   async exportExcelWilay(): Promise<Buffer> {
     const vehicles = await this.VihicileModel.find({
       font_type: 'بين الولايات',
@@ -1362,4 +1379,7 @@ export class VehiclesService {
     await this.VihicileModel.deleteMany({});
     return '✅ All users have been deleted successfully';
   }
+
+
+
 }

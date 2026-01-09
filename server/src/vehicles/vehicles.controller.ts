@@ -22,7 +22,7 @@ import { ExportLineDto } from './dto/line.dto';
 
 @Controller('vehicles')
 export class VehiclesController {
-  constructor(private readonly vehiclesService: VehiclesService) {}
+  constructor(private readonly vehiclesService: VehiclesService) { }
 
   @Post('create')
   async create(@Body() createVehicleDto: CreateVihicleDto) {
@@ -54,7 +54,7 @@ export class VehiclesController {
 
   @Get('export')
   async s(@Res() res: Response, @Query('search') search: string) {
-    const filePath = await this.vehiclesService.exportVihiculeToExcel(search);
+    const filePath = await this.vehiclesService.exportVihiculeToExcel({ search });
     res.download(filePath, 'vihicules.xlsx', (err) => {
       if (err) {
         console.error('خطأ أثناء تحميل الملف:', err);
@@ -100,9 +100,8 @@ export class VehiclesController {
   @Post('import-vihicule')
   async createVihc() {
     // const filePath = path.join(process.cwd(), 'src', 'import-operateur', 'data.json');
-
     // const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    return await this.vehiclesService.importExcel(vihicules);
+    return await this.vehiclesService.importJson(vihicules);
   }
 
   @Post('export-line')
@@ -174,4 +173,5 @@ export class VehiclesController {
   async clearVehicles() {
     return await this.vehiclesService.clearVehicles();
   }
+
 }

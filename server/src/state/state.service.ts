@@ -1199,21 +1199,19 @@ export class StateService {
 
     /** ------------ 1. Operateur (عدد المتعاملين) ------------- **/
     const tpv = filtered.filter((v) =>
-      ['بين البلديات', 'بين الولايات', 'حضري', 'ريفي'].includes(v.font_type),
+      ['بين البلديات', 'بين الولايات', 'حضري أو شبه حضري', 'ريفي'].includes(v.font_type),
     );
-    console.log("tpv",tpv)
+    console.log(tpv,"tpv")
     const publicCount = tpv.filter(
-      (v) => v.status_activite === 'PUBLICE',
+      (v) => v.status_activite === 'PUBLIC',
     ).length;
     const priveCount = tpv.filter((v) => v.status_activite === 'PRIVE').length;
 
     const tpc = filtered.filter((v) =>
-      ['مدرسي', 'نقل العمال'].includes(v.font_type),
+      ['نقل مدرسي', 'نقل العمال'].includes(v.font_type),
     );
 
-    console.log("tpc",tpc)
-
-    const cPub = tpc.filter((c) => c.status_activite === 'PUBLICE').length;
+    const cPub = tpc.filter((c) => c.status_activite === 'PUBLIC').length;
     const cPrv = tpc.filter((c) => c.status_activite === 'PRIVE').length;
 
     const total = tpv.length + tpc.length;
@@ -1238,7 +1236,7 @@ export class StateService {
     );
 
     const publicCounVichecle = tpvVichecle.filter(
-      (v) => v.status_activite === 'PUBLICE',
+      (v) => v.status_activite === 'PUBLIC',
     ).length;
     const priveCountVichecle = tpvVichecle.filter(
       (v) => v.status_activite === 'PRIVE',
@@ -1249,7 +1247,7 @@ export class StateService {
     );
 
     const cPubVichecle = tpcVichecle.filter(
-      (c) => c.status_activite === 'PUBLICE',
+      (c) => c.status_activite === 'PUBLIC',
     ).length;
     const cPrvVichecle = tpcVichecle.filter(
       (c) => c.status_activite === 'PRIVE',
@@ -1277,7 +1275,7 @@ export class StateService {
     );
 
     const publicCountNP = tpvNP
-      .filter((v) => v.status_activite === 'PUBLICE' && v.Number_of_seats)
+      .filter((v) => v.status_activite === 'PUBLIC' && v.Number_of_seats)
       .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
 
     console.log('publicCountNP ', publicCountNP);
@@ -1291,7 +1289,7 @@ export class StateService {
     );
 
     const cPubNP = tpcNP
-      .filter((c) => c.status_activite === 'PUBLICE' && c.Number_of_seats)
+      .filter((c) => c.status_activite === 'PUBLIC' && c.Number_of_seats)
       .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
     console.log('cPubNP ', cPubNP);
     const cPrvNP = tpcNP

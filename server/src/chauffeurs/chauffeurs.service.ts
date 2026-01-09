@@ -41,7 +41,7 @@ export class ChauffeursService {
     const vihicule = await this.vehiclesService.findVihiculeByNumBus({ num_vehicule })
 
     if (!vihicule) {
-      throw new NotFoundException(
+      throw new NotFoundException(!
         new ResponseBuilder()
           .setStatus(404)
           .setMessage(`لم يتم العثور على المركبة  ${num_vehicule}`)
@@ -166,49 +166,86 @@ export class ChauffeursService {
   }
 
   async exportChauffeurToExcel(filterDto: any): Promise<string> {
-    const query: any = {};
+    // Extract and sanitize search term
+    const search = filterDto?.search ? String(filterDto.search).trim() : null;
+    
+    const qb = new ChauffeurQueryBuilder()
+      .setSearch(search)
+      .build();
 
-    const search = filterDto?.search?.trim?.();
-    if (search) {
-      const searchRegex = { $regex: search, $options: 'i' };
-      query.$or = [
-        { fullName_arabe: searchRegex },
-        { fullName_francais: searchRegex },
-      ];
-    };
+    console.log('📊 Export Chauffeurs - Search term:', search || '(empty - showing all records)');
+    console.log('📋 Generated Query:', JSON.stringify(qb.query));
 
-    const vihicule = await this.ChauffeurModel.find(query).lean();
-    console.log(vihicule);
+    const chauffeurs = await this.ChauffeurModel
+      .find(qb.query)
+      .sort(qb.sort)
+      .lean();
+
+    console.log(`✅ Found ${chauffeurs.length} chauffeurs matching criteria`);
 
     const workbook = new Workbook();
     const worksheet = workbook.addWorksheet('السائقين');
 
-    const exportDir = join(__dirname, '..', 'exports/chauffeurs');
-    if (!existsSync(exportDir)) {
-      mkdirSync(exportDir, { recursive: true });
-    }
-
-    const filePath = join(exportDir, 'Chauffeurs.xlsx');
-
+    /* ================= TITLE ================= */
     const titleRow = worksheet.addRow(['قائمة السائقين']);
-    worksheet.addRow([])
-    worksheet.mergeCells('A1:F1');
-    titleRow.getCell(1).font = { bold: true, size: 16, color: { argb: 'FFFFFF' } };
-    titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
-    titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1F4E78' } };
+    worksheet.addRow([]);
+    worksheet.mergeCells('A1:AB1');
 
-    const headerRow = worksheet.addRow([
-      'المعرف (ID)', 'رقم المستخدم', 'رقم الطلب', 'تاريخ الطلب', 'رقم القيد للناقل', 'المتعامل', 'الخط المستغل', 'ترقيم المركبة'
-      , 'طبيعة الخط', 'اسم و لقب السائق', 'طبيعة المستخدم', 'رقم التعريف الوطني NIN', 'رقم رخصة السياقة', 'تاريخ الاصدار'
-      , 'نهاية صلاحية الصنف', 'بلدية الاصدار', 'تاريخ الميلاد', 'مكان الميلاد', 'العنوان', 'رقم شهادة الكفائة المهنية', 'تاريخ الحصول على شهادة الكفاءة'
-      , 'الولاية', 'رقم التسلسلي', 'رقم الانتساب الى الصندوق الوطني', 'المركبة (موقفة او لا)', 'نوع التوقف', 'ملاحظة'
-    ]);
+    titleRow.getCell(1).font = { bold: true, size: 18, color: { argb: 'FFFFFF' }, name: 'Cairo' };
+    titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'right', wrapText: true };
+    titleRow.getCell(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '1F3D6D' },
+    };
+    titleRow.height = 25;
 
+    /* ================= HEADER ================= */
+    const headers = [
+      'ID',
+      'رقم المستخدم',
+      'رقم الطلب',
+      'تاريخ الطلب',
+      'رقم القيد للناقل',
+      'المتعامل',
+      'الخط المستغل',
+      'ترقيم المركبة',
+      'طبيعة الخط',
+      'اسم و لقب السائق',
+      'طبيعة المستخدم',
+      'NIN',
+      'رقم رخصة السياقة',
+      'تاريخ الاصدار',
+      'تاريخ الانتهاء',
+      'بلدية الاصدار',
+      'تاريخ الميلاد',
+      'مكان الميلاد',
+      'العنوان',
+      'رقم شهادة الكفاءة',
+      'تاريخ شهادة الكفاءة',
+      'الولاية',
+      'الرقم التسلسلي',
+      'رقم الصندوق الوطني',
+      'المركبة موقفة',
+      'نوع التوقف',
+      'ملاحظة',
+    ];
 
-    headerRow.eachCell((cell) => {
-      cell.font = { bold: true, color: { argb: 'FFFFFF' } };
+    // Calculate column widths based on header length
+    const columnWidths = headers.map((header) => {
+      const baseWidth = 3;
+      const charWidth = 2.5;
+      return Math.max(baseWidth, Math.ceil(header.length * charWidth));
+    });
+    worksheet.columns = columnWidths.map((width) => ({ width }));
+
+    const headerRow = worksheet.addRow(headers);
+    headerRow.height = 20;
+
+    headerRow.eachCell(cell => {
+      cell.font = { bold: true, color: { argb: 'FFFFFF' }, size: 11, name: 'Cairo' };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '0070C0' } };
-      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.alignment = { vertical: 'middle', horizontal: 'right', wrapText: true };
       cell.border = {
         top: { style: 'thin' },
         left: { style: 'thin' },
@@ -217,43 +254,71 @@ export class ChauffeursService {
       };
     });
 
-    let id = 1;
-    vihicule.forEach((op) => {
+    /* ================= DATA ================= */
+    let index = 1;
+    chauffeurs.forEach((ch, idx) => {
       const row = worksheet.addRow([
-        id++, op.num_chauffeur, op.num_demende, op.hestoire_demende, op.num_enregistrement_du_transporteur,
-        op.operateur, op.ligne_exploitée || "/", op.num_vehicule, op.nature_ligne || "/", op.nom_prenom_chauffeur, op.nature_utilisateur || "/",
-        op.num_didentification_national_NIN, op.num_permis_conduire,
-        op.date_sortie, op.date_expiration_article, op.municipalite_emettrice, op.date_naissance,
-        op.lieu_naissance, op.address, op.Num_certificat_compétence_professionnelle, op.date_obtention_certificat_aptitude_professionnelle,
-        op.wilaya, op.num_serie, op.num_membre_fonds_national,
-        op.vihicile_parked, op.type_parked, op.comments
+        index++,
+        ch.num_chauffeur,
+        ch.num_demende,
+        formatDate(ch.hestoire_demende),
+        ch.num_enregistrement_du_transporteur,
+        ch.operateur,
+        ch.ligne_exploitée || '/',
+        ch.num_vehicule,
+        ch.nature_ligne || '/',
+        ch.nom_prenom_chauffeur,
+        ch.nature_utilisateur || '/',
+        ch.num_didentification_national_NIN,
+        ch.num_permis_conduire,
+        formatDate(ch.date_sortie),
+        formatDate(ch.date_expiration_article),
+        ch.municipalite_emettrice,
+        formatDate(ch.date_naissance),
+        ch.lieu_naissance,
+        ch.address,
+        ch.Num_certificat_compétence_professionnelle,
+        formatDate(ch.date_obtention_certificat_aptitude_professionnelle),
+        ch.wilaya,
+        ch.num_serie,
+        ch.num_membre_fonds_national,
+        ch.vihicile_parked ? 'نعم' : 'لا',
+        ch.type_parked || '/',
+        ch.comments || '/',
       ]);
 
+      row.height = 18;
+      const bgColor = idx % 2 === 0 ? 'F2F2F2' : 'FFFFFF';
 
-      row.eachCell((cell) => {
-        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      row.eachCell(cell => {
+        cell.font = { name: 'Cairo', size: 10, color: { argb: '000000' } };
+        cell.alignment = { vertical: 'middle', horizontal: 'right', wrapText: true };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
         cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' },
+          top: { style: 'thin', color: { argb: 'D3D3D3' } },
+          left: { style: 'thin', color: { argb: 'D3D3D3' } },
+          bottom: { style: 'thin', color: { argb: 'D3D3D3' } },
+          right: { style: 'thin', color: { argb: 'D3D3D3' } },
         };
       });
     });
 
-    worksheet.columns.forEach((column) => {
-      column.width = 30;
-    });
-
+    /* ================= EXCEL OPTIONS ================= */
     worksheet.autoFilter = {
-      from: { row: 2, column: 1 },
-      to: { row: worksheet.rowCount, column: headerRow.cellCount },
+      from: { row: 3, column: 1 },
+      to: { row: worksheet.rowCount, column: headers.length },
     };
 
+    /* ================= FILE ================= */
+    const exportDir = join(__dirname, '..', 'exports/chauffeurs');
+    if (!existsSync(exportDir)) mkdirSync(exportDir, { recursive: true });
+
+    const filePath = join(exportDir, `Chauffeurs_${Date.now()}.xlsx`);
     await workbook.xlsx.writeFile(filePath);
 
     return filePath;
   }
+
 
   async getRegistrationStats(start: string, end: string) {
     const startDate = new Date(start);
@@ -358,4 +423,10 @@ function parseDateFromText(text: any): Date | null {
 
   const [_, day, month, year] = match;
   return new Date(+year, +month - 1, +day);
+}
+
+
+function formatDate(date?: Date) {
+  if (!date) return '/';
+  return new Date(date).toLocaleDateString('fr-FR');
 }

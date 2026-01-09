@@ -20,31 +20,42 @@ export class ChauffeurQueryBuilder {
   }
 
   setSearch(search?: string): this {
-    if (search) {
+    // Trim and validate search input
+    const trimmedSearch = search?.trim?.();
+    
+    // Only apply search if we have a non-empty string
+    if (trimmedSearch && trimmedSearch.length > 0) {
       const orConditions: any[] = [
-        { nom_prenom_chauffeur: new RegExp(search, 'i') },
-        { operateur: new RegExp(search, 'i') },
-        { num_vehicule: new RegExp(search, 'i') },
-        { nature_ligne: new RegExp(search, 'i') },
-        { nature_utilisateur: new RegExp(search, 'i') },
-        { municipalite_emettrice: new RegExp(search, 'i') },
-        { wilaya: new RegExp(search, 'i') },
-        { num_permis_conduire: new RegExp(search, 'i') },
-        { lieu_naissance: new RegExp(search, 'i') },
-        { address: new RegExp(search, 'i') },
+        // Text fields with regex for partial matching
+        { nom_prenom_chauffeur: new RegExp(trimmedSearch, 'i') },
+        { operateur: new RegExp(trimmedSearch, 'i') },
+        { num_vehicule: new RegExp(trimmedSearch, 'i') },
+        { nature_ligne: new RegExp(trimmedSearch, 'i') },
+        { nature_utilisateur: new RegExp(trimmedSearch, 'i') },
+        { municipalite_emettrice: new RegExp(trimmedSearch, 'i') },
+        { wilaya: new RegExp(trimmedSearch, 'i') },
+        { num_permis_conduire: new RegExp(trimmedSearch, 'i') },
+        { lieu_naissance: new RegExp(trimmedSearch, 'i') },
+        { address: new RegExp(trimmedSearch, 'i') },
       ];
 
-      if (!isNaN(Number(search))) {
-        orConditions.push({ num_chauffeur: Number(search) });
-        orConditions.push({ num_enregistrement_du_transporteur: Number(search) });
-        orConditions.push({ num_didentification_national_NIN: Number(search) });
-        orConditions.push({ Num_certificat_compétence_professionnelle: Number(search) });
-        orConditions.push({ num_serie: Number(search) });
-        orConditions.push({ num_membre_fonds_national: Number(search) });
+      // Add numeric conditions only if search is numeric (for exact matching)
+      if (!isNaN(Number(trimmedSearch))) {
+        const numValue = Number(trimmedSearch);
+        orConditions.push({ num_chauffeur: numValue });
+        orConditions.push({ num_enregistrement_du_transporteur: numValue });
+        orConditions.push({ num_didentification_national_NIN: numValue });
+        orConditions.push({ Num_certificat_compétence_professionnelle: numValue });
+        orConditions.push({ num_serie: numValue });
+        orConditions.push({ num_membre_fonds_national: numValue });
       }
 
       this.query.$or = orConditions;
+    } else {
+      // If no search provided, query remains empty (returns all records)
+      this.query = {};
     }
+    
     return this;
   }
 
