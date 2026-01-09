@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader } from "lucide-react";
-import { FindOneVihicule, updateVihicules } from "@/redux/slice/vihiculeSlice";
+import { FindOneVihicule, updateVihicules, clearMessageUpdate } from "@/redux/slice/vihiculeSlice";
 import MainContainer from "@/components/MainContainer";
 import { Helmet } from "react-helmet-async";
 import { isEqual } from "lodash";
@@ -23,7 +23,7 @@ const EditOperateur = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  const { vihicule, loading, messageUpdate } = useSelector(
+  const { vihicule, loading, messageUpdate,error } = useSelector(
     (state: RootState) => state.vihicule
   );
 
@@ -32,7 +32,14 @@ const EditOperateur = () => {
 
   // ✅ Fetch vihicule by ID
   useEffect(() => {
-    if (id) dispatch(FindOneVihicule(id));
+    if (id) {
+      // Clear the previous success message when switching to a new vihicule
+      dispatch(clearMessageUpdate());
+      dispatch(FindOneVihicule(id));
+      // Reset form and message when loading a new vihicule
+      setFormData({});
+      setHasChanges(false);
+    }
   }, [dispatch, id]);
 
   // ✅ Populate form data once fetched
@@ -46,10 +53,16 @@ const EditOperateur = () => {
     setHasChanges(!isEqual(formData, vihicule));
   }, [formData, vihicule]);
 
-  // ✅ Navigate after update
+  // ✅ Navigate after update (only when messageUpdate changes from empty to filled)
   useEffect(() => {
-    if (messageUpdate) navigate("/vehecule");
-  }, [messageUpdate, navigate]);
+    if (messageUpdate && id) {
+      // Show toast and redirect after a short delay to let user see the success message
+      const timer = setTimeout(() => {
+        navigate("/vehecule");
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [messageUpdate, id, navigate]);
 
   // ✅ Handle input changes safely
   const handleChange = (
@@ -472,7 +485,7 @@ const EditOperateur = () => {
               value={formData.vihicile_parked ?? ""}
               onChange={(v) => handleChange("vihicile_parked", v)}
               options={[
-                { label: "نعم، متوقفة", value: "متوقفة" },
+                { label: "نعم", value: "نعم" },
                 { label: "لا", value: "لا" },
               ]}
             />
@@ -485,7 +498,7 @@ const EditOperateur = () => {
                 { label: "نهائي", value: "نهائي" },
                 { label: "مؤقت", value: "مؤقت" },
               ]}
-              disabled={formData.vihicile_parked === "لا"}
+              disabled={!formData.vihicile_parked || formData.vihicile_parked === "لا"}
             />
           </div>
 
@@ -502,7 +515,7 @@ const EditOperateur = () => {
                   : ""
               }
               onChange={(v) => handleChange("hestoire_parked", v)}
-              disabled={formData.vihicile_parked === "لا"}
+              disabled={!formData.vihicile_parked || formData.vihicile_parked === "لا"}
             />
 
             <InputField
@@ -517,6 +530,7 @@ const EditOperateur = () => {
               }
               onChange={(v) => handleChange("hestoire_parked_end", v)}
               disabled={
+                !formData.vihicile_parked ||
                 formData.vihicile_parked === "لا" ||
                 formData.type_parked === "نهائي"
               }

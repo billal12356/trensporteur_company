@@ -134,12 +134,17 @@ export default function OperateurDetails() {
 
   const total = Math.min(chauffeurs.length, vihicules.length);
 
+  // clamp total to non-negative integer
+  const totalItems = Math.max(0, total);
+
+  // Move forward without wrapping; clamp at end
   const goNext = () => {
-    setIndex((prev) => (prev + 1) % total);
+    setIndex((prev) => Math.min(prev + 1, Math.max(0, totalItems - 1)));
   };
 
+  // Move backward without wrapping; clamp at start
   const goPrevious = () => {
-    setIndex((prev) => (prev - 1 + total) % total);
+    setIndex((prev) => Math.max(prev - 1, 0));
   };
 
   const handleClick = () => {
@@ -218,11 +223,24 @@ export default function OperateurDetails() {
                 <span>رجوع</span>
               </Link>
               <h2 className="text-xl font-bold text-center">بيانات المتعامل</h2>
-              <div className="flex gap-3">
-                <Button onClick={goPrevious}>
+              <div className="flex gap-3 items-center">
+                <Button
+                  onClick={goPrevious}
+                  disabled={totalItems === 0 || index === 0}
+                  title={index === 0 ? 'البداية' : 'السابق'}
+                >
                   <IoCaretBackSharp />
                 </Button>
-                <Button onClick={goNext}>
+
+                <div className="text-sm text-gray-600">
+                  {totalItems > 0 ? `${index + 1} / ${totalItems}` : '0 / 0'}
+                </div>
+
+                <Button
+                  onClick={goNext}
+                  disabled={totalItems === 0 || index >= totalItems - 1}
+                  title={index >= totalItems - 1 ? 'النهاية' : 'التالي'}
+                >
                   <IoCaretForwardSharp />
                 </Button>
               </div>

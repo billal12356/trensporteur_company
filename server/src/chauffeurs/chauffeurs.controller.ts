@@ -38,7 +38,7 @@ export class ChauffeursController {
 
   @Get('export')
   async exportExcel(@Res() res: Response, @Query('search') search: string) {
-    const filePath = await this.chauffeursService.exportChauffeurToExcel(search);
+    const filePath = await this.chauffeursService.exportChauffeurToExcel({ search });
     res.download(filePath, 'chauffeurs.xlsx', (err) => {
       if (err) {
         console.error('خطأ أثناء تحميل الملف:', err);

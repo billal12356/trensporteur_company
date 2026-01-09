@@ -28,7 +28,7 @@ const StatistiqueCompt = () => {
     // 🔹 احصائيات
     const totalVehicles = vihicules.length
     const stoppedVehicles = vihicules.filter(
-        (v) => v.vihicile_parked === "نعم"
+        (v) => v.vihicile_parked === "موقفة"
     ).length
     const changedLineVehicles = vihicules.filter(
         (v) => v.status_activite === "تغيير الخط"

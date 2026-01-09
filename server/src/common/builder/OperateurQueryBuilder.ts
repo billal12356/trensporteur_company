@@ -35,10 +35,15 @@ export class OperateurQueryBuilder {
         { fullName_mere_arabe: new RegExp(search, 'i') },
         { fullName_mere_francais: new RegExp(search, 'i') },
         { num_registre_commerce: new RegExp(search, 'i') },
+        // include the schedule number and docier as text matches too
+        // numeric fields are matched as numbers below when the search is numeric;
+        // do not add RegExp conditions for number-typed schema fields (causes CastError)
       ];
 
       if (!isNaN(Number(search))) {
+        // when the search is numeric, also add exact-number matches
         orConditions.push({ num_docier_client: Number(search) });
+        orConditions.push({ num_dhoraire: Number(search) });
         orConditions.push({ num_wilaya: Number(search) });
         orConditions.push({ num_dacte_naissance: Number(search) });
         orConditions.push({ num_didentification_national_NIN: Number(search) });

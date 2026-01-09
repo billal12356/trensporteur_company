@@ -94,6 +94,8 @@ const EnhancedVehicle = React.memo((): ReactElement => {
     ["category", "الصنف"],
     ["type", "النوع"],
     ["First_year_of_use", "أول سنة استعمال"],
+    ["total_load_trucks", "جملة الحمولة (للشاحنات)"],
+    ["restricted_load", "الحمولة المقيدة"],
     ["Number_of_seats", "عدد المقاعد"],
     ["Energy", "الطاقة"],
     ["num_driving_license", "رقم رخصة السير"],
@@ -143,15 +145,14 @@ const EnhancedVehicle = React.memo((): ReactElement => {
         const badge = formatters.status(val);
         return (
           <span
-            className={`px-3 py-1 rounded-full text-xs font-medium ${
-              badge.variant === "default"
-                ? "bg-green-100 text-green-800"
-                : badge.variant === "secondary"
+            className={`px-3 py-1 rounded-full text-xs font-medium ${badge.variant === "default"
+              ? "bg-green-100 text-green-800"
+              : badge.variant === "secondary"
                 ? "bg-yellow-100 text-yellow-800"
                 : badge.variant === "destructive"
-                ? "bg-red-100 text-red-800"
-                : "bg-gray-100 text-gray-800"
-            }`}
+                  ? "bg-red-100 text-red-800"
+                  : "bg-gray-100 text-gray-800"
+              }`}
           >
             {badge.label}
           </span>
@@ -176,6 +177,17 @@ const EnhancedVehicle = React.memo((): ReactElement => {
         <div className="flex items-center gap-1">
           <span>{val}</span>
           <span className="text-xs text-gray-500">مقعد</span>
+        </div>
+      ));
+    }
+    if (
+      keyStr.includes("total_load_trucks") ||
+      keyStr.includes("restricted_load")
+    ) {
+      return colsBuilder.custom(key, label, (val: any) => (
+        <div className="flex items-center gap-1">
+          <span>{val}</span>
+          <span className="text-xs text-gray-500">كغ</span>
         </div>
       ));
     }
