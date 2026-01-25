@@ -69,7 +69,7 @@ interface OperateurState {
   messageUpdate: string;
   error: string | null;
   fileURL: string | null;
-  successMessage: null;
+  successMessage: string | null;
   stats: StatData[];
 }
 
@@ -295,38 +295,37 @@ export const updateOperateur = createAsyncThunk(
 );
 
 export const createOperateur = createAsyncThunk<
-  void, // لا نرجع JSON بل نحمل ملف
+  { message: string; operateur: Operateur },
   Partial<Operateur>,
   { rejectValue: string }
->("operateurs/createOperateur", async (data, { rejectWithValue }) => {
-  try {
-    // نطلب الملف كـ Blob
-    await axios.post(
-      `${API_URL}/api/v1/operateur-dtw/create`,
-      data,
-      {
-        withCredentials: true,
-        // responseType: "blob", // 👈 مهم جداً لتحميل ملف PDF
+>(
+  "operateurs/createOperateur",
+  async (data, { rejectWithValue }) => {
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/v1/operateur-dtw/create`,
+        data,
+        { withCredentials: true }
+      );
+
+      return {
+        message: res.data.message || "تم التسجيل بنجاح",
+        operateur: res.data.operateur,
+      };
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.message || "يرجى ملء البيانات الناقصة"
+        );
       }
-    );
-
-    // // إنشاء رابط تحميل للـ PDF
-    // const url = window.URL.createObjectURL(new Blob([response.data]));
-    // const link = document.createElement("a");
-    // link.href = url;
-    // link.setAttribute("download", "Operateur-Static.pdf");
-    // document.body.appendChild(link);
-    // link.click();
-    // link.remove();
-
-    toast.success("تم تسجيل المتعامل بنجاح");
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      return rejectWithValue(error.response?.data?.message);
+      return rejectWithValue("حدث خطأ غير معروف");
     }
-    return rejectWithValue("حدث خطأ غير معروف");
   }
-});
+);
+
+
+
+
 
 export const generatePDFs = createAsyncThunk(
   "pdfs/generate",
@@ -485,19 +484,26 @@ const operateurSlice = createSlice({
       .addCase(createOperateur.pending, (state) => {
         state.loading = true;
         state.error = null;
-        state.successMessage = null;
+        state.successMessage = null; // ✅ reset
       })
-      .addCase(createOperateur.fulfilled, (state) => {
+
+      .addCase(createOperateur.fulfilled, (state, action) => {
         state.loading = false;
-        //state.successMessage = action.payload.message
-        toast.success("تم تسجيل العميل بنجاح");
-        //state.message = action.payload.message
+        state.operateurs.push(action.payload.operateur);
+        state.successMessage = action.payload.message; // ✅ success
       })
+
       .addCase(createOperateur.rejected, (state, action) => {
         state.loading = false;
-        const errMsg = (action.payload as string) || action.error?.message || 'يرجى ملئ البيانات الناقصة';
-        toast.error(errMsg);
+        state.successMessage = null; // ✅ مهم
+        state.error =
+          action.payload ||
+          action.error.message ||
+          "يرجى ملء البيانات الناقصة";
       });
+
+
+
 
     builder
       .addCase(downloadRegistrationStats.pending, (state) => {

@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Operateur } from 'src/operateur-dtw/operateur-dtw.schema';
-
+import * as fs from 'fs';
+import * as path from 'path';
 import { OperateurDtwService } from 'src/operateur-dtw/operateur-dtw.service';
 import { Operateurs } from 'src/seed/type/operateurs';
 import * as XLSX from 'xlsx'
@@ -85,7 +86,7 @@ export class ImportOperateurService {
         }
 
         const doc = new this.OperateurModel(cleanedData);
-        console.log("doc",doc)
+        console.log("doc", doc)
         doc.save()
           .then(() => saveNext(index + 1))
           .catch((error) => {
@@ -97,6 +98,173 @@ export class ImportOperateurService {
       saveNext(0); // بدء التكرار
     });
   }
+
+
+
+  async convertAndSaveToMongoDB(file: Express.Multer.File): Promise<any> {
+    try {
+      const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+      const sheetNames = workbook.SheetNames;
+
+      const allData = {};
+      let savedCount = 0;
+      let failedCount = 0;
+      const errors = [];
+
+      for (const sheetName of sheetNames) {
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+          raw: false,
+          defval: null,
+        });
+
+        allData[sheetName] = jsonData;
+
+        // Save each row to MongoDB
+        for (let i = 0; i < jsonData.length; i++) {
+          // Skip header rows (row 2 typically contains headers in Arabic)
+          if (i === 0 && jsonData[i]['__EMPTY_38'] === 'متوقف على النشاط أو لا') {
+            continue;
+          }
+
+          try {
+            const row = jsonData[i];
+
+            // Convert dates from Excel format to JavaScript Date
+            const parseDate = (dateStr: any) => {
+              if (!dateStr) return null;
+              const date = new Date(dateStr);
+              return isNaN(date.getTime()) ? null : date;
+            };
+
+            // Convert to number safely
+            const parseNumber = (value: any) => {
+              if (!value || value === '') return null;
+              const num = Number(value);
+              return isNaN(num) ? null : num;
+            };
+
+            // Normalize enum values
+            const normalizeDependActivite = (value: string) => {
+              if (!value) return null;
+              if (value.includes('نعم')) return 'نعم';
+              if (value.includes('لا')) return 'لا';
+              return null;
+            };
+
+            const normalizeTypeDepend = (value: string) => {
+              if (!value) return null;
+              if (value.includes('مؤقت')) return 'مؤقت';
+              if (value.includes('نهائي')) return 'نهائي';
+              return null;
+            };
+
+            // Mapping des colonnes Excel vers le schéma
+            const operateurData = {
+              num_wilaya: parseNumber(row['__EMPTY']),
+              num_docier_client: parseNumber(row['__EMPTY_1']),
+
+              fullName_arabe: row['البحث باسم المتعامل'] || null,
+              fullName_francais: row['__EMPTY_2'] || null,
+
+              date_expiration: parseDate(row['__EMPTY_3']),
+              date_prévue: parseDate(row['__EMPTY_4']),
+
+              num_dhoraire: parseNumber(row['__EMPTY_5']),
+              num_cate_enregistement: parseNumber(row['__EMPTY_6']),
+
+              activite: row['__EMPTY_7'] || null,
+              colonne1: row['__EMPTY_8'] || null,
+
+              nature_activite: row['__EMPTY_9'] || null,
+              colonne2: row['__EMPTY_10'] || null,
+
+              status_activite: row['__EMPTY_11'] || null,
+              colonne3: row['__EMPTY_12'] || null,
+
+              type_client: row['__EMPTY_13'] || null,
+              colonne4: row['__EMPTY_14'] || null,
+
+              institution_person_moral: row['__EMPTY_15'] || null,
+              fullName_gerent_person_moral: row['__EMPTY_16'] || null,
+
+              num_dacte_naissance: parseNumber(row['__EMPTY_17']),
+              num_didentification_national_NIN: parseNumber(row['__EMPTY_18']),
+
+              date_naissance: parseDate(row['__EMPTY_19']),
+
+              lieu_naissance_arabe: row['__EMPTY_20'] || null,
+              lieu_naissance_francais: row['__EMPTY_21'] || null,
+
+              nom_pere_arabe: row['__EMPTY_22'] || null,
+              nom_pere_francais: row['__EMPTY_23'] || null,
+
+              fullName_mere_arabe: row['__EMPTY_24'] || null,
+              fullName_mere_francais: row['__EMPTY_25'] || null,
+
+              communes_naissance_arabe: row['__EMPTY_26'] || null,
+              communes_naissance_francais: row['__EMPTY_27'] || null,
+
+              address_arabe: row['__EMPTY_28'] || null,
+              address_francais: row['__EMPTY_29'] || null,
+
+              address_municipalité_arabe: row['__EMPTY_30'] || null,
+              address_municipalité_francais: row['__EMPTY_31'] || null,
+
+              num_registre_commerce: row['__EMPTY_32'] || null,
+              num_registre_commerce_n5: row['__EMPTY_33'] || null,
+
+              hestoire_registre_commerce: parseDate(row['__EMPTY_34']),
+              modifier_hestoire_registre_commerce: parseDate(row['__EMPTY_35']),
+
+              date_debut_activite: parseDate(row['__EMPTY_36']),
+
+              num_adherent_caise_national_non_salaire: parseNumber(row['__EMPTY_37']),
+
+              depend_activite: normalizeDependActivite(row['__EMPTY_38']),
+              type_depend: normalizeTypeDepend(row['__EMPTY_39']),
+
+              date_arret_activite_temporaire: parseDate(row['__EMPTY_40']),
+              date_arret_activite_permanent: parseDate(row['__EMPTY_41']),
+
+              num_telephone_client: row['__EMPTY_42'] || null,
+              soccupe: row['__EMPTY_43'] || null,
+              note_chef_departement: row['__EMPTY_44'] || null,
+            };
+
+            const operateur = new this.OperateurModel(operateurData);
+            await operateur.save();
+            savedCount++;
+          } catch (error) {
+            failedCount++;
+            errors.push({
+              row: i + 1,
+              error: error.message,
+            });
+            console.error(`خطأ في الصف ${i + 1}:`, error.message);
+          }
+        }
+      }
+
+      // Save to file.json
+      const outputPath = path.join(process.cwd(), 'file.json');
+      fs.writeFileSync(outputPath, JSON.stringify(allData, null, 2), 'utf-8');
+
+      console.log(`✓ تم حفظ ${savedCount} سجل في MongoDB`);
+      console.log(`✗ فشل حفظ ${failedCount} سجل`);
+      console.log(`✓ تم حفظ JSON في ${outputPath}`);
+
+      return {
+        savedCount,
+        failedCount,
+        errors: errors.slice(0, 10),
+      };
+    } catch (error) {
+      console.error('خطأ في تحويل Excel:', error);
+      throw error;
+    }
+  }
+
 
 
   

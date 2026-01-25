@@ -79,10 +79,21 @@ export class StateController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
-    const start = startDate ? new Date(startDate) : undefined;
-    const end = endDate ? new Date(endDate) : undefined;
-    return await this.stateService.statistiqueAnnee(start, end);
+    if (!startDate || !endDate) {
+      return this.stateService.statistiqueAnnee(undefined, undefined);
+    }
+
+    const start = new Date(startDate);
+    start.setUTCHours(0, 0, 0, 0);
+
+    const end = new Date(endDate);
+    end.setUTCHours(0, 0, 0, 0);
+    end.setUTCDate(end.getUTCDate() + 1);
+
+    return this.stateService.statistiqueAnnee(start, end);
   }
+
+
 
 
 

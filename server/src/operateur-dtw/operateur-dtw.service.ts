@@ -50,6 +50,7 @@ export class OperateurDtwService {
       // Create the operateur in DB
       const operateur = await this.OperateurModel.create(createOperateurDtwDto);
 
+      console.log("operateur", operateur)
       if (!operateur) {
         return res.status(404).json({
           message: 'لم يتم إنشاء المتعامل. يرجى التحقق من البيانات.',
@@ -127,11 +128,13 @@ export class OperateurDtwService {
     const chauffeurs = [];
     const num_docier_client = operateur?.num_docier_client;
     const fullName_arabe = operateur?.fullName_arabe;
+    console.log("fullName_arabe", fullName_arabe)
     const vihicle =
       await this.vihiculeService.findVihiculeByOperateur(num_docier_client);
     vihicules.push(...vihicle);
     const chauffeur =
       await this.chauffeursService.findChauffeurByOperateur(fullName_arabe);
+    console.log("chauffeur", chauffeur)
     chauffeurs.push(...chauffeur);
     console.log(chauffeurs);
 
@@ -161,7 +164,6 @@ export class OperateurDtwService {
         vehicleIds.includes(v._id.toString()),
       );
     }
-    console.log('vihicules ', vihicules);
     if (!vihicules || vihicules.length === 0) {
       throw new BadRequestException(
         new ResponseBuilder()
@@ -234,8 +236,6 @@ export class OperateurDtwService {
     };
 
     const firstVehicule = vihicules[0];
-    console.log("firstVehicule.font_type", firstVehicule.font_type);
-
     if (
       firstVehicule.font_type === 'بين البلديات' ||
       firstVehicule.font_type === 'بين الولايات'
@@ -259,7 +259,6 @@ export class OperateurDtwService {
       firstVehicule.font_type === 'ريـفي' ||
       firstVehicule.font_type === 'حضري او شبه حضري'
     ) {
-      console.log("dadadada");
       // ✅ كتابة بيانات المشغل في الصفحة الأولى
       drawArabic(page1, 'عين الدفلة', 380, 115, 14);
       drawArabic(page1, operateur?.fullName_arabe, 290, 235);
@@ -448,7 +447,7 @@ export class OperateurDtwService {
   async exportUsersToExcel(filterDto: any): Promise<string> {
     const query: any = {};
 
-    console.log("filterDto",filterDto)
+    console.log("filterDto", filterDto)
     if (filterDto.search && filterDto.search.trim()) {
       // Use the same robust search logic as findAll
       const orConditions: any[] = [
@@ -479,10 +478,10 @@ export class OperateurDtwService {
 
       query.$or = orConditions;
     }
-    console.log("query",query)
+    console.log("query", query)
     const operateurs = await this.OperateurModel.find(query).lean();
 
-    console.log("operateurs",operateurs)
+    console.log("operateurs", operateurs)
     const workbook = new Workbook();
     const worksheet = workbook.addWorksheet('المتعاملين');
 
@@ -701,19 +700,10 @@ export class OperateurDtwService {
     const operateur = await this.OperateurModel.findById(id).lean();
     if (!operateur) throw new NotFoundException('الناقل غير موجود');
     const fullNameOperateur = operateur.fullName_arabe;
-    console.log("fullNameOperateur", fullNameOperateur)
     const chauffeur =
       await this.chauffeursService.findChauffeurByOperateur(fullNameOperateur);
-    console.log("chauffeur", chauffeur)
-
     if (!chauffeur || chauffeur.length === 0) {
-      throw new BadRequestException(
-        new ResponseBuilder()
-          .setStatus(400)
-          .setMessage('لا يوجد سائق مرتبط بهذا المتعامل')
-          .setErrors({ _id: 'Invalid ObjectId format' })
-          .build(),
-      );
+      throw new NotFoundException('لا يوجد سائق مرتبط بهذا المتعامل');
     }
     const num_op = operateur?.num_docier_client;
     const vihicles = await this.vihiculeService.findVihiculeByOperateur(num_op);
@@ -786,24 +776,11 @@ export class OperateurDtwService {
       align: 'center',
     });
 
-    // INFO BLOCKS — you should replace these hardcoded values with data from `operateur`
+    // INFO BLOCKS
     const info = {
-      registerNumber: '17',
-      activityStartDate: '10/11/1990',
-      lastName: 'مراح',
-      firstName: 'امحمد',
-      phone: '0794560554',
       company: '/',
-      birthDate: '02/12/1958',
-      birthPlace: 'برج الامير خالد',
-      fatherName: 'محمد',
-      address: 'شارع جيش التحرير بئر ولد خليفة',
-      commerceRegister: '3817409 A99',
-      commerceRegisterDate: '10/11/1990',
-      exploitationNumber: '673',
-      exploitationDate: '10/11/1990',
-      date: '14/07/2025',
     };
+
     function formatDate(
       dateInput: Date | string | number,
       reverse: boolean = false,
@@ -827,8 +804,9 @@ export class OperateurDtwService {
 
     const lastNameChauffeur = nameParts
       .slice(0, nameParts.length - 1)
-      .join(' '); // "بن عيسى"
+      .join(' ');
     const firstNameChauffeur = nameParts[nameParts.length - 1];
+
     // INFO DISPLAY
     drawAlignedText({
       page,
@@ -955,9 +933,12 @@ export class OperateurDtwService {
       align: 'left',
     });
 
-    // TABLE
-    // رأس الجدول
-    const tableHeader = [
+    // TABLES - Filter vehicles by type
+    const schoolVehicles = vihicles.filter(v => v.font_type === 'نقل مدرسي');
+    const workerVehicles = vihicles.filter(v => v.font_type === 'نقل العمال');
+
+    // TABLE HEADERS
+    const tableHeaderWithObservation = [
       'الرقم',
       'الخط المستغل',
       'تاريخ الرخصة',
@@ -967,21 +948,14 @@ export class OperateurDtwService {
       'ملاحظة',
     ];
 
-    // تحويل المركبات لصفوف
-    const excludedLines: string[][] = vihicles.map((v, i) => [
-      String(i + 1),
-      `${v.point_depart} - ${v.point_arrive}`,
-      formatDate(v.driving_license_history),
-      String(v.num_bus_registration),
-      String(v.font_symbol),
-      String(v.Number_of_seats),
-      v.font_type === 'نقل المدري' ? String(v.note_chef_departement || '') : '',
-    ]);
-
-    // تعريف عرض الأعمدة
-    const columnWidths = [110, 50, 100, 130, 90, 170, 40]; // من اليمين لليسار
-    const tableTotalWidth = columnWidths.reduce((sum, w) => sum + w, 0);
-    const startX = (page.getWidth() - tableTotalWidth) / 2;
+    const tableHeaderWithoutObservation = [
+      'الرقم',
+      'الخط المستغل',
+      'تاريخ الرخصة',
+      'رقم تسجيل المركبة',
+      'الرقم التسلسلي',
+      'المقاعد',
+    ];
 
     /**
      * دالة لرسم جدول واحد وإرجاع آخر Y بعد الانتهاء
@@ -1001,54 +975,83 @@ export class OperateurDtwService {
     ): { page: PDFPage; y: number } => {
       let tableY = startY;
       let rowIndex = 0;
-      const totalRows = rows.length + 1; // الهيدر + الصفوف
+      const totalRows = rows.length + 1;
+      const tableTotalWidth = columnWidths.reduce((sum, w) => sum + w, 0);
+      let headerDrawn = false;
 
       const drawHeader = (page, y) => {
-        drawAlignedText({
-          page,
-          text: title,
-          y,
-          font: cairoBoldFont,
-          fontSize: 16,
-          align: 'center',
-        });
-        return y - 30;
+        if (!headerDrawn) {
+          drawAlignedText({
+            page,
+            text: title,
+            y,
+            font: cairoBoldFont,
+            fontSize: 16,
+            align: 'center',
+          });
+          headerDrawn = true;
+          return y - 30;
+        }
+        return y;
       };
 
-      // رسم العنوان لأول مرة
       tableY = drawHeader(page, tableY);
 
       while (rowIndex < totalRows) {
-        const y = tableY - rowHeight;
+        // For data rows, we need taller cells (2 lines of content)
+        const extraFontSize = fontSize - 4; // Smaller font for dates
+        const lineSpacing = 4;
+        const actualRowHeight = rowIndex === 0 ? rowHeight : rowHeight + 25; // Height for 2 lines
 
-        // 🔥 لو ما بقاش مكان نضيف صفحة جديدة
-        if (y < 100) {
+        if (tableY - actualRowHeight < 100) {
           page = pdfDoc.addPage([750, 842]);
           tableY = page.getHeight() - 50;
-
-          // نرسم العنوان مرة ثانية
           tableY = drawHeader(page, tableY);
         }
 
-        // رسم المستطيل الخارجي للصف
-        page.drawRectangle({
-          x: startX,
-          y: tableY - rowHeight,
-          width: tableTotalWidth,
-          height: rowHeight,
-          borderColor: rgb(0, 0, 0),
-          borderWidth: 0.5,
+        // Draw only outer border (top, bottom, left, right)
+        // Top border
+        page.drawLine({
+          start: { x: startX, y: tableY },
+          end: { x: startX + tableTotalWidth, y: tableY },
+          color: rgb(0, 0, 0),
+          thickness: 0.5,
+        });
+        
+        // Bottom border
+        page.drawLine({
+          start: { x: startX, y: tableY - actualRowHeight },
+          end: { x: startX + tableTotalWidth, y: tableY - actualRowHeight },
+          color: rgb(0, 0, 0),
+          thickness: 0.5,
+        });
+        
+        // Left border
+        page.drawLine({
+          start: { x: startX, y: tableY },
+          end: { x: startX, y: tableY - actualRowHeight },
+          color: rgb(0, 0, 0),
+          thickness: 0.5,
+        });
+        
+        // Right border
+        page.drawLine({
+          start: { x: startX + tableTotalWidth, y: tableY },
+          end: { x: startX + tableTotalWidth, y: tableY - actualRowHeight },
+          color: rgb(0, 0, 0),
+          thickness: 0.5,
         });
 
         let x = startX;
 
-        // رسم الأعمدة
+        // Draw content without column separators
         for (let colIndex = 0; colIndex < columnWidths.length; colIndex++) {
           const colWidth = columnWidths[colIndex];
+
           const text =
             rowIndex === 0
               ? header[header.length - 1 - colIndex]
-              : rows[rowIndex - 1][header.length - 1 - colIndex];
+              : rows[rowIndex - 1][header.length - 1 - colIndex] || '';
 
           const textWidth = font.widthOfTextAtSize(text, fontSize);
           const maxTextWidth = colWidth - 10;
@@ -1063,12 +1066,16 @@ export class OperateurDtwService {
 
           const textX =
             x + colWidth - font.widthOfTextAtSize(safeText, fontSize) - 5;
-          const textY = tableY - rowHeight / 2 + fontSize / 2 - 2;
+          
+          // Position main text at top of cell for data rows
+          const textY = rowIndex === 0 
+            ? tableY - rowHeight / 2 + fontSize / 2 - 2
+            : tableY - (fontSize - 2) - 6; // Slightly smaller font for data
 
           page.drawText(safeText, {
             x: textX,
             y: textY,
-            size: fontSize,
+            size: rowIndex === 0 ? fontSize : fontSize - 2, // Smaller font for data rows
             font,
             color: rgb(0, 0, 0),
           });
@@ -1076,49 +1083,144 @@ export class OperateurDtwService {
           x += colWidth;
         }
 
-        tableY -= rowHeight;
+        // Render the two date lines INSIDE the border in a single row (for data rows only)
+        if (rowIndex > 0) {
+          const dataRow = rows[rowIndex - 1] || [];
+          const dateTech = dataRow[header.length] || '/';
+          const dateIns = dataRow[header.length + 1] || '/';
+
+          const labelTech = `تاريخ نهاية صلاحية محضر مراقبة التقنية: ${dateTech}`;
+          const labelIns = `تاريخ نهاية صلاحية التأمين: ${dateIns}`;
+
+          const wTech = font.widthOfTextAtSize(labelTech, extraFontSize);
+          const wIns = font.widthOfTextAtSize(labelIns, extraFontSize);
+
+          // Calculate positions for both dates on the same line (flex row style)
+          const totalWidth = wTech + wIns + 30; // 30 for spacing between them
+          const startXForDates = startX + (tableTotalWidth - totalWidth) / 2; // Center both dates
+          
+          const textXTech = startXForDates + totalWidth - wTech;
+          const textXIns = startXForDates;
+
+          // Position on second line (same Y position for both)
+          const textYDates = tableY - (fontSize - 2) - extraFontSize - 12;
+
+          page.drawText(labelTech, {
+            x: textXTech,
+            y: textYDates,
+            size: extraFontSize,
+            font,
+            color: rgb(0, 0, 0),
+          });
+
+          page.drawText(labelIns, {
+            x: textXIns,
+            y: textYDates,
+            size: extraFontSize,
+            font,
+            color: rgb(0, 0, 0),
+          });
+        }
+
+        tableY -= actualRowHeight;
         rowIndex++;
       }
 
       return { page, y: tableY - 30 };
     };
 
-    // ---------------------------
-    // استدعاء عدة جداول
-    // ---------------------------
-
-    // البداية من أعلى الصفحة
     let nextY = height - 450;
 
-    ({ page, y: nextY } = drawTable(
-      pdfDoc,
-      page,
-      'الخطوط المستثناة',
-      startX,
-      nextY,
-      48,
-      tableHeader,
-      excludedLines,
-      cairoSemiBoldFont,
-      12,
-      columnWidths,
-    ));
+    // helper to safely get the first existing date-like field from a list of candidate keys
+    const getFirstDateField = (v: any, candidates: string[]) => {
+      for (const key of candidates) {
+        const val = v?.[key];
+        if (val) return formatDate(val);
+      }
+      return '/';
+    };
 
-    const workerLines = vihicles
-      .map((v, i) => [
+    // Table 1: All vehicles. 'ملاحظة' column filled ONLY for school transport (font_type === 'نقل مدرسي')
+    if (vihicles && vihicles.length > 0) {
+      // widths must match header length (9)
+      const columnWidthsWithObservation = [40, 120, 80, 100, 70, 60, 70];
+      const tableTotalWidth = columnWidthsWithObservation.reduce((sum, w) => sum + w, 0);
+      const startX = (page.getWidth() - tableTotalWidth) / 2;
+      console.log("page.getWidth()",page.getWidth())
+      console.log("tableTotalWidth",tableTotalWidth)
+      console.log("startX",startX)
+
+      const allLines = vihicles.map((v, i) => [
         String(i + 1),
-        `${v.point_depart} - ${v.point_arrive}`,
+        `${v.point_depart || ''} - ${v.point_arrive || ''}`,
         formatDate(v.driving_license_history),
-        String(v.num_bus_registration),
-        String(v.font_symbol),
-        String(v.Number_of_seats),
-        v.font_type === 'نقل العمال'
-          ? String(v.note_chef_departement || '')
-          : '',
-      ])
-      .filter((row) => row[6] !== ''); // keep only rows where font_type === "نقل العمال"
+        String(v.num_bus_registration || ''),
+        String(v.font_symbol || ''),
+        String(v.Number_of_seats ?? ''),
+        // Only show note for school transport; otherwise an explicit '/'
+        v.font_type === 'نقل مدرسي' ? String(v.note_chef_departement || '/') : '/',
+        // Try several likely field names for technical inspection expiry
+        // getFirstDateField(v, [
+        //   'technical_inspection_expiry',
+        //   'inspection_expiry',
+        //   'technical_control_end',
+        //   'hestoire_parked_end',
+        // ]),
+        // // Try several likely field names for insurance expiry
+        // getFirstDateField(v, [
+        //   'insurance_expiry',
+        //   'assurance_end',
+        //   'insurance_end_date',
+        //   'insurance_expire',
+        // ]),
+      ]);
 
-    if (workerLines.length > 0) {
+      
+      ({ page, y: nextY } = drawTable(
+        pdfDoc,
+        page,
+        'الخطوط المستغلة',
+        startX,
+        nextY,
+        48,
+        tableHeaderWithObservation,
+        allLines,
+        cairoSemiBoldFont,
+        12,
+        columnWidthsWithObservation,
+      ));
+    }
+
+    // Worker Transport Table (without observation column)
+    if (workerVehicles.length > 0) {
+      // widths must match header length (8)
+      const columnWidthsWithoutObservation = [40, 120, 80, 100, 70, 60];
+      const tableTotalWidth = columnWidthsWithoutObservation.reduce((sum, w) => sum + w, 0);
+      const startX = (page.getWidth() - tableTotalWidth) / 2;
+
+      const workerLines = workerVehicles.map((v, i) => [
+        String(i + 1),
+        `${v.point_depart || ''} - ${v.point_arrive || ''}`,
+        formatDate(v.driving_license_history),
+        String(v.num_bus_registration || ''),
+        String(v.font_symbol || ''),
+        String(v.Number_of_seats ?? ''),
+        // technical inspection expiry
+        getFirstDateField(v, [
+          'technical_inspection_expiry',
+          'inspection_expiry',
+          'technical_control_end',
+          'hestoire_parked_end',
+        ]),
+        // insurance expiry
+        getFirstDateField(v, [
+          'insurance_expiry',
+          'assurance_end',
+          'insurance_end_date',
+          'insurance_expire',
+        ]),
+      ]);
+
       ({ page, y: nextY } = drawTable(
         pdfDoc,
         page,
@@ -1126,11 +1228,11 @@ export class OperateurDtwService {
         startX,
         nextY,
         48,
-        tableHeader,
+        tableHeaderWithoutObservation,
         workerLines,
         cairoSemiBoldFont,
         12,
-        columnWidths,
+        columnWidthsWithoutObservation,
       ));
     }
 

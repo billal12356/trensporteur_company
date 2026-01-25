@@ -10,6 +10,10 @@ import {
   Res,
   NotFoundException,
   HttpStatus,
+  UseInterceptors,
+  HttpException,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
 import { CreateVihicleDto } from './dto/create-vehicle.dto';
@@ -19,6 +23,7 @@ import * as fs from 'fs';
 import * as ExcelJS from 'exceljs';
 import * as vihicules from '../seed/data/vihicule.json';
 import { ExportLineDto } from './dto/line.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('vehicles')
 export class VehiclesController {
@@ -173,5 +178,35 @@ export class VehiclesController {
   async clearVehicles() {
     return await this.vehiclesService.clearVehicles();
   }
+
+  @Post('upload-vehicle')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadExcel(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new HttpException('No file uploaded', HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      const result = await this.vehiclesService.convertAndSaveToMongoDB(file);
+
+      return {
+        success: true,
+        message: 'تم تحويل وحفظ ملف Excel بنجاح في MongoDB',
+        savedRecords: result.savedCount,
+        failedRecords: result.failedCount,
+        totalProcessed: result.totalProcessed,
+        jsonFilePath: result.jsonPath,
+        errors: result.errors,
+      };
+    } catch (error) {
+      throw new HttpException(
+        `خطأ في تحويل Excel: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+
+  
 
 }
