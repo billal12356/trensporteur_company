@@ -1,5 +1,5 @@
 import MainContainer from "@/components/MainContainer";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -21,11 +21,25 @@ import { Operateur } from "@/components/types/OperateurTypes";
 const FormOperateur: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { loading } = useSelector((state: RootState) => state.operateur);
 
   // --- Local state for all fields ---
   const [operateur, setOperateur] = useState<Partial<Operateur>>({});
   const depnd = operateur.depend_activite;
+
+  const { successMessage, loading } = useSelector(
+    (state: RootState) => state.operateur
+  );
+
+  console.log("successMessage", successMessage)
+  useEffect(() => {
+    if (successMessage === null) return;
+
+    if (successMessage && !loading) {
+      navigate("/operateur");
+    }
+  }, [successMessage, loading, navigate]);
+
+
 
   // Generic field handler
   const handleChange = (field: keyof Operateur, value: any) => {
@@ -33,12 +47,12 @@ const FormOperateur: React.FC = () => {
   };
 
   // Submit function
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("data ==>", operateur);
-    await dispatch(createOperateur(operateur as Operateur)).unwrap();
-    navigate("/operateur");
+    dispatch(createOperateur(operateur));
   };
+
+
 
   return (
     <MainContainer>
@@ -719,7 +733,7 @@ const FormOperateur: React.FC = () => {
                 onChange={(e) =>
                   handleChange(
                     "num_adherent_caise_national_non_salaire",
-                     Number(e.target.value)
+                    Number(e.target.value)
                   )
                 }
               />

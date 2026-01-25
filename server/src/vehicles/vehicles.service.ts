@@ -18,6 +18,7 @@ import path, { join } from 'path';
 import { Workbook } from 'exceljs';
 import * as ExcelJS from 'exceljs';
 import * as fs from 'fs';
+import * as XLSX from 'xlsx';
 import { VihiclesQueryBuilder } from 'src/common/builder/VihiclesQueryBuilder';
 
 
@@ -815,46 +816,89 @@ export class VehiclesService {
 
   // ================= Export Urban Transport Excel =================
   async exportUrbanTransportExcel(): Promise<Buffer> {
-    const data = await this.VihicileModel.find({
-      font_type: 'حضري او شبه حضري',
+    const vehicles = await this.VihicileModel.find({
+      font_type: "حضري أو شبه حضري",
     }).lean();
+    console.log("vehicles", vehicles)
 
-    // دالة تجيب عدد المتعاملين
-    const operateur = async (num_client: number) => {
-      const op =
-        await this.operateurService.findOperateurByNumClient(num_client);
-      return op.length;
-    };
+    // ================= Committee Data (FROM YOUR JSON) =================
 
+
+    const committeeData = [
+      { "font_symbol": "441001", "oldVehicles": null, "committeeOpinion": "6" },
+      { "font_symbol": "441002", "oldVehicles": null, "committeeOpinion": "1 طلب ترخيص" },
+      { "font_symbol": "441003", "oldVehicles": null, "committeeOpinion": "6" },
+      { "font_symbol": "441004", "oldVehicles": null, "committeeOpinion": "6" },
+      { "font_symbol": "441005", "oldVehicles": 25, "committeeOpinion": "15" },
+      { "font_symbol": "441006", "oldVehicles": 21, "committeeOpinion": "21" },
+      { "font_symbol": "441010", "oldVehicles": 24, "committeeOpinion": "11" },
+      { "font_symbol": "441012", "oldVehicles": 21, "committeeOpinion": "10" },
+      { "font_symbol": "441014", "oldVehicles": 2, "committeeOpinion": "2 مع طلب ترخيص وزاري" },
+      { "font_symbol": "441015", "oldVehicles": 19, "committeeOpinion": "14" },
+      { "font_symbol": "441016", "oldVehicles": 0, "committeeOpinion": "5" },
+      { "font_symbol": "441022", "oldVehicles": 13, "committeeOpinion": "10" },
+      { "font_symbol": "441023", "oldVehicles": 17, "committeeOpinion": "14" },
+      { "font_symbol": "441025", "oldVehicles": 20, "committeeOpinion": "12" },
+      { "font_symbol": "441026", "oldVehicles": 3, "committeeOpinion": "طلب الترخيص 6" },
+      { "font_symbol": "441030", "oldVehicles": 13, "committeeOpinion": "10 برمجة اجتماع" },
+      { "font_symbol": "441033", "oldVehicles": 3, "committeeOpinion": "الحذف مع التسوية" },
+      { "font_symbol": "441042", "oldVehicles": 3, "committeeOpinion": "2" },
+      { "font_symbol": "441044", "oldVehicles": 17, "committeeOpinion": "5" },
+      { "font_symbol": "441045", "oldVehicles": 10, "committeeOpinion": "12" },
+      { "font_symbol": "441046", "oldVehicles": 10, "committeeOpinion": "9 برمجة اجتماع" },
+      { "font_symbol": "441048", "oldVehicles": 6, "committeeOpinion": "4" },
+      { "font_symbol": "441049", "oldVehicles": 10, "committeeOpinion": "6" },
+      { "font_symbol": "441050", "oldVehicles": 1, "committeeOpinion": "4" },
+      { "font_symbol": "441052", "oldVehicles": 12, "committeeOpinion": "12" },
+      { "font_symbol": "441053", "oldVehicles": 6, "committeeOpinion": "6 مع عقد اجتماع" },
+      { "font_symbol": "441057", "oldVehicles": 0, "committeeOpinion": "1" },
+      { "font_symbol": "441066", "oldVehicles": 5, "committeeOpinion": "6 مع عقد اجتماع" },
+      { "font_symbol": "441067", "oldVehicles": null, "committeeOpinion": "2" },
+      { "font_symbol": "441068", "oldVehicles": null, "committeeOpinion": "4" },
+      { "font_symbol": "441071", "oldVehicles": 2, "committeeOpinion": "1" },
+      { "font_symbol": "441072", "oldVehicles": null, "committeeOpinion": "2" },
+      { "font_symbol": "441075", "oldVehicles": null, "committeeOpinion": "2" },
+      { "font_symbol": "441076", "oldVehicles": null, "committeeOpinion": "2" },
+      { "font_symbol": "441077", "oldVehicles": null, "committeeOpinion": "2" },
+      { "font_symbol": "441078", "oldVehicles": null, "committeeOpinion": "2" },
+      { "font_symbol": "441079", "oldVehicles": null, "committeeOpinion": "2" },
+      { "font_symbol": "441080", "oldVehicles": null, "committeeOpinion": "2" },
+      { "font_symbol": "441081", "oldVehicles": null, "committeeOpinion": "2" },
+      { "font_symbol": "441082", "oldVehicles": null, "committeeOpinion": "4" }
+    ];
+
+    const committeeMap = new Map<string, any>();
+    committeeData.forEach(c => committeeMap.set(c.font_symbol, c));
+
+    // ================= Group vehicles by font_symbol =================
+    const vehiclesBySymbol = new Map<string, any[]>();
+    for (const v of vehicles) {
+      const symbol = v.font_symbol ?? 'UNKNOWN';
+      if (!vehiclesBySymbol.has(symbol)) {
+        vehiclesBySymbol.set(symbol, []);
+      }
+      vehiclesBySymbol.get(symbol)!.push(v);
+    }
+
+    // ================= Workbook =================
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('النقل الحضري');
 
-    // 🟦 1) إضافة العنوان مع "padding" عبر ارتفاع الصف
-    worksheet.mergeCells('A1:N2'); // ياخذ صفّين = padding عمودي
+    worksheet.mergeCells('A1:N2');
     const titleCell = worksheet.getCell('A1');
     titleCell.value = 'مخطط النقل الحضري بخطوط الحضرية';
-    titleCell.alignment = { vertical: 'middle', horizontal: 'center' }; // في الوسط
-    titleCell.font = {
-      name: 'Cairo',
-      size: 24,
-      bold: true,
-      color: { argb: 'FFFFFFFF' }, // أبيض
-    };
-    titleCell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: '4472C4' }, // أزرق غامق
-    };
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    titleCell.font = { name: 'Cairo', size: 24, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } };
     worksheet.getRow(1).height = 40;
 
-    // 🟦 2) صف رؤوس الأعمدة (صف 3 الآن)
     const headerRow = worksheet.addRow([
       'ترخيص وزاري',
       'اقتراح اللجنة',
-      'الحد الاقصى للخط + (الترخيص + التعريض + الحالي)',
+      'الحد الاقصى للخط (الترخيص + التعريض + الحالي)',
       'عدد المركبات حاليا',
       'عدد المتعاملين حاليا',
-      'عدد المركبات القديمة',
+      'عدد المركبات قديما',
       'النقطة 5',
       'النقطة 4',
       'النقطة 3',
@@ -865,79 +909,65 @@ export class VehiclesService {
       'رمز الخط',
     ]);
 
-    // 🟦 3) AutoFit أعمدة + تنسيق الهيدر
-    headerRow.eachCell((cell, colNumber) => {
-      cell.alignment = {
-        vertical: 'middle',
-        horizontal: 'center',
-        wrapText: true,
-      };
+    headerRow.eachCell((cell, col) => {
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
       cell.font = { name: 'Cairo', size: 13, bold: true };
-      cell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'D9E1F2' },
-      };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'D9E1F2' } };
       cell.border = {
         top: { style: 'thin' },
         left: { style: 'thin' },
         bottom: { style: 'thin' },
         right: { style: 'thin' },
       };
-
-      // عرض الأعمدة بناءً على طول الكلمة (min 15, max 40)
-      const headerText = cell.value?.toString() || '';
-      worksheet.getColumn(colNumber).width = Math.min(
-        Math.max(headerText.length + 5, 15),
-        40,
-      );
+      worksheet.getColumn(col).width = 22;
     });
-    headerRow.height = 30;
 
-    // 🟦 4) إدخال البيانات
-    for (const item of data) {
-      const opCount = await operateur(item.num_docier_client);
+    // ================= Data Rows =================
+    const sortedSymbols = Array.from(vehiclesBySymbol.keys()).sort();
 
-      worksheet.addRow({
-        ministerial_license: '',
-        committee_proposal: item.note_chef_departement || '',
-        max_limit: '',
-        vehicles_now: '',
-        operateurCount: opCount,
-        old_vehicles: '',
-        point_Traffic5: item.point_Traffic5,
-        point_Traffic4: item.point_Traffic4,
-        point_Traffic3: item.point_Traffic3,
-        point_Traffic2: item.point_Traffic2,
-        point_Traffic1: item.point_Traffic1,
-        point_arrive: item.point_arrive,
-        point_depart: item.point_depart,
-        font_symbol: item.font_symbol,
+    for (const symbol of sortedSymbols) {
+      const group = vehiclesBySymbol.get(symbol)!;
+      const committee = committeeMap.get(symbol);
+
+      const uniqueOperators = new Set(
+        group.map(v => v.num_docier_client).filter(Boolean),
+      );
+
+      const first = group[0];
+
+      const row = worksheet.addRow([
+        '', // ترخيص وزاري
+        committee?.committeeOpinion ?? '',
+        '',
+        group.length,
+        uniqueOperators.size,
+        committee?.oldVehicles ?? '',
+        first?.point_Traffic5 ?? '',
+        first?.point_Traffic4 ?? '',
+        first?.point_Traffic3 ?? '',
+        first?.point_Traffic2 ?? '',
+        first?.point_Traffic1 ?? '',
+        first?.point_arrive ?? '',
+        first?.point_depart ?? '',
+        symbol,
+      ]);
+
+      row.eachCell(cell => {
+        cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+        cell.font = { name: 'Cairo', size: 11 };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' },
+        };
       });
     }
 
-    // 🟦 5) تنسيق الصفوف (وسط + حدود)
-    worksheet.eachRow((row, rowNumber) => {
-      if (rowNumber > 2) {
-        // بعد العنوان والهيدر
-        row.height = 20;
-        row.eachCell((cell) => {
-          cell.alignment = { vertical: 'middle', horizontal: 'center' };
-          cell.font = { name: 'Cairo', size: 11 };
-          cell.border = {
-            top: { style: 'thin' },
-            left: { style: 'thin' },
-            bottom: { style: 'thin' },
-            right: { style: 'thin' },
-          };
-        });
-      }
-    });
-
-    // 🟦 6) إرجاع الملف
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer);
   }
+
 
   // ================= Export Balady Transport Excel =================
   async exportBaladyExcel(): Promise<Buffer> {
@@ -1129,14 +1159,77 @@ export class VehiclesService {
   // ================= Export Rifi Transport Excel =================
   async exportRifiExcel(): Promise<Buffer> {
     const vehicles = await this.VihicileModel.find({
-      font_type: 'ريفي',
+      font_type: 'ريـفي',
     }).exec();
 
+    // ================= Committee Data =================
+    const committeeData = [
+      { font_symbol: '444066', oldVehicles: 10, committeeOpinion: 10 },
+      { font_symbol: '444190', oldVehicles: 2, committeeOpinion: 7 },
+      { font_symbol: '444198', oldVehicles: 0, committeeOpinion: 8 },
+      { font_symbol: '444475', oldVehicles: 0, committeeOpinion: 3 },
+      { font_symbol: '444103', oldVehicles: 3, committeeOpinion: 4 },
+      { font_symbol: '444368', oldVehicles: 8, committeeOpinion: 13 },
+      { font_symbol: '444067', oldVehicles: 6, committeeOpinion: 4 },
+      { font_symbol: '444206', oldVehicles: 4, committeeOpinion: 4 },
+      { font_symbol: '444476', oldVehicles: 0, committeeOpinion: 3 },
+      { font_symbol: '444477', oldVehicles: 0, committeeOpinion: 3 },
+      { font_symbol: '444478', oldVehicles: 0, committeeOpinion: 3 },
+      { font_symbol: '444479', oldVehicles: 0, committeeOpinion: 3 },
+      { font_symbol: '444480', oldVehicles: 0, committeeOpinion: 3 },
+      { font_symbol: '444481', oldVehicles: 0, committeeOpinion: 3 },
+      { font_symbol: '444482', oldVehicles: 0, committeeOpinion: 3 },
+      { font_symbol: '444516', oldVehicles: 0, committeeOpinion: 3 },
+      { font_symbol: '444483', oldVehicles: 0, committeeOpinion: 3 },
+      { font_symbol: '444222', oldVehicles: 7, committeeOpinion: 11 },
+      { font_symbol: '444445', oldVehicles: 4, committeeOpinion: 6 },
+      { font_symbol: '444035', oldVehicles: 4, committeeOpinion: 5 },
+      { font_symbol: '444471', oldVehicles: 0, committeeOpinion: 2 },
+      { font_symbol: '444484', oldVehicles: 1, committeeOpinion: 3 },
+      { font_symbol: '444210', oldVehicles: 3, committeeOpinion: 5 },
+      { font_symbol: '444384', oldVehicles: 1, committeeOpinion: 5 },
+      { font_symbol: '444413', oldVehicles: 4, committeeOpinion: 8 },
+      { font_symbol: '444472', oldVehicles: 0, committeeOpinion: 2 },
+      { font_symbol: '444361', oldVehicles: 10, committeeOpinion: 6 },
+      { font_symbol: '444468', oldVehicles: 2, committeeOpinion: 5 },
+      { font_symbol: '444464', oldVehicles: 0, committeeOpinion: 4 },
+      { font_symbol: '444450', oldVehicles: 5, committeeOpinion: 8 },
+      { font_symbol: '444473', oldVehicles: 0, committeeOpinion: 2 },
+      { font_symbol: '444310', oldVehicles: 0, committeeOpinion: 6 },
+      { font_symbol: '444485', oldVehicles: 0, committeeOpinion: 3 },
+      { font_symbol: '444505', oldVehicles: 0, committeeOpinion: 4 },
+      { font_symbol: '444223', oldVehicles: 2, committeeOpinion: 6 },
+      { font_symbol: '444486', oldVehicles: 0, committeeOpinion: 3 },
+      { font_symbol: '444411', oldVehicles: 3, committeeOpinion: 7 },
+      { font_symbol: '444447', oldVehicles: 1, committeeOpinion: 4 },
+      { font_symbol: '444448', oldVehicles: 3, committeeOpinion: 5 },
+      { font_symbol: '444506', oldVehicles: 1, committeeOpinion: 4 },
+      { font_symbol: '444452', oldVehicles: 0, committeeOpinion: 6 },
+      { font_symbol: '444470', oldVehicles: 2, committeeOpinion: 2 },
+      { font_symbol: '444487', oldVehicles: 0, committeeOpinion: 3 },
+      { font_symbol: '444003', oldVehicles: 12, committeeOpinion: 15 },
+      { font_symbol: '444189', oldVehicles: 3, committeeOpinion: 5 },
+      { font_symbol: '444446', oldVehicles: 1, committeeOpinion: 2 },
+    ];
+
+    const committeeMap = new Map<string, any>();
+    committeeData.forEach((c) => committeeMap.set(c.font_symbol, c));
+
+    // ================= Group vehicles by font_symbol =================
+    const vehiclesBySymbol = new Map<string, any[]>();
+    for (const v of vehicles) {
+      const fontSymbol = v.font_symbol?.replace(/-/g, '') ?? 'UNKNOWN';
+      if (!vehiclesBySymbol.has(fontSymbol)) {
+        vehiclesBySymbol.set(fontSymbol, []);
+      }
+      vehiclesBySymbol.get(fontSymbol).push(v);
+    }
+
+    // ================= Workbook =================
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Vehicles');
 
-    // --- Header title (merged row) ---
-    worksheet.mergeCells('A1:L1'); // عندك 12 عمود في الهيدر
+    worksheet.mergeCells('A1:K1');
     const titleCell = worksheet.getCell('A1');
     titleCell.value = 'مخطط النقل الخاص بالخطوط الريفية';
     titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -1153,28 +1246,22 @@ export class VehiclesService {
     };
     worksheet.getRow(1).height = 40;
 
-    // --- Column headers ---
     const headerRow = worksheet.addRow([
       'راي المدير',
       'راي اللجنة',
       'ترخيص وزاري',
       'الحد الاقصى للخط (الترخيص + التعريض + الحالي)',
       'عدد المركبات حاليا',
-      'عدد المتعاملين حاليا ',
-      'عدد المركبات في قديما ',
+      'عدد المتعاملين حاليا',
+      'عدد المركبات قديما',
       'نقطة الوصول',
       'نقطة الانطلاق',
       'رمز الخط',
       'الرقم',
     ]);
 
-    // --- Style headers ---
-    headerRow.eachCell((cell, colNumber) => {
-      cell.alignment = {
-        vertical: 'middle',
-        horizontal: 'center',
-        wrapText: true,
-      };
+    headerRow.eachCell((cell, col) => {
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
       cell.font = { name: 'Cairo', size: 13, bold: true };
       cell.fill = {
         type: 'pattern',
@@ -1187,67 +1274,64 @@ export class VehiclesService {
         bottom: { style: 'thin' },
         right: { style: 'thin' },
       };
-
-      // عرض الأعمدة بناءً على طول الكلمة (min 15, max 40)
-      const headerText = cell.value?.toString() || '';
-      worksheet.getColumn(colNumber).width = Math.min(
-        Math.max(headerText.length + 5, 15),
-        40,
-      );
+      worksheet.getColumn(col).width = 22;
     });
-    headerRow.height = 30;
 
-    // --- Data rows ---
-    let idx = 0;
-    for (const v of vehicles) {
-      const op = await this.operateurService.findOperateurByNumClient(
-        v.num_docier_client,
-      );
-      const opCount = op?.length ?? 0;
+    // ================= Data Rows - Grouped by font_symbol =================
+    let idx = 1;
+
+    // Sort font_symbols for consistent ordering
+    const sortedSymbols = Array.from(vehiclesBySymbol.keys()).sort();
+
+    for (const fontSymbol of sortedSymbols) {
+      const vehiclesForSymbol = vehiclesBySymbol.get(fontSymbol);
+      const committee = committeeMap.get(fontSymbol);
+      const currentVehicleCount = vehiclesForSymbol.length;
+
+      // Count unique operators for this font_symbol
+      const uniqueOperators = new Set();
+      for (const v of vehiclesForSymbol) {
+        if (v.num_docier_client) {
+          uniqueOperators.add(v.num_docier_client);
+        }
+      }
+      const opCount = uniqueOperators.size;
+
+      // Get route info from first vehicle
+      const firstVehicle = vehiclesForSymbol[0];
 
       const row = worksheet.addRow([
         '', // راي المدير
-        v.note_chef_departement ?? '', // ملاحظات رئيس المصلحة
-        '',
-        '',
-        '', // عدد المركبات سابقا
+        committee?.committeeOpinion ?? '', // راي اللجنة
+        '', // ترخيص وزاري
+        '', // الحد الاقصى للخط
+        currentVehicleCount, // ✅ عدد المركبات حاليا
         opCount, // عدد المتعاملين حاليا
-        '', // عدد المركبات حاليا
-        v.point_arrive ?? '', // الوصول
-        v.point_depart ?? '', // الانطلاق
-        v.font_type ?? '', // رمز الخط
-        idx + 1, // الرقم
+        committee?.oldVehicles ?? '', // عدد المركبات قديما
+        firstVehicle?.point_arrive ?? '', // نقطة الوصول
+        firstVehicle?.point_depart ?? '', // نقطة الانطلاق
+        fontSymbol, // رمز الخط
+        idx, // الرقم
       ]);
 
-      // Style rows + alternate colors
-      worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber > 2) {
-          // بعد العنوان والهيدر
-          row.height = 20;
-          row.eachCell((cell) => {
-            cell.alignment = { vertical: 'middle', horizontal: 'center' };
-            cell.font = { name: 'Cairo', size: 11 };
-            cell.border = {
-              top: { style: 'thin' },
-              left: { style: 'thin' },
-              bottom: { style: 'thin' },
-              right: { style: 'thin' },
-            };
-          });
-        }
+      row.eachCell((cell) => {
+        cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+        cell.font = { name: 'Cairo', size: 11 };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' },
+        };
       });
 
       idx++;
     }
 
-    // --- Auto column widths ---
-    worksheet.columns.forEach((col) => {
-      col.width = 20;
-    });
-
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer);
   }
+
 
   // ================= Export Wilay Transport Excel =================
   async exportExcelWilay(): Promise<Buffer> {
@@ -1255,131 +1339,367 @@ export class VehiclesService {
       font_type: 'بين الولايات',
     }).exec();
 
+    // ================= Committee Data (NEW) =================
+    const committeeData = [
+      { font_symbol: '441001', oldVehicles: null, committeeOpinion: '6' },
+      { font_symbol: '441002', oldVehicles: null, committeeOpinion: '1 طلب ترخيص' },
+      { font_symbol: '441003', oldVehicles: null, committeeOpinion: '6' },
+      { font_symbol: '441004', oldVehicles: null, committeeOpinion: '6' },
+      { font_symbol: '441005', oldVehicles: 25, committeeOpinion: '15' },
+      { font_symbol: '441006', oldVehicles: 21, committeeOpinion: '21' },
+      { font_symbol: '441010', oldVehicles: 24, committeeOpinion: '11' },
+      { font_symbol: '441012', oldVehicles: 21, committeeOpinion: '10' },
+      { font_symbol: '441014', oldVehicles: 2, committeeOpinion: '2 مع طلب ترخيص وزاري' },
+      { font_symbol: '441015', oldVehicles: 19, committeeOpinion: '14' },
+      { font_symbol: '441016', oldVehicles: 0, committeeOpinion: '5' },
+      { font_symbol: '441022', oldVehicles: 13, committeeOpinion: '10' },
+      { font_symbol: '441023', oldVehicles: 17, committeeOpinion: '14' },
+      { font_symbol: '441025', oldVehicles: 20, committeeOpinion: '12' },
+      { font_symbol: '441026', oldVehicles: 3, committeeOpinion: 'طلب الترخيص 6' },
+      { font_symbol: '441030', oldVehicles: 13, committeeOpinion: '10 برمجة اجتماع' },
+      { font_symbol: '441033', oldVehicles: 3, committeeOpinion: 'الحذف مع التسوية' },
+      { font_symbol: '441042', oldVehicles: 3, committeeOpinion: '2' },
+      { font_symbol: '441044', oldVehicles: 17, committeeOpinion: '5' },
+      { font_symbol: '441045', oldVehicles: 10, committeeOpinion: '12' },
+      { font_symbol: '441046', oldVehicles: 10, committeeOpinion: '9 برمجة اجتماع' },
+      { font_symbol: '441048', oldVehicles: 6, committeeOpinion: '4' },
+      { font_symbol: '441049', oldVehicles: 10, committeeOpinion: '6' },
+      { font_symbol: '441050', oldVehicles: 1, committeeOpinion: '4' },
+      { font_symbol: '441052', oldVehicles: 12, committeeOpinion: '12' },
+      { font_symbol: '441053', oldVehicles: 6, committeeOpinion: '6 مع عقد اجتماع' },
+      { font_symbol: '441057', oldVehicles: 0, committeeOpinion: '1' },
+      { font_symbol: '441066', oldVehicles: 5, committeeOpinion: '6 مع عقد اجتماع' },
+      { font_symbol: '441067', oldVehicles: null, committeeOpinion: '2' },
+      { font_symbol: '441068', oldVehicles: null, committeeOpinion: '4' },
+      { font_symbol: '441071', oldVehicles: 2, committeeOpinion: '1' },
+      { font_symbol: '441072', oldVehicles: null, committeeOpinion: '2' },
+      { font_symbol: '441075', oldVehicles: null, committeeOpinion: '2' },
+      { font_symbol: '441076', oldVehicles: null, committeeOpinion: '2' },
+      { font_symbol: '441077', oldVehicles: null, committeeOpinion: '2' },
+      { font_symbol: '441078', oldVehicles: null, committeeOpinion: '2' },
+      { font_symbol: '441079', oldVehicles: null, committeeOpinion: '2' },
+      { font_symbol: '441080', oldVehicles: null, committeeOpinion: '2' },
+      { font_symbol: '441081', oldVehicles: null, committeeOpinion: '2' },
+      { font_symbol: '441082', oldVehicles: null, committeeOpinion: '4' },
+    ];
+
+    const committeeMap = new Map<string, any>();
+    committeeData.forEach(c => committeeMap.set(c.font_symbol, c));
+
+    // ================= Group vehicles by font_symbol =================
+    const vehiclesBySymbol = new Map<string, any[]>();
+    for (const v of vehicles) {
+      const symbol = v.font_symbol?.replace(/-/g, '') ?? 'UNKNOWN';
+      if (!vehiclesBySymbol.has(symbol)) {
+        vehiclesBySymbol.set(symbol, []);
+      }
+      vehiclesBySymbol.get(symbol).push(v);
+    }
+
+    // ================= Workbook =================
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Vehicles');
 
-    // --- Header title (merged row) ---
     worksheet.mergeCells('A1:M1');
     const titleCell = worksheet.getCell('A1');
     titleCell.value = 'مخطط النقل الخاص بالخطوط الولائية';
     titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
-    titleCell.font = {
-      name: 'Cairo',
-      size: 24,
-      bold: true,
-      color: { argb: 'FFFFFFFF' },
-    };
-    titleCell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: '4472C4' },
-    };
+    titleCell.font = { name: 'Cairo', size: 24, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } };
     worksheet.getRow(1).height = 40;
-    // --- Column headers ---
+
     const headerRow = worksheet.addRow([
       'راي المدير',
-      'اتفاق اللجنة',
+      'راي اللجنة',
       'عدد الرخص التي تم تعويضها',
       'العدد المتفق عليه باخر محضر',
       'ملاحظات رئيس المصلحة',
       'العدد الاقصى حسب محضر الاجتماع',
-      'عدد المركبات سابقا',
-      'عدد المركبات في الوقت الحالي',
-      'عدد المتعاملين في الوقت الحالي',
+      'عدد المركبات قديما',
+      'عدد المركبات حاليا',
+      'عدد المتعاملين حاليا',
       'الوصول',
       'الانطلاق',
       'رمز الخط',
       'الرقم',
     ]);
 
-    // --- Style headers ---
-    headerRow.eachCell((cell, colNumber) => {
-      cell.alignment = {
-        vertical: 'middle',
-        horizontal: 'center',
-        wrapText: true,
-      };
+    headerRow.eachCell((cell, col) => {
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
       cell.font = { name: 'Cairo', size: 13, bold: true };
-      cell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'D9E1F2' },
-      };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'D9E1F2' } };
       cell.border = {
         top: { style: 'thin' },
         left: { style: 'thin' },
         bottom: { style: 'thin' },
         right: { style: 'thin' },
       };
-
-      // عرض الأعمدة بناءً على طول الكلمة (min 15, max 40)
-      const headerText = cell.value?.toString() || '';
-      worksheet.getColumn(colNumber).width = Math.min(
-        Math.max(headerText.length + 5, 15),
-        40,
-      );
+      worksheet.getColumn(col).width = 22;
     });
-    headerRow.height = 30;
 
-    // --- Data rows ---
-    let idx = 0;
-    for (const v of vehicles) {
-      const op = await this.operateurService.findOperateurByNumClient(
-        v.num_docier_client,
+    // ================= Data Rows =================
+    let idx = 1;
+    const sortedSymbols = Array.from(vehiclesBySymbol.keys()).sort();
+
+    for (const symbol of sortedSymbols) {
+      const list = vehiclesBySymbol.get(symbol);
+      const committee = committeeMap.get(symbol);
+
+      const uniqueOperators = new Set(
+        list.map(v => v.num_docier_client).filter(Boolean),
       );
-      const opCount = op?.length ?? 0;
+
+      const first = list[0];
 
       const row = worksheet.addRow([
-        '', // راي المدير
-        '', // اتفاق اللجنة
-        '', // عدد الرخص التي تم تعويضها
-        '', // العدد المتفق عليه باخر محضر
-        v.note_chef_departement ?? '', // ملاحظات رئيس المصلحة
-        '', // عدد المركبات سابقا
-        '', // عدد المركبات سابقا
-        '', // عدد المركبات حاليا
-        opCount, // عدد المتعاملين حاليا
-        v.point_arrive ?? '', // الوصول
-        v.point_depart ?? '', // الانطلاق
-        v.font_type ?? '', // رمز الخط
-        idx + 1, // الرقم
+        '',
+        committee?.committeeOpinion ?? '',
+        '',
+        '',
+        first?.note_chef_departement ?? '',
+        '',
+        committee?.oldVehicles ?? '',
+        list.length,
+        uniqueOperators.size,
+        first?.point_arrive ?? '',
+        first?.point_depart ?? '',
+        symbol,
+        idx,
       ]);
 
-      // Style rows + alternate colors
-      worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber > 2) {
-          // بعد العنوان والهيدر
-          row.height = 20;
-          row.eachCell((cell) => {
-            cell.alignment = { vertical: 'middle', horizontal: 'center' };
-            cell.font = { name: 'Cairo', size: 11 };
-            cell.border = {
-              top: { style: 'thin' },
-              left: { style: 'thin' },
-              bottom: { style: 'thin' },
-              right: { style: 'thin' },
-            };
-          });
-        }
+      row.eachCell(cell => {
+        cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+        cell.font = { name: 'Cairo', size: 11 };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' },
+        };
       });
 
       idx++;
     }
 
-    // --- Auto column widths ---
-    worksheet.columns.forEach((col) => {
-      col.width = 20;
-    });
-
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer);
   }
+
 
   async clearVehicles(): Promise<string> {
     await this.VihicileModel.deleteMany({});
     return '✅ All users have been deleted successfully';
   }
 
+
+
+  async convertAndSaveToMongoDB(file: Express.Multer.File): Promise<any> {
+    try {
+      console.log("file.buffer", file.buffer);
+      const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+      const sheetNames = workbook.SheetNames;
+
+      const allData = {};
+      let savedCount = 0;
+      let failedCount = 0;
+      let totalProcessed = 0;
+      const errors = [];
+
+      for (const sheetName of sheetNames) {
+        const worksheet = workbook.Sheets[sheetName];
+        console.log("worksheet", worksheet);
+
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+          raw: false,
+          defval: null,
+        });
+
+        allData[sheetName] = jsonData;
+
+        // Save each row to MongoDB
+        for (let i = 0; i < jsonData.length; i++) {
+          totalProcessed++;
+          try {
+            const row = jsonData[i];
+
+            // Convert dates from Excel format to JavaScript Date
+            const parseDate = (dateStr: any) => {
+              if (!dateStr) return null;
+              const date = new Date(dateStr);
+              return isNaN(date.getTime()) ? null : date;
+            };
+
+            // Convert to number safely
+            const parseNumber = (value: any) => {
+              if (!value || value === '') return null;
+              const num = Number(value);
+              return isNaN(num) ? null : num;
+            };
+
+            // Normalize enum values
+            const normalizeVehicleParked = (value: string) => {
+              if (!value) return null;
+              if (value.includes('نعم')) return 'نعم';
+              if (value.includes('لا')) return 'لا';
+              return null;
+            };
+
+            const normalizeTypeParked = (value: string) => {
+              if (!value) return null;
+              if (value.includes('مؤقت')) return 'مؤقت';
+              if (value.includes('نهائي')) return 'نهائي';
+              return null;
+            };
+
+            // Column mapping: Excel headers -> Schema fields
+            const columnMapping = {
+              '__EMPTY': 'num_wilaya',
+              '__EMPTY_1': 'num_docier_client',
+              'البحث باسم المتعامل بالعربية': 'fullName_arabe',
+              'البحث باسم المتعامل بالفرنسية': 'fullName_francais',
+              '__EMPTY_2': 'activite',
+              '__EMPTY_3': 'colonne1',
+              '__EMPTY_4': 'nature_activite',
+              '__EMPTY_5': 'colonne2',
+              '__EMPTY_6': 'status_activite',
+              '__EMPTY_7': 'colonne3',
+              'البحث بترقيم المركبة': 'num_bus_registration',
+              '__EMPTY_8': 'circle',
+              '__EMPTY_9': 'Municipality',
+              '__EMPTY_10': 'Style',
+              '__EMPTY_11': 'category',
+              '__EMPTY_12': 'type',
+              '__EMPTY_13': 'First_year_of_use',
+              '__EMPTY_14': 'total_load_trucks',
+              '__EMPTY_15': 'restricted_load',
+              '__EMPTY_16': 'Number_of_seats',
+              '__EMPTY_17': 'Energy',
+              '__EMPTY_18': 'num_driving_license',
+              '__EMPTY_19': 'driving_license_history',
+              '__EMPTY_20': 'driving_license_dure',
+              '__EMPTY_21': 'line_activity_start_date',
+              '__EMPTY_22': 'Vehicle_activity_start_date',
+              '__EMPTY_23': 'font_type',
+              '__EMPTY_24': 'colonne4',
+              '__EMPTY_25': 'font_symbol',
+              '__EMPTY_26': 'point_depart',
+              '__EMPTY_27': 'point_arrive',
+              '__EMPTY_28': 'point_Traffic1',
+              '__EMPTY_29': 'point_Traffic2',
+              '__EMPTY_30': 'point_Traffic3',
+              '__EMPTY_31': 'point_Traffic4',
+              '__EMPTY_32': 'point_Traffic5',
+              '__EMPTY_33': 'line_start_time',
+              '__EMPTY_34': 'line_end_time',
+              '__EMPTY_35': 'Pace_per_minute',
+              '__EMPTY_36': 'time_depart1',
+              '__EMPTY_37': 'time_depart2',
+              '__EMPTY_38': 'time_depart3',
+              '__EMPTY_39': 'time_depart4',
+              '__EMPTY_40': 'vihicile_parked',
+              '__EMPTY_41': 'type_parked',
+              '__EMPTY_42': 'hestoire_parked',
+              '__EMPTY_43': 'hestoire_parked_end',
+              '__EMPTY_44': 'comments',
+              '__EMPTY_45': 'person_concerned',
+              '__EMPTY_46': 'note_chef_departement',
+              '__EMPTY_47': 'path',
+            };
+
+            // Map and convert Excel data to schema fields
+            const vihiclesData: any = {};
+
+            for (const [excelColumn, schemaField] of Object.entries(columnMapping)) {
+              const value = row[excelColumn];
+
+              // Apply appropriate conversion based on field type
+              if (value === null || value === undefined || value === '') {
+                vihiclesData[schemaField] = null;
+                continue;
+              }
+
+              // Date fields
+              if ([
+                'driving_license_history',
+                'driving_license_dure',
+                'line_activity_start_date',
+                'Vehicle_activity_start_date',
+                'hestoire_parked',
+                'hestoire_parked_end'
+              ].includes(schemaField)) {
+                vihiclesData[schemaField] = parseDate(value);
+              }
+              // Number fields
+              else if ([
+                'num_wilaya',
+                'num_docier_client',
+                'First_year_of_use',
+                'total_load_trucks',
+                'restricted_load',
+                'Number_of_seats',
+                'num_driving_license'
+              ].includes(schemaField)) {
+                vihiclesData[schemaField] = parseNumber(value);
+              }
+              // Enum fields with normalization
+              else if (schemaField === 'vihicile_parked') {
+                vihiclesData[schemaField] = normalizeVehicleParked(value);
+              }
+              else if (schemaField === 'type_parked') {
+                vihiclesData[schemaField] = normalizeTypeParked(value);
+              }
+              // String fields
+              else {
+                vihiclesData[schemaField] = value;
+              }
+            }
+
+            // Also save original Excel column names as additional fields
+            for (const [key, value] of Object.entries(row)) {
+              const cleanKey = key.trim();
+              // Only add if not already mapped
+              if (!columnMapping[key]) {
+                vihiclesData[cleanKey] = value;
+              }
+            }
+
+            // Create and save the document
+            const vihicle = new this.VihicileModel(vihiclesData);
+            await vihicle.save();
+            savedCount++;
+          } catch (error) {
+            failedCount++;
+            errors.push({
+              row: i + 1,
+              error: error.message,
+              data: jsonData[i],
+            });
+            console.error(`خطأ في الصف ${i + 1}:`, error.message);
+          }
+        }
+      }
+
+      // Save to file.json
+      const outputPath = path.join(process.cwd(), 'file-vehuc.json');
+      fs.writeFileSync(outputPath, JSON.stringify(allData, null, 2), 'utf-8');
+
+      console.log(`✓ تم حفظ ${savedCount} سجل في MongoDB`);
+      console.log(`✗ فشل حفظ ${failedCount} سجل`);
+      console.log(`✓ تم معالجة ${totalProcessed} سجل إجمالي`);
+      console.log(`✓ تم حفظ JSON في ${outputPath}`);
+
+      return {
+        savedCount,
+        failedCount,
+        totalProcessed,
+        jsonPath: outputPath,
+        errors: errors.slice(0, 10),
+      };
+    } catch (error) {
+      console.error('خطأ في تحويل Excel:', error);
+      throw error;
+    }
+  }
 
 
 }

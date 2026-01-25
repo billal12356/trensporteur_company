@@ -13,7 +13,7 @@ export class StateService {
     @InjectModel(Operateur.name) private operateurModel: Model<Operateur>,
     @InjectModel(Chauffeur.name) private chauffeurModel: Model<Chauffeur>,
     @InjectModel(Vihicles.name) private vehiculeModel: Model<Vihicles>,
-  ) {}
+  ) { }
   async getAllStats() {
     const now = new Date();
     const startOfDay = new Date(
@@ -111,12 +111,12 @@ export class StateService {
           totalAge: { $sum: '$vehicleAge' },
           en_activite: {
             $sum: {
-              $cond: [{ $eq: ['$vihicile_parked', 'في الخدمة'] }, 1, 0],
+              $cond: [{ $eq: ['$vihicile_parked', 'لا'] }, 1, 0],
             },
           },
           arret: {
             $sum: {
-              $cond: [{ $eq: ['$vihicile_parked', 'موقفة'] }, 1, 0],
+              $cond: [{ $eq: ['$vihicile_parked', 'نعم'] }, 1, 0],
             },
           },
           totalTrajets: { $sum: '$trafficPointsCount' },
@@ -300,12 +300,12 @@ export class StateService {
           },
           en_activite: {
             $sum: {
-              $cond: [{ $eq: ['$vihicile_parked', 'في الخدمة'] }, 1, 0],
+              $cond: [{ $eq: ['$vihicile_parked', 'لا'] }, 1, 0],
             },
           },
           arret: {
             $sum: {
-              $cond: [{ $eq: ['$vihicile_parked', 'موقفة'] }, 1, 0],
+              $cond: [{ $eq: ['$vihicile_parked', 'نعم'] }, 1, 0],
             },
           },
           totalTrajets: { $sum: '$trafficPointsCount' },
@@ -423,7 +423,7 @@ export class StateService {
   //inter rural
   async getInter_rural(startDate, endDate) {
     const matchConditions: any = {
-      font_type: 'ريفي',
+      font_type: 'ريـفي',
     };
 
     if (startDate && endDate) {
@@ -488,12 +488,12 @@ export class StateService {
           },
           en_activite: {
             $sum: {
-              $cond: [{ $eq: ['$vihicile_parked', 'في الخدمة'] }, 1, 0],
+              $cond: [{ $eq: ['$vihicile_parked', 'لا'] }, 1, 0],
             },
           },
           arret: {
             $sum: {
-              $cond: [{ $eq: ['$vihicile_parked', 'موقفة'] }, 1, 0],
+              $cond: [{ $eq: ['$vihicile_parked', 'نعم'] }, 1, 0],
             },
           },
           totalTrajets: { $sum: '$trafficPointsCount' },
@@ -676,12 +676,12 @@ export class StateService {
           },
           en_activite: {
             $sum: {
-              $cond: [{ $eq: ['$vihicile_parked', 'في الخدمة'] }, 1, 0],
+              $cond: [{ $eq: ['$vihicile_parked', 'لا'] }, 1, 0],
             },
           },
           arret: {
             $sum: {
-              $cond: [{ $eq: ['$vihicile_parked', 'موقفة'] }, 1, 0],
+              $cond: [{ $eq: ['$vihicile_parked', 'نعم'] }, 1, 0],
             },
           },
           totalTrajets: { $sum: '$trafficPointsCount' },
@@ -864,12 +864,12 @@ export class StateService {
           },
           en_activite: {
             $sum: {
-              $cond: [{ $eq: ['$vihicile_parked', 'في الخدمة'] }, 1, 0],
+              $cond: [{ $eq: ['$vihicile_parked', 'لا'] }, 1, 0],
             },
           },
           arret: {
             $sum: {
-              $cond: [{ $eq: ['$vihicile_parked', 'موقفة'] }, 1, 0],
+              $cond: [{ $eq: ['$vihicile_parked', 'نعم'] }, 1, 0],
             },
           },
           totalTrajets: { $sum: '$trafficPointsCount' },
@@ -1051,12 +1051,12 @@ export class StateService {
           },
           en_activite: {
             $sum: {
-              $cond: [{ $eq: ['$vihicile_parked', 'في الخدمة'] }, 1, 0],
+              $cond: [{ $eq: ['$vihicile_parked', 'لا'] }, 1, 0],
             },
           },
           arret: {
             $sum: {
-              $cond: [{ $eq: ['$vihicile_parked', 'موقفة'] }, 1, 0],
+              $cond: [{ $eq: ['$vihicile_parked', 'نعم'] }, 1, 0],
             },
           },
           totalTrajets: { $sum: '$trafficPointsCount' },
@@ -1178,12 +1178,18 @@ export class StateService {
     let CAPACITÉ = {};
 
     // نجيب المركبات فقط بين startDate و endDate
-    const vehicles = await this.vehiculeModel.find({
-      createdAt: {
+    const dateFilter: any = {};
+
+    if (startDate && endDate) {
+      dateFilter.createdAt = {
         $gte: startDate,
-        $lte: endDate,
-      },
-    });
+        $lt: endDate, // 🔥 لاحظ lt وليس lte
+      };
+    }
+
+    const vehicles = await this.vehiculeModel.find(dateFilter);
+
+
 
     // نربطهم مع الـ opérateur
     const results = await Promise.all(
@@ -1201,7 +1207,7 @@ export class StateService {
     const tpv = filtered.filter((v) =>
       ['بين البلديات', 'بين الولايات', 'حضري أو شبه حضري', 'ريفي'].includes(v.font_type),
     );
-    console.log(tpv,"tpv")
+    console.log(tpv, "tpv")
     const publicCount = tpv.filter(
       (v) => v.status_activite === 'PUBLIC',
     ).length;

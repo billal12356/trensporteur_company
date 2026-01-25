@@ -8,6 +8,9 @@ import { ResponseBuilder } from 'src/common/builder/response.builder';
 import { UserQueryBuilder } from 'src/common/builder/pagination.builder';
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as XLSX from 'xlsx'
 import { Workbook } from 'exceljs';
 import { OperateurDtwService } from 'src/operateur-dtw/operateur-dtw.service';
 import { VehiclesService } from 'src/vehicles/vehicles.service';
@@ -168,7 +171,7 @@ export class ChauffeursService {
   async exportChauffeurToExcel(filterDto: any): Promise<string> {
     // Extract and sanitize search term
     const search = filterDto?.search ? String(filterDto.search).trim() : null;
-    
+
     const qb = new ChauffeurQueryBuilder()
       .setSearch(search)
       .build();
@@ -351,12 +354,20 @@ export class ChauffeursService {
     }));
   }
 
-  async findChauffeurByOperateur(fullName_francais: string) {
-    const chauffeur = await this.ChauffeurModel
-      .find({ operateur: fullName_francais })
-      .exec();
-    return chauffeur
+  async findChauffeurByOperateur(fullName_arabe: string) {
+    if (!fullName_arabe) return [];
+
+    const cleanedName = fullName_arabe
+      .trim()
+      .replace(/\s+/g, ' ');
+
+    return this.ChauffeurModel.find({
+      operateur: {
+        $regex: cleanedName,
+      },
+    }).exec();
   }
+
 
   async importExcel(filePath: any): Promise<void> {
     return new Promise((resolve) => {
@@ -402,6 +413,107 @@ export class ChauffeursService {
   async clearChauffeurs(): Promise<string> {
     await this.ChauffeurModel.deleteMany({});
     return '✅ All users have been deleted successfully';
+  }
+
+  async convertAndSaveToMongoDB(file: Express.Multer.File): Promise<any> {
+    try {
+      const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+      const sheetNames = workbook.SheetNames;
+
+      const allData = {};
+      let savedCount = 0;
+      let failedCount = 0;
+      const errors = [];
+
+      for (const sheetName of sheetNames) {
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+          raw: false,
+          defval: null,
+        });
+
+        allData[sheetName] = jsonData;
+
+        // Save each row to MongoDB
+        for (let i = 0; i < jsonData.length; i++) {
+          try {
+            const row = jsonData[i];
+
+            // Convert dates from Excel format to JavaScript Date
+            const parseDate = (dateStr: any) => {
+              if (!dateStr) return null;
+              const date = new Date(dateStr);
+              return isNaN(date.getTime()) ? null : date;
+            };
+
+            // Convert to number safely
+            const parseNumber = (value: any) => {
+              if (!value || value === '') return null;
+              const num = Number(value);
+              return isNaN(num) ? null : num;
+            };
+
+            // Mapping Excel columns to Chauffeur schema
+            const chauffeurData = {
+              num_chauffeur: parseNumber(row['رقم المستخدم']),
+              num_demende: parseNumber(row['رقم الطلب']),
+              hestoire_demende: parseDate(row['تاريخ الطلب']),
+              num_enregistrement_du_transporteur: parseNumber(row['رقم القيد للناقل']),
+              operateur: row['المتعامل'] || null,
+              ligne_exploitée: row['الخط المستغل'] || null,
+              num_vehicule: row['ترقيم المركبة'] || null,
+              nature_ligne: row['طبيعة الخط'] || null,
+              nom_prenom_chauffeur: row['اسم و لقب السائق'] || null,
+              nature_utilisateur: row['طبيعة المستخدم'] || null,
+              num_didentification_national_NIN: parseNumber(row['رقم التعريف الوطني']),
+              num_permis_conduire: row['رقم رخصة السياقة'] || null,
+              date_sortie: parseDate(row['تاريخ الإصدار']),
+              date_expiration_article: parseDate(row['نهاية صلاحية الصنف']),
+              municipalite_emettrice: row['بلدية الإصدار'] || null,
+              date_naissance: parseDate(row['تاريخ الميلاد']),
+              lieu_naissance: row['مكان الميلاد'] || null,
+              address: row['العنوان'] || null,
+              Num_certificat_compétence_professionnelle: parseNumber(row['رقم شهادة الكفاءة المهنية']),
+              date_obtention_certificat_aptitude_professionnelle: parseDate(row['تاريخ الحصول على شهادة الكفاءة المهنية']),
+              wilaya: row['الولاية'] || null,
+              num_serie: parseNumber(row['رقم التسلسلي ']),
+              num_membre_fonds_national: parseNumber(row['رقم الانتساب الى الصندوق الوطني للعمال الأجراء']),
+              vihicile_parked: row['المركبة موقفة أو لا'] || null,
+              type_parked: row['نوع التوقيف'] || null,
+              comments: row['ملاحظة '] || null,
+            };
+
+            const chauffeur = new this.ChauffeurModel(chauffeurData);
+            await chauffeur.save();
+            savedCount++;
+          } catch (error) {
+            failedCount++;
+            errors.push({
+              row: i + 1,
+              error: error.message,
+            });
+            console.error(`خطأ في الصف ${i + 1}:`, error.message);
+          }
+        }
+      }
+
+      // Save to file.json
+      const outputPath = path.join(process.cwd(), 'file.json');
+      fs.writeFileSync(outputPath, JSON.stringify(allData, null, 2), 'utf-8');
+
+      console.log(`✓ تم حفظ ${savedCount} سجل في MongoDB`);
+      console.log(`✗ فشل حفظ ${failedCount} سجل`);
+      console.log(`✓ تم حفظ JSON في ${outputPath}`);
+
+      return {
+        savedCount,
+        failedCount,
+        errors: errors.slice(0, 10),
+      };
+    } catch (error) {
+      console.error('خطأ في تحويل Excel:', error);
+      throw error;
+    }
   }
 }
 
