@@ -3,48 +3,53 @@ import {
   IsOptional,
   IsNumber,
   IsDate,
+  IsNotEmpty
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateChauffeurDto {
-
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   num_chauffeur?: number;
 
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   num_demende?: number;
 
-  @IsOptional()
   @Type(() => Date)
   @IsDate()
-  hestoire_demende?: Date;
+  hestoire_demende: Date;
 
-  @IsOptional() @IsNumber()
-  num_enregistrement_du_transporteur?: number;
+  @IsNumber()
+  num_enregistrement_du_transporteur: number;
 
-  @IsOptional() @IsString()
-  operateur?: string;
+  @IsString()
+  operateur: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   ligne_exploitée?: string;
 
-  @IsOptional() @IsString()
-  num_vehicule?: string;
+  @IsString()
+  num_vehicule: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   nature_ligne?: string;
 
-  @IsOptional() @IsString()
-  nom_prenom_chauffeur?: string;
+  @IsString()
+  nom_prenom_chauffeur: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   nature_utilisateur?: string;
 
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   num_didentification_national_NIN?: number;
 
-  @IsOptional() @IsString()
-  num_permis_conduire?: string;
+  @IsString()
+  num_permis_conduire: string;
 
   @IsOptional()
   @Type(() => Date)
@@ -56,7 +61,8 @@ export class CreateChauffeurDto {
   @IsDate()
   date_expiration_article?: Date;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   municipalite_emettrice?: string;
 
   @IsOptional()
@@ -64,13 +70,15 @@ export class CreateChauffeurDto {
   @IsDate()
   date_naissance?: Date;
 
-  @IsOptional() @IsString()
-  lieu_naissance?: string;
+  @IsString()
+  lieu_naissance: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   address?: string;
 
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   Num_certificat_compétence_professionnelle?: number;
 
   @IsOptional()
@@ -78,21 +86,27 @@ export class CreateChauffeurDto {
   @IsDate()
   date_obtention_certificat_aptitude_professionnelle?: Date;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   wilaya?: string;
 
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   num_serie?: number;
 
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   num_membre_fonds_national?: number;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   vihicile_parked?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   type_parked?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   comments?: string;
 }
