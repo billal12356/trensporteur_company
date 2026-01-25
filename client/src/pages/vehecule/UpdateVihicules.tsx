@@ -23,7 +23,7 @@ const EditOperateur = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  const { vihicule, loading, messageUpdate,error } = useSelector(
+  const { vihicule, loading, messageUpdate } = useSelector(
     (state: RootState) => state.vihicule
   );
 
