@@ -33,11 +33,10 @@ export const formatDateFrench = (dateString: string | Date | undefined): string 
   try {
     const date = new Date(dateString)
     if (isNaN(date.getTime())) return "-"
-    return date.toLocaleDateString("fr-FR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
+    const dd = String(date.getDate()).padStart(2, '0')
+    const mm = String(date.getMonth() + 1).padStart(2, '0')
+    const yyyy = String(date.getFullYear())
+    return `${dd}/${mm}/${yyyy}`
   } catch {
     return "-"
   }
@@ -57,6 +56,46 @@ export const formatDateShort = (dateString: string | Date | undefined): string =
   } catch {
     return "-"
   }
+}
+
+/**
+ * Parse flexible date formats including ISO or dd/mm/yyyy | dd-mm-yyyy | dd.mm.yyyy
+ * Returns a Date or null
+ */
+export const parseFlexibleDate = (s: string | Date | undefined): Date | null => {
+  if (!s) return null
+  if (s instanceof Date) {
+    return isNaN(s.getTime()) ? null : s
+  }
+  const str = String(s).trim()
+  // Try native parse first
+  const d = new Date(str)
+  if (!isNaN(d.getTime())) return d
+
+  // Match dd/mm/yyyy or dd-mm-yyyy or dd.mm.yyyy
+  const m = str.match(/^\s*(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})\s*$/)
+  if (m) {
+    let day = parseInt(m[1], 10)
+    let month = parseInt(m[2], 10)
+    let year = parseInt(m[3], 10)
+    if (year < 100) year += year >= 50 ? 1900 : 2000
+    const res = new Date(year, month - 1, day)
+    return isNaN(res.getTime()) ? null : res
+  }
+
+  return null
+}
+
+/**
+ * Table date formatter returning DD/MM/YYYY
+ */
+export const formatDateTable = (dateString: string | Date | undefined): string => {
+  const parsed = parseFlexibleDate(dateString)
+  if (!parsed) return "-"
+  const dd = String(parsed.getDate()).padStart(2, '0')
+  const mm = String(parsed.getMonth() + 1).padStart(2, '0')
+  const yyyy = String(parsed.getFullYear())
+  return `${dd}/${mm}/${yyyy}`
 }
 
 /**
@@ -238,6 +277,7 @@ export const formatters = {
   date: formatDate,
   dateFrench: formatDateFrench,
   dateShort: formatDateShort,
+  tableDate: formatDateTable,
   time: formatTime,
   status: getStatusBadge,
   phone: formatPhone,

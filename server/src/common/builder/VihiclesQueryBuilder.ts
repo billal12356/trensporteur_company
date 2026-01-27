@@ -20,34 +20,95 @@ export class VihiclesQueryBuilder {
   }
 
   setSearch(search?: string): this {
-    if (search) {
-      const orConditions: any[] = [
-        { fullName_arabe: new RegExp(search, 'i') },
-        { fullName_francais: new RegExp(search, 'i') },
-        { activite: new RegExp(search, 'i') },
-        { nature_activite: new RegExp(search, 'i') },
-        { status_activite: new RegExp(search, 'i') },
-        { num_bus_registration: new RegExp(search, 'i') },
-        { circle: new RegExp(search, 'i') },
-        { Municipality: new RegExp(search, 'i') },
-        { Style: new RegExp(search, 'i') },
-        { category: new RegExp(search, 'i') },
-        { type: new RegExp(search, 'i') },
-        { font_symbol: new RegExp(search, 'i') },
-        { point_depart: new RegExp(search, 'i') },
-        { point_arrive: new RegExp(search, 'i') },
-      ];
-
-      if (!isNaN(Number(search))) {
-        orConditions.push({ num_wilaya: Number(search) });
-        orConditions.push({ num_docier_client: Number(search) });
-        orConditions.push({ First_year_of_use: Number(search) });
-        orConditions.push({ num_driving_license: Number(search) });
-        orConditions.push({ Number_of_seats: Number(search) });
-      }
-
-      this.query.$or = orConditions;
+    const trimmed = search?.toString().trim?.();
+    if (!trimmed || trimmed.length === 0) {
+      this.query = {};
+      return this;
     }
+
+    const orConditions: any[] = [];
+    const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+    const regex = new RegExp(escapeRegex(trimmed), 'i');
+
+    // String fields (partial, case-insensitive)
+    const stringFields = [
+      'fullName_arabe',
+      'fullName_francais',
+      'activite',
+      'colonne1',
+      'nature_activite',
+      'colonne2',
+      'status_activite',
+      'colonne3',
+      'num_bus_registration',
+      'circle',
+      'Municipality',
+      'Style',
+      'category',
+      'type',
+      'font_type',
+      'colonne4',
+      'font_symbol',
+      'point_depart',
+      'point_arrive',
+      'point_Traffic1',
+      'point_Traffic2',
+      'point_Traffic3',
+      'point_Traffic4',
+      'point_Traffic5',
+      'line_start_time',
+      'line_end_time',
+      'Pace_per_minute',
+      'time_depart1',
+      'time_depart2',
+      'time_depart3',
+      'time_depart4',
+      'vihicile_parked',
+      'type_parked',
+      'comments',
+      'person_concerned',
+      'note_chef_departement',
+      'path',
+    ];
+
+    stringFields.forEach((f) => orConditions.push({ [f]: regex }));
+
+    // Numeric fields (exact match when input is numeric)
+    const numericFields = [
+      'num_wilaya',
+      'num_docier_client',
+      'First_year_of_use',
+      'total_load_trucks',
+      'restricted_load',
+      'Number_of_seats',
+      'num_driving_license',
+      'num_up',
+    ];
+
+    if (!isNaN(Number(trimmed))) {
+      const num = Number(trimmed);
+      numericFields.forEach((f) => orConditions.push({ [f]: num }));
+    }
+
+    // Date fields: match documents where the date falls within the parsed day
+    const dateFields = [
+      'driving_license_history',
+      'line_activity_start_date',
+      'Vehicle_activity_start_date',
+      'hestoire_parked',
+      'hestoire_parked_end',
+    ];
+
+    const parsed = new Date(trimmed);
+    if (!isNaN(parsed.getTime())) {
+      const start = new Date(parsed);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(parsed);
+      end.setHours(23, 59, 59, 999);
+      dateFields.forEach((f) => orConditions.push({ [f]: { $gte: start, $lt: end } }));
+    }
+
+    this.query.$or = orConditions;
     return this;
   }
 

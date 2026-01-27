@@ -28,6 +28,8 @@ import {
   exportVihicules,
   fetchVihicules,
 } from "@/redux/slice/vihiculeSlice";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/redux/store";
 import MainContainer from "@/components/MainContainer";
 
 import { useListPage } from "@/hooks/useListPage";
@@ -65,15 +67,19 @@ const EnhancedVehicle = React.memo((): ReactElement => {
     limit: 10,
   });
 
+  const dispatch = useDispatch<AppDispatch>();
+
   const handleExportLine = async () => {
     setIsExportingLine(true);
     try {
-      // @ts-ignore - ExportLines thunk not yet typed
-      await ExportLines({ search: searchQueryLine });
+      // dispatch the thunk and unwrap to throw on rejection
+      // @ts-ignore - keep types lenient for now
+      await dispatch(ExportLines({ search: searchQueryLine })).unwrap();
       setSearchQueryLine("");
+    } catch (err) {
+      console.error("ExportLines error:", err);
     } finally {
       setIsExportingLine(false);
-      setSearchQueryLine("");
     }
   };
 
@@ -136,7 +142,8 @@ const EnhancedVehicle = React.memo((): ReactElement => {
       keyStr.toLowerCase().includes("history") ||
       keyStr.toLowerCase().includes("_start_") ||
       keyStr.toLowerCase().includes("_end_") ||
-      keyStr.toLowerCase().includes("depart")
+      keyStr.toLowerCase().includes("depart") ||
+      keyStr.toLowerCase().includes("dure")
     ) {
       return colsBuilder.date(key, label, true);
     }

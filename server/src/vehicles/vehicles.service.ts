@@ -685,7 +685,7 @@ export class VehiclesService {
     // بيانات الخط
     worksheet.mergeCells('F8:G8');
     const cellF8 = worksheet.getCell('F8');
-    cellF8.value = 'الخميس - الشلف';
+    cellF8.value = vehicles[0]?.point_depart + ' - ' + vehicles[0]?.point_arrive;
     cellF8.alignment = headerAlignment;
 
     worksheet.mergeCells('C8:D8');
@@ -744,20 +744,20 @@ export class VehiclesService {
       const rowIndex = startRow + 2 + index;
       const row = worksheet.getRow(rowIndex);
       row.getCell(1).value = index + 1;
-      row.getCell(2).value = vehicle.num_docier_client ?? '';
-      row.getCell(3).value = vehicle.fullName_arabe ?? '';
+      row.getCell(2).value = vehicle.num_docier_client || '/';
+      row.getCell(3).value = vehicle.fullName_arabe || '/';
       const go1 = Array.isArray(vehicle.time_depart1)
-        ? (vehicle.time_depart1 ?? '')
-        : (vehicle.time_depart1 ?? '');
+        ? (vehicle.time_depart1 || '/')
+        : (vehicle.time_depart1 || '/');
       const go2 = Array.isArray(vehicle.time_depart2)
-        ? (vehicle.time_depart2 ?? '')
-        : (vehicle.time_depart2 ?? '');
+        ? (vehicle.time_depart2 || '/')
+        : (vehicle.time_depart2 || '/');
       const return1 = Array.isArray(vehicle.time_depart3)
-        ? (vehicle.time_depart3 ?? '')
-        : (vehicle.time_depart3 ?? '');
+        ? (vehicle.time_depart3 || '/')
+        : (vehicle.time_depart3 || '/');
       const return2 = Array.isArray(vehicle.time_depart4)
-        ? (vehicle.time_depart4 ?? '')
-        : (vehicle.time_depart4 ?? '');
+        ? (vehicle.time_depart4 || '/')
+        : (vehicle.time_depart4 || '/');
 
       // تنسيق التوقيت بدقة
       row.getCell(4).value = `${go2.padEnd(6, '     ')} ${go1}`;
