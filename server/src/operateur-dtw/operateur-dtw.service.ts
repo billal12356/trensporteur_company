@@ -808,6 +808,17 @@ export class OperateurDtwService {
     const firstNameChauffeur = nameParts[nameParts.length - 1];
 
     // INFO DISPLAY
+    const infoTop = height - 180;
+    const infoBottom = height - 400;
+    const infoLeft = 40;
+    const infoRight = width - 40;
+
+    // Draw info section border
+    page.drawLine({ start: { x: infoLeft, y: infoTop }, end: { x: infoRight, y: infoTop }, thickness: 1 });
+    page.drawLine({ start: { x: infoLeft, y: infoBottom }, end: { x: infoRight, y: infoBottom }, thickness: 1 });
+    page.drawLine({ start: { x: infoLeft, y: infoTop }, end: { x: infoLeft, y: infoBottom }, thickness: 1 });
+    page.drawLine({ start: { x: infoRight, y: infoTop }, end: { x: infoRight, y: infoBottom }, thickness: 1 });
+
     drawAlignedText({
       page,
       text: `عين الدفلة في : ${formatDate(Date.now(), true)}`,
@@ -957,6 +968,29 @@ export class OperateurDtwService {
       'المقاعد',
     ];
 
+    function wrapText(text, font, fontSize, maxWidth) {
+      if (!text) return [''];
+
+      const words = text.split(' ');
+      const lines = [];
+      let line = '';
+
+      for (const word of words) {
+        const testLine = line ? `${line} ${word}` : word;
+        const width = font.widthOfTextAtSize(testLine, fontSize);
+
+        if (width <= maxWidth) {
+          line = testLine;
+        } else {
+          if (line) lines.push(line);
+          line = word;
+        }
+      }
+
+      if (line) lines.push(line);
+      return lines;
+    }
+
     /**
      * دالة لرسم جدول واحد وإرجاع آخر Y بعد الانتهاء
      */
@@ -964,7 +998,7 @@ export class OperateurDtwService {
       pdfDoc,
       page,
       title: string,
-      startX: number,
+      _startX: number, // ignored
       startY: number,
       rowHeight: number,
       header: string[],
@@ -973,12 +1007,27 @@ export class OperateurDtwService {
       fontSize: number,
       columnWidths: number[],
     ): { page: PDFPage; y: number } => {
+
+      // ===== PAGE SETUP =====
+      const pageWidth = page.getWidth();
+      const leftMargin = 40;
+      const rightMargin = 40;
+      const usableWidth = pageWidth - leftMargin - rightMargin;
+      const tableStartX = leftMargin;
+
       let tableY = startY;
       let rowIndex = 0;
       const totalRows = rows.length + 1;
-      const tableTotalWidth = columnWidths.reduce((sum, w) => sum + w, 0);
       let headerDrawn = false;
 
+      // ===== SCALE COLUMNS =====
+      const originalTotal = columnWidths.reduce((s, w) => s + w, 0);
+      const scaledWidths = columnWidths.map(
+        w => (w / originalTotal) * usableWidth
+      );
+      const tableTotalWidth = usableWidth;
+
+      // ===== TITLE =====
       const drawHeader = (page, y) => {
         if (!headerDrawn) {
           drawAlignedText({
@@ -997,93 +1046,97 @@ export class OperateurDtwService {
 
       tableY = drawHeader(page, tableY);
 
+      // ===== TABLE LOOP =====
       while (rowIndex < totalRows) {
-        // For data rows, we need taller cells (2 lines of content)
-        const extraFontSize = fontSize - 4; // Smaller font for dates
-        const lineSpacing = 4;
-        const actualRowHeight = rowIndex === 0 ? rowHeight : rowHeight + 25; // Height for 2 lines
 
+        const extraFontSize = fontSize - 4;
+        
+        // Calculate dynamic row height based on content
+        let maxLines = 1;
+        if (rowIndex > 0) {
+          const dataRow = rows[rowIndex - 1];
+          for (let colIndex = 0; colIndex < scaledWidths.length; colIndex++) {
+            const text = dataRow[header.length - 1 - colIndex] || '';
+            const textSize = fontSize - 2;
+            const lines = wrapText(text, font, textSize, scaledWidths[colIndex] - 10);
+            maxLines = Math.max(maxLines, lines.length);
+          }
+        }
+        
+        // Calculate actual row height - MINIMIZED
+        const lineSpacing = 3; // Reduced from 4
+        const topPadding = rowIndex === 0 ? 15 : 8; // Reduced padding
+        const bottomPadding = 8; // Reduced padding
+        const baseHeight = rowIndex === 0 
+          ? rowHeight 
+          : Math.max(45, maxLines * (fontSize - 2 + lineSpacing) + topPadding + bottomPadding);
+        const actualRowHeight = rowIndex === 0 ? baseHeight : baseHeight + 25; // Reduced from 30
+
+        // ===== PAGE BREAK =====
         if (tableY - actualRowHeight < 100) {
           page = pdfDoc.addPage([750, 842]);
           tableY = page.getHeight() - 50;
           tableY = drawHeader(page, tableY);
         }
 
-        // Draw only outer border (top, bottom, left, right)
+        // ===== DRAW ROW BORDERS (Top, Right, Left, Bottom) =====
+        const drawLine = (x1, y1, x2, y2) =>
+          page.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, thickness: 0.5 });
+
         // Top border
-        page.drawLine({
-          start: { x: startX, y: tableY },
-          end: { x: startX + tableTotalWidth, y: tableY },
-          color: rgb(0, 0, 0),
-          thickness: 0.5,
-        });
-        
+        drawLine(tableStartX, tableY, tableStartX + tableTotalWidth, tableY);
         // Bottom border
-        page.drawLine({
-          start: { x: startX, y: tableY - actualRowHeight },
-          end: { x: startX + tableTotalWidth, y: tableY - actualRowHeight },
-          color: rgb(0, 0, 0),
-          thickness: 0.5,
-        });
-        
+        drawLine(tableStartX, tableY - actualRowHeight, tableStartX + tableTotalWidth, tableY - actualRowHeight);
         // Left border
-        page.drawLine({
-          start: { x: startX, y: tableY },
-          end: { x: startX, y: tableY - actualRowHeight },
-          color: rgb(0, 0, 0),
-          thickness: 0.5,
-        });
-        
+        drawLine(tableStartX, tableY, tableStartX, tableY - actualRowHeight);
         // Right border
-        page.drawLine({
-          start: { x: startX + tableTotalWidth, y: tableY },
-          end: { x: startX + tableTotalWidth, y: tableY - actualRowHeight },
-          color: rgb(0, 0, 0),
-          thickness: 0.5,
-        });
+        drawLine(tableStartX + tableTotalWidth, tableY, tableStartX + tableTotalWidth, tableY - actualRowHeight);
 
-        let x = startX;
+        // ===== CELLS =====
+        let x = tableStartX;
 
-        // Draw content without column separators
-        for (let colIndex = 0; colIndex < columnWidths.length; colIndex++) {
-          const colWidth = columnWidths[colIndex];
+        for (let colIndex = 0; colIndex < scaledWidths.length; colIndex++) {
+          const colWidth = scaledWidths[colIndex];
 
           const text =
             rowIndex === 0
               ? header[header.length - 1 - colIndex]
               : rows[rowIndex - 1][header.length - 1 - colIndex] || '';
 
-          const textWidth = font.widthOfTextAtSize(text, fontSize);
-          const maxTextWidth = colWidth - 10;
+          const textSize = rowIndex === 0 ? fontSize : fontSize - 2;
+          const lines = wrapText(text, font, textSize, colWidth - 10);
 
-          const safeText =
-            textWidth > maxTextWidth
-              ? text.slice(
-                0,
-                Math.floor((maxTextWidth / textWidth) * text.length),
-              ) + '…'
-              : text;
+          // Center text vertically in the cell
+          const lineSpacing = 3;
+          const totalTextHeight = lines.length * (textSize + lineSpacing);
+          const cellContentHeight = rowIndex === 0 ? (rowHeight - 30) : (baseHeight - 25);
+          const verticalOffset = (cellContentHeight - totalTextHeight) / 2;
 
-          const textX =
-            x + colWidth - font.widthOfTextAtSize(safeText, fontSize) - 5;
-          
-          // Position main text at top of cell for data rows
-          const textY = rowIndex === 0 
-            ? tableY - rowHeight / 2 + fontSize / 2 - 2
-            : tableY - (fontSize - 2) - 6; // Slightly smaller font for data
+          let textY =
+            rowIndex === 0
+              ? tableY - 15 - verticalOffset
+              : tableY - textSize - 8 - verticalOffset;
 
-          page.drawText(safeText, {
-            x: textX,
-            y: textY,
-            size: rowIndex === 0 ? fontSize : fontSize - 2, // Smaller font for data rows
-            font,
-            color: rgb(0, 0, 0),
+          lines.forEach(line => {
+            const textX =
+              x + colWidth - font.widthOfTextAtSize(line, textSize) - 5;
+
+            page.drawText(line, {
+              x: textX,
+              y: textY,
+              size: textSize,
+              font,
+            });
+
+            textY -= textSize + 3; // Reduced spacing between lines
           });
+
+          // No vertical borders between columns
 
           x += colWidth;
         }
 
-        // Render the two date lines INSIDE the border in a single row (for data rows only)
+        // ===== DATES LINE (INSIDE THE CELL) =====
         if (rowIndex > 0) {
           const dataRow = rows[rowIndex - 1] || [];
           const dateTech = dataRow[header.length] || '/';
@@ -1095,30 +1148,25 @@ export class OperateurDtwService {
           const wTech = font.widthOfTextAtSize(labelTech, extraFontSize);
           const wIns = font.widthOfTextAtSize(labelIns, extraFontSize);
 
-          // Calculate positions for both dates on the same line (flex row style)
-          const totalWidth = wTech + wIns + 30; // 30 for spacing between them
-          const startXForDates = startX + (tableTotalWidth - totalWidth) / 2; // Center both dates
-          
-          const textXTech = startXForDates + totalWidth - wTech;
-          const textXIns = startXForDates;
+          const totalWidth = wTech + wIns + 30;
+          const startXForDates =
+            tableStartX + (tableTotalWidth - totalWidth) / 2;
 
-          // Position on second line (same Y position for both)
-          const textYDates = tableY - (fontSize - 2) - extraFontSize - 12;
+          // Position dates at the bottom of the cell
+          const textYDates = tableY - actualRowHeight + extraFontSize + 5;
 
           page.drawText(labelTech, {
-            x: textXTech,
+            x: startXForDates + totalWidth - wTech,
             y: textYDates,
             size: extraFontSize,
             font,
-            color: rgb(0, 0, 0),
           });
 
           page.drawText(labelIns, {
-            x: textXIns,
+            x: startXForDates,
             y: textYDates,
             size: extraFontSize,
             font,
-            color: rgb(0, 0, 0),
           });
         }
 
@@ -1128,6 +1176,9 @@ export class OperateurDtwService {
 
       return { page, y: tableY - 30 };
     };
+
+
+
 
     let nextY = height - 450;
 
@@ -1141,14 +1192,19 @@ export class OperateurDtwService {
     };
 
     // Table 1: All vehicles. 'ملاحظة' column filled ONLY for school transport (font_type === 'نقل مدرسي')
+
+
     if (vihicles && vihicles.length > 0) {
-      // widths must match header length (9)
-      const columnWidthsWithObservation = [40, 120, 80, 100, 70, 60, 70];
-      const tableTotalWidth = columnWidthsWithObservation.reduce((sum, w) => sum + w, 0);
-      const startX = (page.getWidth() - tableTotalWidth) / 2;
-      console.log("page.getWidth()",page.getWidth())
-      console.log("tableTotalWidth",tableTotalWidth)
-      console.log("startX",startX)
+      // Relative widths (auto-scaled to page) - RTL order
+      const columnWidthsWithObservation = [
+        50,  // ملاحظة
+        70,  // المقاعد
+        90,  // الرقم التسلسلي
+        120, // رقم تسجيل المركبة
+        100, // تاريخ الرخصة
+        200, // الخط المستغل
+        40,  // الرقم
+      ];
 
       const allLines = vihicles.map((v, i) => [
         String(i + 1),
@@ -1157,44 +1213,32 @@ export class OperateurDtwService {
         String(v.num_bus_registration || ''),
         String(v.font_symbol || ''),
         String(v.Number_of_seats ?? ''),
-        // Only show note for school transport; otherwise an explicit '/'
-        v.font_type === 'نقل مدرسي' ? String(v.note_chef_departement || '/') : '/',
-        // Try several likely field names for technical inspection expiry
-        // getFirstDateField(v, [
-        //   'technical_inspection_expiry',
-        //   'inspection_expiry',
-        //   'technical_control_end',
-        //   'hestoire_parked_end',
-        // ]),
-        // // Try several likely field names for insurance expiry
-        // getFirstDateField(v, [
-        //   'insurance_expiry',
-        //   'assurance_end',
-        //   'insurance_end_date',
-        //   'insurance_expire',
-        // ]),
+        v.font_type === 'نقل مدرسي'
+          ? String(v.note_chef_departement || '/')
+          : '/',
       ]);
 
-      
       ({ page, y: nextY } = drawTable(
         pdfDoc,
         page,
         'الخطوط المستغلة',
-        startX,
+        0,          // ignored
         nextY,
-        48,
+        65,         // IMPORTANT: header height
         tableHeaderWithObservation,
         allLines,
         cairoSemiBoldFont,
         12,
-        columnWidthsWithObservation,
+        columnWidthsWithObservation
       ));
     }
 
+
+
     // Worker Transport Table (without observation column)
     if (workerVehicles.length > 0) {
-      // widths must match header length (8)
-      const columnWidthsWithoutObservation = [40, 120, 80, 100, 70, 60];
+      // widths must match header length (6) - RTL order
+      const columnWidthsWithoutObservation = [60, 70, 100, 80, 120, 40];
       const tableTotalWidth = columnWidthsWithoutObservation.reduce((sum, w) => sum + w, 0);
       const startX = (page.getWidth() - tableTotalWidth) / 2;
 
@@ -1344,8 +1388,10 @@ export class OperateurDtwService {
     const page = pdfDoc.addPage([595, 842]);
 
     // 🔁 دالة لعكس ترتيب الكلمات فقط (مش الحروف)
-    const reverseWords = (text: string) =>
-      text ? text.split(' ').reverse().join(' ') : '';
+    const reverseWords = (text: string) =>{
+      return text
+    }
+      
 
     page.drawText(reverseWords("2022/06/19"), {
       x: 30,

@@ -4,8 +4,8 @@ import { TransportStatsTable } from "./transport-stats-table";
 
 const TransportTable: React.FC = () => {
   const tableRef = useRef<HTMLDivElement>(null);
-  const [startDate, setStartDate] = useState("2025-01-01");
-  const [endDate, setEndDate] = useState("2025-12-31");
+  const [startDate, setStartDate] = useState("2026-01-01");
+  const [endDate, setEndDate] = useState("2026-12-31");
 
   const handlePrint = () => {
     const printContents = tableRef.current?.innerHTML;

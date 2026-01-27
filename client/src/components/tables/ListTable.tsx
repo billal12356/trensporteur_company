@@ -360,7 +360,7 @@ export function useTableColumns<T>(): {
         // Use centralized French date formatter for consistent UI
         if (!val) return "-"
         try {
-          return formatters.dateFrench(val)
+          return formatters.tableDate(val)
         } catch {
           return String(val)
         }
