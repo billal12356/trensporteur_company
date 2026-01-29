@@ -31,14 +31,6 @@ const FormOperateur: React.FC = () => {
   );
 
   console.log("successMessage", successMessage)
-  useEffect(() => {
-    if (successMessage === null) return;
-
-    if (successMessage && !loading) {
-      navigate("/operateur");
-    }
-  }, [successMessage, loading, navigate]);
-
 
 
   // Generic field handler
@@ -47,9 +39,15 @@ const FormOperateur: React.FC = () => {
   };
 
   // Submit function
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(createOperateur(operateur));
+    try {
+      await dispatch(createOperateur(operateur)).unwrap();
+      navigate("/operateur"); // ✅ 100% reliable
+    } catch (err) {
+      // optional: error is already in Redux
+      console.error(err);
+    }
   };
 
 
