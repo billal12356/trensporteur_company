@@ -259,6 +259,9 @@ const operateurSlice = createSlice({
         clearSuccessMessage: (state) => {
             state.successMessage = null;
         },
+        clearMessageUpdate: (state) => {
+            state.messageUpdate = "";
+        }
     },
     extraReducers: (builder) => {
         builder
@@ -379,5 +382,5 @@ const operateurSlice = createSlice({
 });
 
 // Export Actions & Reducer
-export const { setMessage, resetDownloadState } = operateurSlice.actions;
+export const { setMessage, resetDownloadState, clearMessageUpdate } = operateurSlice.actions;
 export default operateurSlice.reducer;

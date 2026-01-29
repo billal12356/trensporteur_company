@@ -17,6 +17,7 @@ import { Loader } from "lucide-react";
 import {
   FindOneChauffeur,
   updateChauffeurs,
+  clearMessageUpdate,
 } from "@/redux/slice/chauffeurSlice";
 import MainContainer from "@/components/MainContainer";
 import { Helmet } from "react-helmet-async";
@@ -47,6 +48,13 @@ const EditChauffeur = () => {
   useEffect(() => {
     if (messageUpdate) navigate("/chauffeur");
   }, [messageUpdate, navigate]);
+
+  // Clear messageUpdate on unmount
+  useEffect(() => {
+    return () => {
+      dispatch(clearMessageUpdate());
+    };
+  }, [dispatch]);
 
   // ✅ Detect if formData changed from original chauffeur
   useEffect(() => {

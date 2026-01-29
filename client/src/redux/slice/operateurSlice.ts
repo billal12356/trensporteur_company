@@ -308,6 +308,7 @@ export const createOperateur = createAsyncThunk<
         { withCredentials: true }
       );
 
+      console.log("res",res.data)
       return {
         message: res.data.message || "تم التسجيل بنجاح",
         operateur: res.data.operateur,
@@ -488,6 +489,7 @@ const operateurSlice = createSlice({
       })
 
       .addCase(createOperateur.fulfilled, (state, action) => {
+        console.log("action.payload.operateur",action.payload)
         state.loading = false;
         state.operateurs.push(action.payload.operateur);
         state.successMessage = action.payload.message; // ✅ success
