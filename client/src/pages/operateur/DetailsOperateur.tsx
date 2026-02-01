@@ -18,11 +18,11 @@ import { formatters } from "@/lib/formatters";
 import { clearError } from "@/redux/slice/operateurSlice";
 
 export default function OperateurDetails() {
-  const { operateur, vihicules, chauffeurs, loading,error } = useSelector(
+  const { operateur, vihicules, chauffeurs, loading, error } = useSelector(
     (state: RootState) => state.operateur
   );
 
-  console.log("error",error)
+  console.log("error", error);
 
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const dispatch = useDispatch<AppDispatch>();
@@ -153,6 +153,13 @@ export default function OperateurDetails() {
   const handleClickPfds = () => {
     dispatch(generatePDFs(id ?? " "));
   };
+
+  useEffect(() => {
+    // Scroll to the top of the page when the component is mounted
+    window.scrollTo(0, 0);
+  }, []);
+
+  console.log("selectedVehicles",selectedVehicles)
 
   return (
     <MainContainer>

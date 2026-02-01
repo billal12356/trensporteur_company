@@ -163,7 +163,9 @@ export class OperateurDtwService {
       vihicules = vihicules.filter((v) =>
         vehicleIds.includes(v._id.toString()),
       );
+      console.log("vihicules", vihicules)
     }
+
     if (!vihicules || vihicules.length === 0) {
       throw new BadRequestException(
         new ResponseBuilder()
@@ -235,7 +237,9 @@ export class OperateurDtwService {
       });
     };
 
-    const firstVehicule = vihicules[0];
+    const firstVehicule = vihicules.filter((v) =>
+      v.font_type !== 'نقل مدرسي' && v.font_type !== 'نقل العمال'
+    )[0];
     if (
       firstVehicule.font_type === 'بين البلديات' ||
       firstVehicule.font_type === 'بين الولايات'
@@ -392,12 +396,31 @@ export class OperateurDtwService {
       );
     }
 
+    /** 🔹 Remove undefined values */
+    const updateData = { ...updateOperateurDtwDto };
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
+
+    /** 🔹 Check if there's data to update */
+    if (Object.keys(updateData).length === 0) {
+      throw new BadRequestException(
+        new ResponseBuilder()
+          .setStatus(400)
+          .setMessage('لا توجد بيانات للتحديث')
+          .setErrors({ update: 'No fields provided for update' })
+          .build(),
+      );
+    }
+
     const operateur = await this.OperateurModel.findByIdAndUpdate(
       id,
-      { $set: updateOperateurDtwDto },
+      { $set: updateData },
       {
         new: true,
-        runValidators: true,
+        runValidators: false, // ✅ Disable required field validation
       },
     ).exec();
 
@@ -417,7 +440,6 @@ export class OperateurDtwService {
       .setData(operateur)
       .build();
   }
-
   async remove(id: string) {
     const operateur = await this.OperateurModel.findByIdAndDelete(id);
 
@@ -484,6 +506,11 @@ export class OperateurDtwService {
     console.log("operateurs", operateurs)
     const workbook = new Workbook();
     const worksheet = workbook.addWorksheet('المتعاملين');
+
+    // Set the worksheet to display from right to left
+    worksheet.views = [
+      { rightToLeft: true },
+    ];
 
     const exportDir = join(__dirname, '..', 'exports/operateurs');
     if (!existsSync(exportDir)) {
@@ -577,6 +604,7 @@ export class OperateurDtwService {
     });
 
     let id = 1;
+    // Ensure num_didentification_national_NIN is treated as text in Excel
     operateurs.forEach((op) => {
       const row = worksheet.addRow([
         id++,
@@ -599,7 +627,7 @@ export class OperateurDtwService {
         op.institution_person_moral || '/',
         op.fullName_gerent_person_moral || '/',
         op.num_dacte_naissance || '/',
-        op.num_didentification_national_NIN || '/',
+        `${op.num_didentification_national_NIN || '/'}`, // Format as text
         op.date_naissance || '/',
         op.lieu_naissance_arabe || '/',
         op.lieu_naissance_francais || '/',
@@ -813,6 +841,7 @@ export class OperateurDtwService {
     const infoLeft = 40;
     const infoRight = width - 40;
 
+    console.log("operateur.num_registre_commerce",operateur.num_registre_commerce)
     // Draw info section border
     page.drawLine({ start: { x: infoLeft, y: infoTop }, end: { x: infoRight, y: infoTop }, thickness: 1 });
     page.drawLine({ start: { x: infoLeft, y: infoBottom }, end: { x: infoRight, y: infoBottom }, thickness: 1 });
@@ -944,6 +973,19 @@ export class OperateurDtwService {
       align: 'left',
     });
 
+
+    //please add ملاحظة here with another text in flex
+
+    // Adding ملاحظة with another text in a flex layout
+    drawAlignedText({
+      page,
+      text: `ملاحظة: ${('إعلان رقم 01 بتاريخ 07/12/2022')}`,
+      y: height - 430,
+      font: cairoSemiBoldFont,
+      fontSize: 16,
+      align: 'right',
+    });
+
     // TABLES - Filter vehicles by type
     const schoolVehicles = vihicles.filter(v => v.font_type === 'نقل مدرسي');
     const workerVehicles = vihicles.filter(v => v.font_type === 'نقل العمال');
@@ -999,7 +1041,7 @@ export class OperateurDtwService {
       page,
       title: string,
       _startX: number, // ignored
-      startY: number,
+      startY: number = 710, // Use the adjusted starting Y position
       rowHeight: number,
       header: string[],
       rows: string[][],
@@ -1050,7 +1092,7 @@ export class OperateurDtwService {
       while (rowIndex < totalRows) {
 
         const extraFontSize = fontSize - 4;
-        
+
         // Calculate dynamic row height based on content
         let maxLines = 1;
         if (rowIndex > 0) {
@@ -1062,13 +1104,13 @@ export class OperateurDtwService {
             maxLines = Math.max(maxLines, lines.length);
           }
         }
-        
+
         // Calculate actual row height - MINIMIZED
         const lineSpacing = 3; // Reduced from 4
         const topPadding = rowIndex === 0 ? 15 : 8; // Reduced padding
         const bottomPadding = 8; // Reduced padding
-        const baseHeight = rowIndex === 0 
-          ? rowHeight 
+        const baseHeight = rowIndex === 0
+          ? rowHeight
           : Math.max(45, maxLines * (fontSize - 2 + lineSpacing) + topPadding + bottomPadding);
         const actualRowHeight = rowIndex === 0 ? baseHeight : baseHeight + 25; // Reduced from 30
 
@@ -1388,10 +1430,10 @@ export class OperateurDtwService {
     const page = pdfDoc.addPage([595, 842]);
 
     // 🔁 دالة لعكس ترتيب الكلمات فقط (مش الحروف)
-    const reverseWords = (text: string) =>{
+    const reverseWords = (text: string) => {
       return text
     }
-      
+
 
     page.drawText(reverseWords("2022/06/19"), {
       x: 30,
@@ -1492,7 +1534,7 @@ export class OperateurDtwService {
     drawArabic(address_arabe || 'بدون عنوان', 354, 462, 14);
 
     drawArabic('خدمة', 420, 514, 14);
-    drawArabic('عين الدفلى', 90, 670, 10);
+    drawArabic('عين الدفلة', 90, 670, 10);
 
     // ---------------------------
     // 💾 حفظ PDF مؤقتًا

@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useEffect } from "react"
 import type { ReactElement } from "react"
 import { useNavigate } from "react-router-dom"
 import { Search, Download, RefreshCw, Users, Phone } from "lucide-react"
@@ -29,7 +29,7 @@ const EnhancedOperateur = React.memo((): ReactElement => {
     data: operateurs,
     total,
     limit,
-  // pagination returned by the hook is available if needed later
+    // pagination returned by the hook is available if needed later
     handleDelete,
     handleExport,
     handleRefresh,
@@ -47,6 +47,10 @@ const EnhancedOperateur = React.memo((): ReactElement => {
   })
 
   const colsBuilder = useTableColumns<any>()
+  useEffect(() => {
+    // Scroll to the top of the page when the component is mounted
+    window.scrollTo(0, 0);
+  }, []);
 
   // Define columns using a mapping to keep file compact and maintainable
   const columnDefinitions: Array<[keyof any, string]> = [
@@ -109,15 +113,14 @@ const EnhancedOperateur = React.memo((): ReactElement => {
         // formatters.status returns an object { variant, label }
         // convert to a Badge UI element here to satisfy ListTable render requirement
         return (
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-            badge.variant === "default"
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${badge.variant === "default"
               ? "bg-green-100 text-green-800"
               : badge.variant === "secondary"
-              ? "bg-yellow-100 text-yellow-800"
-              : badge.variant === "destructive"
-              ? "bg-red-100 text-red-800"
-              : "bg-gray-100 text-gray-800"
-          }`}>
+                ? "bg-yellow-100 text-yellow-800"
+                : badge.variant === "destructive"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-gray-100 text-gray-800"
+            }`}>
             {badge.label}
           </span>
         )
@@ -183,7 +186,7 @@ const EnhancedOperateur = React.memo((): ReactElement => {
                       <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                       تحديث
                     </Button>
-                    <Button onClick={handleExport} disabled={isExporting} className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
+                    <Button onClick={handleExport} disabled={isExporting || !searchQuery || operateurs.length === 0} className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
                       <Download className="w-4 h-4" />
                       {isExporting ? "جاري التصدير..." : "تصدير Excel"}
                     </Button>

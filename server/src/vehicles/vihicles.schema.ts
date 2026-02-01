@@ -158,7 +158,7 @@ export class Vihicles {
   @Prop({ type: String })
   path: string;
 
-  @Prop({ type: Number })
+  @Prop({ type: Number,default: 0  })
   num_up: number;
 }
 

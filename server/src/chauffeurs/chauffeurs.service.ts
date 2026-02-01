@@ -28,15 +28,15 @@ export class ChauffeursService {
   ) { }
 
   async create(createChauffeurDto: CreateChauffeurDto) {
-    const fullName_francais = createChauffeurDto.operateur
+    const fullName_arabe = createChauffeurDto.operateur
     const num_vehicule = createChauffeurDto.num_vehicule
-    const operateur = await this.operateurService.findByVihicilesandChauffer({ fullName_francais })
+    const operateur = await this.operateurService.findByVihicilesandChauffer({ fullName_arabe })
 
     if (!operateur) {
       throw new NotFoundException(
         new ResponseBuilder()
           .setStatus(404)
-          .setMessage(`لم يتم العثور على المتعامل  ${fullName_francais}`)
+          .setMessage(`لم يتم العثور على المتعامل  ${fullName_arabe}`)
           .setErrors({ _id: 'Operator not found' })
           .build(),
       );
@@ -216,7 +216,7 @@ export class ChauffeursService {
       'طبيعة الخط',
       'اسم و لقب السائق',
       'طبيعة المستخدم',
-      'NIN',
+      'الرقم الوطني للتعريف (NIN)',
       'رقم رخصة السياقة',
       'تاريخ الاصدار',
       'تاريخ الانتهاء',
@@ -235,12 +235,9 @@ export class ChauffeursService {
     ];
 
     // Calculate column widths based on header length
-    const columnWidths = headers.map((header) => {
-      const baseWidth = 3;
-      const charWidth = 2.5;
-      return Math.max(baseWidth, Math.ceil(header.length * charWidth));
-    });
-    worksheet.columns = columnWidths.map((width) => ({ width }));
+    worksheet.columns = headers.map((header) => ({
+      width: Math.ceil(header.length * 1.5), // Adjust multiplier for better fit
+    }));
 
     const headerRow = worksheet.addRow(headers);
     headerRow.height = 20;
@@ -272,7 +269,7 @@ export class ChauffeursService {
         ch.nature_ligne || '/',
         ch.nom_prenom_chauffeur,
         ch.nature_utilisateur || '/',
-        ch.num_didentification_national_NIN,
+        `${ch.num_didentification_national_NIN || '/'}`,
         ch.num_permis_conduire,
         formatDate(ch.date_sortie),
         formatDate(ch.date_expiration_article),
@@ -311,6 +308,11 @@ export class ChauffeursService {
       from: { row: 3, column: 1 },
       to: { row: worksheet.rowCount, column: headers.length },
     };
+
+    // Set the worksheet to display from right to left
+    worksheet.views = [
+      { rightToLeft: true },
+    ];
 
     /* ================= FILE ================= */
     const exportDir = join(__dirname, '..', 'exports/chauffeurs');

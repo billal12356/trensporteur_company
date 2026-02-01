@@ -45,6 +45,9 @@ export class StateService {
 
   //inter communal
   async getInter_communal(startDate?: Date, endDate?: Date) {
+    const ve = await this.vehiculeModel.findOne({
+      font_type: 'بين البلديات'
+    })
     const matchConditions: any = {
       font_type: 'بين البلديات',
     };
@@ -272,6 +275,19 @@ export class StateService {
               },
             },
           },
+          vehicleAge: {
+            $subtract: [
+              { $year: new Date() },
+              {
+                $convert: {
+                  input: '$First_year_of_use',
+                  to: 'int',
+                  onError: 0,
+                  onNull: 0,
+                },
+              },
+            ],
+          },
         },
       },
       {
@@ -459,6 +475,19 @@ export class StateService {
                 cond: { $ne: ['$$point', ''] },
               },
             },
+          },
+          vehicleAge: {
+            $subtract: [
+              { $year: new Date() },
+              {
+                $convert: {
+                  input: '$First_year_of_use',
+                  to: 'int',
+                  onError: 0,
+                  onNull: 0,
+                },
+              },
+            ],
           },
         },
       },
@@ -648,6 +677,19 @@ export class StateService {
               },
             },
           },
+          vehicleAge: {
+            $subtract: [
+              { $year: new Date() },
+              {
+                $convert: {
+                  input: '$First_year_of_use',
+                  to: 'int',
+                  onError: 0,
+                  onNull: 0,
+                },
+              },
+            ],
+          },
         },
       },
       {
@@ -836,6 +878,19 @@ export class StateService {
               },
             },
           },
+          vehicleAge: {
+            $subtract: [
+              { $year: new Date() },
+              {
+                $convert: {
+                  input: '$First_year_of_use',
+                  to: 'int',
+                  onError: 0,
+                  onNull: 0,
+                },
+              },
+            ],
+          },
         },
       },
       {
@@ -1023,6 +1078,19 @@ export class StateService {
               },
             },
           },
+          vehicleAge: {
+            $subtract: [
+              { $year: new Date() },
+              {
+                $convert: {
+                  input: '$First_year_of_use',
+                  to: 'int',
+                  onError: 0,
+                  onNull: 0,
+                },
+              },
+            ],
+          },
         },
       },
       {
@@ -1172,89 +1240,134 @@ export class StateService {
   }
 
   //statistisue annee
-  async statistiqueAnnee(startDate: Date, endDate: Date) {
+ async statistiqueAnnee(startDate: Date, endDate: Date) {
     let Operateur = {};
     let Vihicle = {};
     let CAPACITÉ = {};
 
-    // نجيب المركبات فقط بين startDate و endDate
+    // Get vehicles within date range
     const dateFilter: any = {};
-
     if (startDate && endDate) {
       dateFilter.createdAt = {
         $gte: startDate,
-        $lt: endDate, // 🔥 لاحظ lt وليس lte
+        $lt: endDate,
       };
     }
 
     const vehicles = await this.vehiculeModel.find(dateFilter);
 
+    // Get unique client IDs from vehicles
+    const uniqueClientIds = [
+      ...new Set(
+        vehicles
+          .map(v => v.num_docier_client)
+          .filter(Boolean)
+      ),
+    ];
 
+    // Fetch operators
+    const operateurs = await this.operateurModel
+      .find({
+        num_docier_client: { $in: uniqueClientIds },
+      })
+      .select('num_docier_client')
+      .lean();
 
-    // نربطهم مع الـ opérateur
-    const results = await Promise.all(
-      vehicles.map(async (v) => {
-        const op = await this.operateurModel.findOne({
-          num_docier_client: v.num_docier_client,
-        });
-        return op ? v : null;
-      }),
+    // Create Set for lookup
+    const operateurSet = new Set(
+      operateurs.map(o => o.num_docier_client)
     );
 
-    const filtered = results.filter((v) => v !== null);
+    // Filter vehicles that have matching operators
+    const vehiclesWithOperators = vehicles.filter(v => 
+      v.num_docier_client && operateurSet.has(v.num_docier_client)
+    );
 
-    /** ------------ 1. Operateur (عدد المتعاملين) ------------- **/
-    const tpv = filtered.filter((v) =>
+    /** ------------ 1. Operateur (عدد المتعاملين - UNIQUE COUNT) ------------- **/
+    
+    // Get UNIQUE num_docier_client for TPV
+    const tpvVehicles = vehiclesWithOperators.filter((v) =>
       ['بين البلديات', 'بين الولايات', 'حضري أو شبه حضري', 'ريفي'].includes(v.font_type),
     );
-    console.log(tpv, "tpv")
-    const publicCount = tpv.filter(
-      (v) => v.status_activite === 'PUBLIC',
-    ).length;
-    const priveCount = tpv.filter((v) => v.status_activite === 'PRIVE').length;
-
-    const tpc = filtered.filter((v) =>
-      ['نقل مدرسي', 'نقل العمال'].includes(v.font_type),
+    
+    const tpvUniquePublic = new Set(
+      tpvVehicles
+        .filter(v => v.status_activite === 'PUBLIC')
+        .map(v => v.num_docier_client)
+    );
+    
+    const tpvUniquePrive = new Set(
+      tpvVehicles
+        .filter(v => v.status_activite === 'PRIVE')
+        .map(v => v.num_docier_client)
+    );
+    
+    const tpvUniqueTotal = new Set(
+      tpvVehicles.map(v => v.num_docier_client)
     );
 
-    const cPub = tpc.filter((c) => c.status_activite === 'PUBLIC').length;
-    const cPrv = tpc.filter((c) => c.status_activite === 'PRIVE').length;
+    // Get UNIQUE num_docier_client for TPC
+    const tpcVehicles = vehiclesWithOperators.filter((v) =>
+      ['نقل مدرسي', 'نقل العمال'].includes(v.font_type),
+    );
+    
+    const tpcUniquePublic = new Set(
+      tpcVehicles
+        .filter(v => v.status_activite === 'PUBLIC')
+        .map(v => v.num_docier_client)
+    );
+    
+    const tpcUniquePrive = new Set(
+      tpcVehicles
+        .filter(v => v.status_activite === 'PRIVE')
+        .map(v => v.num_docier_client)
+    );
+    
+    const tpcUniqueTotal = new Set(
+      tpcVehicles.map(v => v.num_docier_client)
+    );
 
-    const total = tpv.length + tpc.length;
+    // Total UNIQUE operators (combining both TPV and TPC)
+    const allUniqueOperators = new Set([
+      ...tpvUniqueTotal,
+      ...tpcUniqueTotal
+    ]);
 
     Operateur = {
       transport_public_voyageurs: {
-        total: tpv.length,
-        public: publicCount,
-        prive: priveCount,
+        total: tpvUniqueTotal.size,        // UNIQUE count
+        public: tpvUniquePublic.size,      // UNIQUE count
+        prive: tpvUniquePrive.size,        // UNIQUE count
       },
       transport_propre_compte: {
-        total: tpc.length,
-        pubC: cPub,
-        PrvC: cPrv,
+        total: tpcUniqueTotal.size,        // UNIQUE count
+        pubC: tpcUniquePublic.size,        // UNIQUE count
+        PrvC: tpcUniquePrive.size,         // UNIQUE count
       },
-      total,
+      total: allUniqueOperators.size,      // UNIQUE count
     };
 
     /** ------------ 2. Vehicle (عدد المركبات) ------------- **/
     const tpvVichecle = vehicles.filter((v) =>
-      ['بين البلديات', 'بين الولايات', 'حضري', 'ريفي'].includes(v.font_type),
+      ['بين البلديات', 'بين الولايات', 'حضري أو شبه حضري', 'ريفي'].includes(v.font_type),
     );
 
     const publicCounVichecle = tpvVichecle.filter(
       (v) => v.status_activite === 'PUBLIC',
     ).length;
+    
     const priveCountVichecle = tpvVichecle.filter(
       (v) => v.status_activite === 'PRIVE',
     ).length;
 
     const tpcVichecle = vehicles.filter((v) =>
-      ['مدرسي', 'نقل العمال'].includes(v.font_type),
+      ['نقل مدرسي', 'نقل العمال'].includes(v.font_type),
     );
 
     const cPubVichecle = tpcVichecle.filter(
       (c) => c.status_activite === 'PUBLIC',
     ).length;
+    
     const cPrvVichecle = tpcVichecle.filter(
       (c) => c.status_activite === 'PRIVE',
     ).length;
@@ -1277,59 +1390,61 @@ export class StateService {
 
     /** ------------ 3. CAPACITÉ (مجموع المقاعد) ------------- **/
     const tpvNP = vehicles.filter((v) =>
-      ['بين البلديات', 'بين الولايات', 'حضري', 'ريفي'].includes(v.font_type),
+      ['بين البلديات', 'بين الولايات', 'حضري أو شبه حضري', 'ريفي'].includes(v.font_type),
     );
 
     const publicCountNP = tpvNP
       .filter((v) => v.status_activite === 'PUBLIC' && v.Number_of_seats)
       .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
 
-    console.log('publicCountNP ', publicCountNP);
-
     const priveCountNP = tpvNP
       .filter((v) => v.status_activite === 'PRIVE' && v.Number_of_seats)
       .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
 
     const tpcNP = vehicles.filter((v) =>
-      ['مدرسي', 'نقل العمال'].includes(v.font_type),
+      ['نقل مدرسي', 'نقل العمال'].includes(v.font_type),
     );
 
     const cPubNP = tpcNP
       .filter((c) => c.status_activite === 'PUBLIC' && c.Number_of_seats)
       .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
-    console.log('cPubNP ', cPubNP);
+    
     const cPrvNP = tpcNP
       .filter((c) => c.status_activite === 'PRIVE' && c.Number_of_seats)
       .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
+    
     const total_tpv = tpvNP.reduce(
       (sum, v) => sum + (Number(v.Number_of_seats) || 0),
       0,
     );
+    
     const total_tpc = tpcNP.reduce(
       (sum, v) => sum + (Number(v.Number_of_seats) || 0),
       0,
     );
+    
     const totalNP = total_tpv + total_tpc;
 
     CAPACITÉ = {
       transport_public_voyageurs: {
-        total: tpvNP.reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0),
+        total: total_tpv,
         public: publicCountNP,
         prive: priveCountNP,
       },
       transport_propre_compte: {
-        total: tpcNP.reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0),
+        total: total_tpc,
         pubC: cPubNP,
         PrvC: cPrvNP,
       },
       totalNP,
     };
 
-    /** ------------ 4. Return ------------- **/
     return {
       Operateur,
       Vihicle,
       CAPACITÉ,
     };
   }
+
+
 }

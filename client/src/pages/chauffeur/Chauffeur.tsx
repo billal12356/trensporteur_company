@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useEffect } from "react"
 import type { ReactElement } from "react"
 import { useNavigate } from "react-router-dom"
 import { Search, Download, RefreshCw, UserCheck, Phone } from "lucide-react"
@@ -48,6 +48,10 @@ const EnhancedChauffeur = React.memo((): ReactElement => {
   })
 
   const colsBuilder = useTableColumns<any>()
+  useEffect(() => {
+    // Scroll to the top of the page when the component is mounted
+    window.scrollTo(0, 0);
+  }, []);
 
   const columnDefinitions: Array<[keyof any, string]> = [
     ["num_chauffeur", "رقم المستخدم"],
@@ -92,15 +96,14 @@ const EnhancedChauffeur = React.memo((): ReactElement => {
       return colsBuilder.custom(key, label, (val: any) => {
         const badge = formatters.status(val)
         return (
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-            badge.variant === "default"
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${badge.variant === "default"
               ? "bg-green-100 text-green-800"
               : badge.variant === "secondary"
-              ? "bg-yellow-100 text-yellow-800"
-              : badge.variant === "destructive"
-              ? "bg-red-100 text-red-800"
-              : "bg-gray-100 text-gray-800"
-          }`}>
+                ? "bg-yellow-100 text-yellow-800"
+                : badge.variant === "destructive"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-gray-100 text-gray-800"
+            }`}>
             {badge.label}
           </span>
         )
@@ -109,7 +112,7 @@ const EnhancedChauffeur = React.memo((): ReactElement => {
     if (keyStr.includes("nature_ligne")) {
       return colsBuilder.custom(key, label, (val: any) => <Badge variant="secondary">{val}</Badge>)
     }
-    if (keyStr.includes("num_" ) && keyStr.includes("telephone")) {
+    if (keyStr.includes("num_") && keyStr.includes("telephone")) {
       return colsBuilder.custom(key, label, (val: any) => (
         <div className="flex items-center gap-2">
           <Phone className="w-4 h-4 text-gray-400" />
@@ -169,7 +172,7 @@ const EnhancedChauffeur = React.memo((): ReactElement => {
                       <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                       تحديث
                     </Button>
-                    <Button onClick={handleExport} disabled={isExporting} className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
+                    <Button onClick={handleExport} disabled={isExporting || !searchQuery || chauffeurs.length === 0} className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
                       <Download className="w-4 h-4" />
                       {isExporting ? "جاري التصدير..." : "تصدير Excel"}
                     </Button>

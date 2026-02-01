@@ -25,17 +25,16 @@ const StatistiqueCompt = () => {
         dispatch(fetchVihicules({ search: "", page, limit: 1000000 }))
     }, [dispatch, page])
 
-    vihicules.map((v)=>{
-        console.log('vehi ==>' ,v?.vihicile_parked)
-    })
     // 🔹 احصائيات
     const totalVehicles = vihicules.length
     const stoppedVehicles = vihicules.filter(
         (v) => v.vihicile_parked === "نعم"
     ).length
-    const changedLineVehicles = vihicules.filter(
-        (v) => v.status_activite === "تغيير الخط"
-    ).length
+    const changedLineVehicles = vihicules.reduce(
+        (sum, v) => sum + (v.num_up ?? 0),
+        0
+    );
+
 
     // const np = vihicules.map((v)=>{
     //     return v.NUM

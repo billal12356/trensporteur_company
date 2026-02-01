@@ -207,6 +207,11 @@ export class VehiclesController {
   }
 
 
+  @Post('add-field')
+  async addFieldToVehicles() {
+    return await this.vehiclesService.addFieldToVehicles();
+  }
+
   
 
 }
