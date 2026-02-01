@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import type { ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -84,6 +84,11 @@ const EnhancedVehicle = React.memo((): ReactElement => {
   };
 
   const colsBuilder = useTableColumns<any>();
+
+  useEffect(() => {
+    // Scroll to the top of the page when the component is mounted
+    window.scrollTo(0, 0);
+  }, []);
 
   const columnDefinitions: Array<[keyof any, string]> = [
     ["num_wilaya", "رقم الولاية"],
@@ -280,7 +285,7 @@ const EnhancedVehicle = React.memo((): ReactElement => {
                     </Button>
                     <Button
                       onClick={handleExport}
-                      disabled={isExporting}
+                      disabled={isExporting || !searchQuery || vihicules.length === 0}
                       className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
                     >
                       <Download className="w-4 h-4" />
@@ -304,7 +309,7 @@ const EnhancedVehicle = React.memo((): ReactElement => {
                   <div className="flex items-center gap-3">
                     <Button
                       onClick={handleExportLine}
-                      disabled={isExportingLine}
+                      disabled={isExportingLine || !searchQueryLine}
                       className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
                     >
                       <Download className="w-4 h-4" />

@@ -195,4 +195,8 @@ export class CreateVihicleDto {
   @IsOptional()
   @IsString()
   path?: string;
+
+
+  @IsNumber()
+  num_up: number;
 }

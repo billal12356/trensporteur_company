@@ -175,59 +175,47 @@ export class VehiclesService {
 
   async update(id: string, updateVehicleDto: UpdateVehicleDto) {
     if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException(
-        new ResponseBuilder()
-          .setStatus(400)
-          .setMessage(`المعرف ${id} غير صالح`)
-          .setErrors({ _id: 'Invalid ObjectId format' })
-          .build(),
-      );
+      throw new BadRequestException('معرف غير صالح');
     }
 
-    // Get the existing vehicle first
-    const existingVehicle = await this.VihicileModel.findById(id).exec();
-    if (!existingVehicle) {
-      throw new NotFoundException(
-        new ResponseBuilder()
-          .setStatus(404)
-          .setMessage(`لم يتم العثور على المشغل ذو المعرف #${id}`)
-          .setErrors({ _id: 'Operator not found' })
-          .build(),
-      );
+    const vehicle = await this.VihicileModel.findById(id);
+    console.log("vehicle", vehicle);
+    
+    if (!vehicle) {
+      throw new NotFoundException('المركبة غير موجودة');
     }
 
-    // Check if num_matricule is being updated
-    let updateData: any = { $set: updateVehicleDto };
-    if (
-      updateVehicleDto.num_bus_registration &&
-      updateVehicleDto.num_bus_registration !== existingVehicle.num_bus_registration
-    ) {
-      // increment num_up if num_matricule has changed
-      updateData.$inc = { num_up: 1 };
+    /** 🔹 Remove undefined values */
+    Object.keys(updateVehicleDto).forEach(key => {
+      if (updateVehicleDto[key] === undefined) {
+        delete updateVehicleDto[key];
+      }
+    });
+
+    /** 🔹 Check if font_type changed */
+    const shouldIncrementNumUp = 
+      updateVehicleDto.font_type && 
+      updateVehicleDto.font_type !== vehicle.font_type;
+
+    /** 🔹 Merge values into existing document */
+    Object.assign(vehicle, updateVehicleDto);
+
+    /** 🔹 Increment num_up if font_type changed */
+    if (shouldIncrementNumUp) {
+      vehicle.num_up = (vehicle.num_up ?? 0) + 1;
+      console.log(`font_type changed: ${vehicle.font_type} → num_up incremented to ${vehicle.num_up}`);
     }
-    await this.VihicileModel.updateMany(
-      { num_up: { $exists: false } },
-      { $set: { num_up: 0 } }
-    );
 
-
-    const updatedVehicle = await this.VihicileModel.findByIdAndUpdate(
-      id,
-      updateData,
-      {
-        new: true,
-        runValidators: true,
-      },
-    ).exec();
-
-    console.log("updatedVehicle", updatedVehicle)
+    /** 🔹 Save - validates only modified fields */
+    const updatedVehicle = await vehicle.save({ validateModifiedOnly: true });
 
     return new ResponseBuilder()
       .setStatus(200)
-      .setMessage('تم تحديث المشغل بنجاح!')
+      .setMessage('تم تحديث المركبة بنجاح')
       .setData(updatedVehicle)
       .build();
   }
+
 
   async remove(id: string) {
     const operateur = await this.VihicileModel.findByIdAndDelete(id);
@@ -364,55 +352,55 @@ export class VehiclesService {
     vihicule.forEach((op) => {
       const row = worksheet.addRow([
         id++,
-        op.num_wilaya,
-        op.num_docier_client,
-        op.fullName_arabe,
-        op.fullName_francais,
-        op.activite,
+        op.num_wilaya || '/',
+        op.num_docier_client || '/',
+        op.fullName_arabe || '/',
+        op.fullName_francais || '/',
+        op.activite || '/',
         op.colonne1 || '/',
-        op.nature_activite,
+        op.nature_activite || '/',
         op.colonne2 || '/',
-        op.status_activite,
+        op.status_activite || '/',
         op.colonne3 || '/',
-        op.num_bus_registration,
-        op.circle,
-        op.Municipality,
-        op.Style,
-        op.category,
-        op.type,
-        op.First_year_of_use,
-        op.Number_of_seats,
-        op.Energy,
-        op.num_driving_license,
-        op.driving_license_history,
-        op.driving_license_dure,
-        op.line_activity_start_date,
-        op.Vehicle_activity_start_date,
-        op.font_type,
-        op.colonne4,
-        op.font_symbol,
-        op.point_depart,
-        op.point_arrive,
-        op.point_Traffic1,
-        op.point_Traffic2,
-        op.point_Traffic3,
-        op.point_Traffic4,
-        op.point_Traffic5,
-        op.line_start_time,
-        op.line_end_time,
-        op.Pace_per_minute,
-        op.time_depart1,
-        op.time_depart2,
-        op.time_depart3,
-        op.time_depart4,
-        op.vihicile_parked,
-        op.type_parked,
-        op.hestoire_parked,
-        op.hestoire_parked_end,
-        op.comments,
-        op.person_concerned,
-        op.note_chef_departement,
-        op.path,
+        op.num_bus_registration || '/',
+        op.circle || '/',
+        op.Municipality || '/',
+        op.Style || '/',
+        op.category || '/',
+        op.type || '/',
+        op.First_year_of_use || '/',
+        op.Number_of_seats || '/',
+        op.Energy || '/',
+        op.num_driving_license || '/',
+        formatDate(op.driving_license_history) || '/',
+        formatDate(op.driving_license_dure) || '/',
+        formatDate(op.line_activity_start_date) || '/',
+        formatDate(op.Vehicle_activity_start_date) || '/',
+        op.font_type || '/',
+        op.colonne4 || '/',
+        op.font_symbol || '/',
+        op.point_depart || '/',
+        op.point_arrive || '/',
+        op.point_Traffic1 || '/',
+        op.point_Traffic2 || '/',
+        op.point_Traffic3 || '/',
+        op.point_Traffic4 || '/',
+        op.point_Traffic5 || '/',
+        op.line_start_time || '/',
+        op.line_end_time || '/',
+        op.Pace_per_minute || '/',
+        op.time_depart1 || '/',
+        op.time_depart2 || '/',
+        op.time_depart3 || '/',
+        op.time_depart4 || '/',
+        op.vihicile_parked || '/',
+        op.type_parked || '/',
+        op.hestoire_parked || '/',
+        op.hestoire_parked_end || '/',
+        op.comments || '/',
+        op.person_concerned || '/',
+        op.note_chef_departement || '/',
+        op.path || '/',
       ]);
 
       row.eachCell((cell) => {
@@ -434,6 +422,11 @@ export class VehiclesService {
       from: { row: 2, column: 1 },
       to: { row: worksheet.rowCount, column: headerRow.cellCount },
     };
+
+    worksheet.views = [
+      { rightToLeft: true },
+    ];
+
 
     await workbook.xlsx.writeFile(filePath);
 
@@ -602,7 +595,6 @@ export class VehiclesService {
   // ================= Export To Excel =================
   async exportToExcel(lineCode: string): Promise<Buffer> {
     const vehicles = await this.searchByLineCode(lineCode);
-    console.log("vehicles ", vehicles);
 
     function formatDate(
       dateInput: Date | string | number,
@@ -825,47 +817,22 @@ export class VehiclesService {
 
 
     const committeeData = [
-      { "font_symbol": "441001", "oldVehicles": null, "committeeOpinion": "6" },
-      { "font_symbol": "441002", "oldVehicles": null, "committeeOpinion": "1 طلب ترخيص" },
-      { "font_symbol": "441003", "oldVehicles": null, "committeeOpinion": "6" },
-      { "font_symbol": "441004", "oldVehicles": null, "committeeOpinion": "6" },
-      { "font_symbol": "441005", "oldVehicles": 25, "committeeOpinion": "15" },
-      { "font_symbol": "441006", "oldVehicles": 21, "committeeOpinion": "21" },
-      { "font_symbol": "441010", "oldVehicles": 24, "committeeOpinion": "11" },
-      { "font_symbol": "441012", "oldVehicles": 21, "committeeOpinion": "10" },
-      { "font_symbol": "441014", "oldVehicles": 2, "committeeOpinion": "2 مع طلب ترخيص وزاري" },
-      { "font_symbol": "441015", "oldVehicles": 19, "committeeOpinion": "14" },
-      { "font_symbol": "441016", "oldVehicles": 0, "committeeOpinion": "5" },
-      { "font_symbol": "441022", "oldVehicles": 13, "committeeOpinion": "10" },
-      { "font_symbol": "441023", "oldVehicles": 17, "committeeOpinion": "14" },
-      { "font_symbol": "441025", "oldVehicles": 20, "committeeOpinion": "12" },
-      { "font_symbol": "441026", "oldVehicles": 3, "committeeOpinion": "طلب الترخيص 6" },
-      { "font_symbol": "441030", "oldVehicles": 13, "committeeOpinion": "10 برمجة اجتماع" },
-      { "font_symbol": "441033", "oldVehicles": 3, "committeeOpinion": "الحذف مع التسوية" },
-      { "font_symbol": "441042", "oldVehicles": 3, "committeeOpinion": "2" },
-      { "font_symbol": "441044", "oldVehicles": 17, "committeeOpinion": "5" },
-      { "font_symbol": "441045", "oldVehicles": 10, "committeeOpinion": "12" },
-      { "font_symbol": "441046", "oldVehicles": 10, "committeeOpinion": "9 برمجة اجتماع" },
-      { "font_symbol": "441048", "oldVehicles": 6, "committeeOpinion": "4" },
-      { "font_symbol": "441049", "oldVehicles": 10, "committeeOpinion": "6" },
-      { "font_symbol": "441050", "oldVehicles": 1, "committeeOpinion": "4" },
-      { "font_symbol": "441052", "oldVehicles": 12, "committeeOpinion": "12" },
-      { "font_symbol": "441053", "oldVehicles": 6, "committeeOpinion": "6 مع عقد اجتماع" },
-      { "font_symbol": "441057", "oldVehicles": 0, "committeeOpinion": "1" },
-      { "font_symbol": "441066", "oldVehicles": 5, "committeeOpinion": "6 مع عقد اجتماع" },
-      { "font_symbol": "441067", "oldVehicles": null, "committeeOpinion": "2" },
-      { "font_symbol": "441068", "oldVehicles": null, "committeeOpinion": "4" },
-      { "font_symbol": "441071", "oldVehicles": 2, "committeeOpinion": "1" },
-      { "font_symbol": "441072", "oldVehicles": null, "committeeOpinion": "2" },
-      { "font_symbol": "441075", "oldVehicles": null, "committeeOpinion": "2" },
-      { "font_symbol": "441076", "oldVehicles": null, "committeeOpinion": "2" },
-      { "font_symbol": "441077", "oldVehicles": null, "committeeOpinion": "2" },
-      { "font_symbol": "441078", "oldVehicles": null, "committeeOpinion": "2" },
-      { "font_symbol": "441079", "oldVehicles": null, "committeeOpinion": "2" },
-      { "font_symbol": "441080", "oldVehicles": null, "committeeOpinion": "2" },
-      { "font_symbol": "441081", "oldVehicles": null, "committeeOpinion": "2" },
-      { "font_symbol": "441082", "oldVehicles": null, "committeeOpinion": "4" }
-    ];
+      { "font_symbol": "443001", "oldVehicles": 5, "committeeOpinion": "المؤسسة العمومية " },
+      { "font_symbol": "443002", "oldVehicles": 5, "committeeOpinion": "المؤسسة العمومية" },
+      { "font_symbol": "443003", "oldVehicles": 1, "committeeOpinion": "المؤسسة العمومية " },
+      { "font_symbol": "443004", "oldVehicles": 1, "committeeOpinion": "المؤسسة العمومية " },
+      { "font_symbol": "443011", "oldVehicles": 2, "committeeOpinion": "المؤسسة العمومية " },
+      { "font_symbol": "443015", "oldVehicles": 1, "committeeOpinion": "المؤسسة العمومية " },
+      { "font_symbol": "443016", "oldVehicles": 0, "committeeOpinion": "المؤسسة العمومية " },
+      { "font_symbol": "443005", "oldVehicles": 1, "committeeOpinion": "المؤسسة العمومية " },
+      { "font_symbol": "443006", "oldVehicles": 2, "committeeOpinion": "المؤسسة العمومي" },
+      { "font_symbol": "443007", "oldVehicles": 6, "committeeOpinion": "المؤسسة العمومية" },
+      { "font_symbol": "443012", "oldVehicles": 1, "committeeOpinion": "المؤسسة العمومية" },
+      { "font_symbol": "443013", "oldVehicles": 0, "committeeOpinion": "المؤسسة العمومية " },
+      { "font_symbol": "443008", "oldVehicles": 1, "committeeOpinion": "المؤسسة العمومية " },
+      { "font_symbol": "443009", "oldVehicles": 1, "committeeOpinion": "المؤسسة العمومية " },
+      { "font_symbol": "443010", "oldVehicles": 1, "committeeOpinion": "المؤسسة العمومية " },
+      ];
 
     const committeeMap = new Map<string, any>();
     committeeData.forEach(c => committeeMap.set(c.font_symbol, c));
@@ -1702,4 +1669,26 @@ export class VehiclesService {
   }
 
 
+  async addFieldToVehicles() {
+    try {
+      const field = await this.VihicileModel.updateMany(
+      { num_up: { $exists: false } },
+      { $set: { num_up: 0 } }
+    );
+    return field;
+    } catch (error) {
+      console.log("error",error)
+    }
+  }
+
 }
+function formatDate(date?: Date | string | null): string {
+  if (!date) return '/';
+
+  const d = date instanceof Date ? date : new Date(date);
+
+  if (isNaN(d.getTime())) return '/';
+
+  return d.toLocaleDateString('fr-FR'); // dd/mm/yyyy
+}
+

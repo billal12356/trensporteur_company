@@ -104,6 +104,7 @@ interface Vihicles {
 
   path: string;
 
+  num_up: number;
   createdAt: string;
 }
 interface ApiError {
