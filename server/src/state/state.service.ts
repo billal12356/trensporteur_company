@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateStateDto } from './dto/create-state.dto';
 import { UpdateStateDto } from './dto/update-state.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -1240,210 +1240,273 @@ export class StateService {
   }
 
   //statistisue annee
- async statistiqueAnnee(startDate: Date, endDate: Date) {
-    let Operateur = {};
-    let Vihicle = {};
-    let CAPACITÉ = {};
+  async statistiqueAnnee(startDate: Date, endDate: Date) {
+    try {
+      let Operateur = {};
+      let Vihicle = {};
+      let CAPACITÉ = {};
 
-    // Get vehicles within date range
-    const dateFilter: any = {};
-    if (startDate && endDate) {
-      dateFilter.createdAt = {
-        $gte: startDate,
-        $lt: endDate,
-      };
-    }
+      // Get vehicles within date range
+      const dateFilter: any = {};
+      if (startDate && endDate) {
+        dateFilter.createdAt = {
+          $gte: startDate,
+          $lt: endDate,
+        };
+      }
 
-    const vehicles = await this.vehiculeModel.find(dateFilter);
+      const vehicles = await this.vehiculeModel.find(dateFilter);
+      console.log('📊 Total vehicles found:', vehicles.length);
 
-    // Get unique client IDs from vehicles
-    const uniqueClientIds = [
-      ...new Set(
-        vehicles
+      if (!vehicles || vehicles.length === 0) {
+        return {
+          Operateur: {
+            transport_public_voyageurs: { total: 0, public: 0, prive: 0 },
+            transport_propre_compte: { total: 0, pubC: 0, PrvC: 0 },
+            total: 0,
+          },
+          Vihicle: {
+            transport_public_voyageurs: { total: 0, public: 0, prive: 0 },
+            transport_propre_compte: { total: 0, pubC: 0, PrvC: 0 },
+            totalVichecle: 0,
+          },
+          CAPACITÉ: {
+            transport_public_voyageurs: { total: 0, public: 0, prive: 0 },
+            transport_propre_compte: { total: 0, pubC: 0, PrvC: 0 },
+            totalNP: 0,
+          },
+        };
+      }
+
+      // Get unique client IDs from vehicles (no duplicates)
+      const uniqueClientIds = [
+        ...new Set(
+          vehicles
+            .map(v => v.num_docier_client)
+            .filter(Boolean) // Remove null/undefined
+        ),
+      ];
+      console.log('🔢 Unique client IDs from vehicles:', uniqueClientIds.length);
+
+      // Fetch operators that exist in the operators collection
+      const operateurs = await this.operateurModel
+        .find({
+          num_docier_client: { $in: uniqueClientIds },
+        })
+        .select('num_docier_client')
+        .lean();
+
+      console.log('👥 Operators found in collection:', operateurs.length);
+      console.log('⚠️ Discrepancy check:', operateurs.length > uniqueClientIds.length ? 'DUPLICATE OPERATORS!' : 'OK');
+
+      // ✅ FIX: Remove duplicate operators
+      const operateurSet = new Set(
+        operateurs.map(o => o.num_docier_client)
+      );
+      console.log('✅ Unique operators (after deduplication):', operateurSet.size);
+
+      // Filter vehicles that have matching operators
+      const vehiclesWithOperators = vehicles.filter(v =>
+        v.num_docier_client && operateurSet.has(v.num_docier_client)
+      );
+      console.log('🚗 Vehicles with valid operators:', vehiclesWithOperators.length);
+
+      // ✅ Check vehicles without operators
+      const vehiclesWithoutOperators = vehicles.filter(v =>
+        !v.num_docier_client || !operateurSet.has(v.num_docier_client)
+      );
+      console.log('⚠️ Vehicles WITHOUT operators:', vehiclesWithoutOperators.length);
+
+      if (vehiclesWithoutOperators.length > 0) {
+        const missingIds = [...new Set(vehiclesWithoutOperators.map(v => v.num_docier_client))];
+        console.log('❌ Missing operator IDs:', missingIds.slice(0, 10)); // Show first 10
+      }
+
+      /** ------------ 1. Operateur (عدد المتعاملين - UNIQUE COUNT) ------------- **/
+
+      // TPV: Transport Public Voyageurs
+      const tpvVehicles = vehiclesWithOperators.filter((v) =>
+        ['بين البلديات', 'بين الولايات', 'حضري أو شبه حضري', 'ريفي', 'ريـفي'].includes(v.font_type),
+      );
+
+      const tpvUniquePublic = new Set(
+        tpvVehicles
+          .filter(v => v.status_activite === 'PUBLIC')
           .map(v => v.num_docier_client)
-          .filter(Boolean)
-      ),
-    ];
+      );
 
-    // Fetch operators
-    const operateurs = await this.operateurModel
-      .find({
-        num_docier_client: { $in: uniqueClientIds },
-      })
-      .select('num_docier_client')
-      .lean();
+      const tpvUniquePrive = new Set(
+        tpvVehicles
+          .filter(v => v.status_activite === 'PRIVE')
+          .map(v => v.num_docier_client)
+      );
 
-    // Create Set for lookup
-    const operateurSet = new Set(
-      operateurs.map(o => o.num_docier_client)
-    );
+      const tpvUniqueTotal = new Set(
+        tpvVehicles.map(v => v.num_docier_client)
+      );
 
-    // Filter vehicles that have matching operators
-    const vehiclesWithOperators = vehicles.filter(v => 
-      v.num_docier_client && operateurSet.has(v.num_docier_client)
-    );
+      // TPC: Transport Propre Compte
+      const tpcVehicles = vehiclesWithOperators.filter((v) =>
+        ['نقل مدرسي', 'نقل العمال'].includes(v.font_type),
+      );
 
-    /** ------------ 1. Operateur (عدد المتعاملين - UNIQUE COUNT) ------------- **/
-    
-    // Get UNIQUE num_docier_client for TPV
-    const tpvVehicles = vehiclesWithOperators.filter((v) =>
-      ['بين البلديات', 'بين الولايات', 'حضري أو شبه حضري', 'ريفي'].includes(v.font_type),
-    );
-    
-    const tpvUniquePublic = new Set(
-      tpvVehicles
-        .filter(v => v.status_activite === 'PUBLIC')
-        .map(v => v.num_docier_client)
-    );
-    
-    const tpvUniquePrive = new Set(
-      tpvVehicles
-        .filter(v => v.status_activite === 'PRIVE')
-        .map(v => v.num_docier_client)
-    );
-    
-    const tpvUniqueTotal = new Set(
-      tpvVehicles.map(v => v.num_docier_client)
-    );
+      const tpcUniquePublic = new Set(
+        tpcVehicles
+          .filter(v => v.status_activite === 'PUBLIC')
+          .map(v => v.num_docier_client)
+      );
 
-    // Get UNIQUE num_docier_client for TPC
-    const tpcVehicles = vehiclesWithOperators.filter((v) =>
-      ['نقل مدرسي', 'نقل العمال'].includes(v.font_type),
-    );
-    
-    const tpcUniquePublic = new Set(
-      tpcVehicles
-        .filter(v => v.status_activite === 'PUBLIC')
-        .map(v => v.num_docier_client)
-    );
-    
-    const tpcUniquePrive = new Set(
-      tpcVehicles
-        .filter(v => v.status_activite === 'PRIVE')
-        .map(v => v.num_docier_client)
-    );
-    
-    const tpcUniqueTotal = new Set(
-      tpcVehicles.map(v => v.num_docier_client)
-    );
+      const tpcUniquePrive = new Set(
+        tpcVehicles
+          .filter(v => v.status_activite === 'PRIVE')
+          .map(v => v.num_docier_client)
+      );
 
-    // Total UNIQUE operators (combining both TPV and TPC)
-    const allUniqueOperators = new Set([
-      ...tpvUniqueTotal,
-      ...tpcUniqueTotal
-    ]);
+      const tpcUniqueTotal = new Set(
+        tpcVehicles.map(v => v.num_docier_client)
+      );
 
-    Operateur = {
-      transport_public_voyageurs: {
-        total: tpvUniqueTotal.size,        // UNIQUE count
-        public: tpvUniquePublic.size,      // UNIQUE count
-        prive: tpvUniquePrive.size,        // UNIQUE count
-      },
-      transport_propre_compte: {
-        total: tpcUniqueTotal.size,        // UNIQUE count
-        pubC: tpcUniquePublic.size,        // UNIQUE count
-        PrvC: tpcUniquePrive.size,         // UNIQUE count
-      },
-      total: allUniqueOperators.size,      // UNIQUE count
-    };
+      // Total UNIQUE operators (combining both TPV and TPC)
+      const allUniqueOperators = new Set([
+        ...tpvUniqueTotal,
+        ...tpcUniqueTotal
+      ]);
 
-    /** ------------ 2. Vehicle (عدد المركبات) ------------- **/
-    const tpvVichecle = vehicles.filter((v) =>
-      ['بين البلديات', 'بين الولايات', 'حضري أو شبه حضري', 'ريفي'].includes(v.font_type),
-    );
+      console.log('📊 TPV Unique Operators:', tpvUniqueTotal.size);
+      console.log('   - Public:', tpvUniquePublic.size);
+      console.log('   - Private:', tpvUniquePrive.size);
+      console.log('📊 TPC Unique Operators:', tpcUniqueTotal.size);
+      console.log('   - Public:', tpcUniquePublic.size);
+      console.log('   - Private:', tpcUniquePrive.size);
+      console.log('📊 Total Unique Operators (TPV + TPC):', allUniqueOperators.size);
 
-    const publicCounVichecle = tpvVichecle.filter(
-      (v) => v.status_activite === 'PUBLIC',
-    ).length;
-    
-    const priveCountVichecle = tpvVichecle.filter(
-      (v) => v.status_activite === 'PRIVE',
-    ).length;
+      // Check for operators not in TPV or TPC
+      const operatorsNotInCategories = [...operateurSet].filter(
+        id => !allUniqueOperators.has(id)
+      );
+      console.log('⚠️ Operators not in TPV/TPC categories:', operatorsNotInCategories.length);
 
-    const tpcVichecle = vehicles.filter((v) =>
-      ['نقل مدرسي', 'نقل العمال'].includes(v.font_type),
-    );
+      Operateur = {
+        transport_public_voyageurs: {
+          total: tpvUniqueTotal.size,
+          public: tpvUniquePublic.size,
+          prive: tpvUniquePrive.size,
+        },
+        transport_propre_compte: {
+          total: tpcUniqueTotal.size,
+          pubC: tpcUniquePublic.size,
+          PrvC: tpcUniquePrive.size,
+        },
+        total: allUniqueOperators.size,
+      };
 
-    const cPubVichecle = tpcVichecle.filter(
-      (c) => c.status_activite === 'PUBLIC',
-    ).length;
-    
-    const cPrvVichecle = tpcVichecle.filter(
-      (c) => c.status_activite === 'PRIVE',
-    ).length;
+      /** ------------ 2. Vehicle (عدد المركبات) ------------- **/
+      const tpvVichecle = vehicles.filter((v) =>
+        ['بين البلديات', 'بين الولايات', 'حضري أو شبه حضري', 'ريفي', 'ريـفي'].includes(v.font_type),
+      );
 
-    const totalVichecle = tpcVichecle.length + tpvVichecle.length;
+      const publicCounVichecle = tpvVichecle.filter(
+        (v) => v.status_activite === 'PUBLIC',
+      ).length;
 
-    Vihicle = {
-      transport_public_voyageurs: {
-        total: tpvVichecle.length,
-        public: publicCounVichecle,
-        prive: priveCountVichecle,
-      },
-      transport_propre_compte: {
-        total: tpcVichecle.length,
-        pubC: cPubVichecle,
-        PrvC: cPrvVichecle,
-      },
-      totalVichecle,
-    };
+      const priveCountVichecle = tpvVichecle.filter(
+        (v) => v.status_activite === 'PRIVE',
+      ).length;
 
-    /** ------------ 3. CAPACITÉ (مجموع المقاعد) ------------- **/
-    const tpvNP = vehicles.filter((v) =>
-      ['بين البلديات', 'بين الولايات', 'حضري أو شبه حضري', 'ريفي'].includes(v.font_type),
-    );
+      const tpcVichecle = vehicles.filter((v) =>
+        ['نقل مدرسي', 'نقل العمال'].includes(v.font_type),
+      );
 
-    const publicCountNP = tpvNP
-      .filter((v) => v.status_activite === 'PUBLIC' && v.Number_of_seats)
-      .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
+      const cPubVichecle = tpcVichecle.filter(
+        (c) => c.status_activite === 'PUBLIC',
+      ).length;
 
-    const priveCountNP = tpvNP
-      .filter((v) => v.status_activite === 'PRIVE' && v.Number_of_seats)
-      .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
+      const cPrvVichecle = tpcVichecle.filter(
+        (c) => c.status_activite === 'PRIVE',
+      ).length;
 
-    const tpcNP = vehicles.filter((v) =>
-      ['نقل مدرسي', 'نقل العمال'].includes(v.font_type),
-    );
+      const totalVichecle = tpcVichecle.length + tpvVichecle.length;
 
-    const cPubNP = tpcNP
-      .filter((c) => c.status_activite === 'PUBLIC' && c.Number_of_seats)
-      .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
-    
-    const cPrvNP = tpcNP
-      .filter((c) => c.status_activite === 'PRIVE' && c.Number_of_seats)
-      .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
-    
-    const total_tpv = tpvNP.reduce(
-      (sum, v) => sum + (Number(v.Number_of_seats) || 0),
-      0,
-    );
-    
-    const total_tpc = tpcNP.reduce(
-      (sum, v) => sum + (Number(v.Number_of_seats) || 0),
-      0,
-    );
-    
-    const totalNP = total_tpv + total_tpc;
+      Vihicle = {
+        transport_public_voyageurs: {
+          total: tpvVichecle.length,
+          public: publicCounVichecle,
+          prive: priveCountVichecle,
+        },
+        transport_propre_compte: {
+          total: tpcVichecle.length,
+          pubC: cPubVichecle,
+          PrvC: cPrvVichecle,
+        },
+        totalVichecle,
+      };
 
-    CAPACITÉ = {
-      transport_public_voyageurs: {
-        total: total_tpv,
-        public: publicCountNP,
-        prive: priveCountNP,
-      },
-      transport_propre_compte: {
-        total: total_tpc,
-        pubC: cPubNP,
-        PrvC: cPrvNP,
-      },
-      totalNP,
-    };
+      /** ------------ 3. CAPACITÉ (مجموع المقاعد) ------------- **/
+      const tpvNP = vehicles.filter((v) =>
+        ['بين البلديات', 'بين الولايات', 'حضري أو شبه حضري', 'ريفي', 'ريـفي'].includes(v.font_type),
+      );
 
-    return {
-      Operateur,
-      Vihicle,
-      CAPACITÉ,
-    };
+      const publicCountNP = tpvNP
+        .filter((v) => v.status_activite === 'PUBLIC' && v.Number_of_seats)
+        .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
+
+      const priveCountNP = tpvNP
+        .filter((v) => v.status_activite === 'PRIVE' && v.Number_of_seats)
+        .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
+
+      const tpcNP = vehicles.filter((v) =>
+        ['نقل مدرسي', 'نقل العمال'].includes(v.font_type),
+      );
+
+      const cPubNP = tpcNP
+        .filter((c) => c.status_activite === 'PUBLIC' && c.Number_of_seats)
+        .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
+
+      const cPrvNP = tpcNP
+        .filter((c) => c.status_activite === 'PRIVE' && c.Number_of_seats)
+        .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
+
+      const total_tpv = tpvNP.reduce(
+        (sum, v) => sum + (Number(v.Number_of_seats) || 0),
+        0,
+      );
+
+      const total_tpc = tpcNP.reduce(
+        (sum, v) => sum + (Number(v.Number_of_seats) || 0),
+        0,
+      );
+
+      const totalNP = total_tpv + total_tpc;
+
+      CAPACITÉ = {
+        transport_public_voyageurs: {
+          total: total_tpv,
+          public: publicCountNP,
+          prive: priveCountNP,
+        },
+        transport_propre_compte: {
+          total: total_tpc,
+          pubC: cPubNP,
+          PrvC: cPrvNP,
+        },
+        totalNP,
+      };
+
+      console.log('✅ Statistics calculated successfully');
+
+      return {
+        Operateur,
+        Vihicle,
+        CAPACITÉ,
+      };
+
+    } catch (error) {
+      console.error('❌ Error in statistiqueAnnee:', error);
+      throw new InternalServerErrorException({
+        message: 'حدث خطأ أثناء حساب الإحصائيات',
+        error: error.message,
+      });
+    }
   }
 
 
