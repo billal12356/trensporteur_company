@@ -50,6 +50,15 @@ export class StateService {
     })
     const matchConditions: any = {
       font_type: 'بين البلديات',
+      $or: [
+        { vihicile_parked: 'لا' },
+        {
+          $and: [
+            { type_parked: 'نعم' },
+            { vihicile_parked: 'مؤقت' },
+          ],
+        },
+      ],
     };
 
     if (startDate && endDate) {
@@ -238,6 +247,15 @@ export class StateService {
   async getInter_wilaya(startDate, endDate) {
     const matchConditions: any = {
       font_type: 'بين الولايات',
+      $or: [
+        { vihicile_parked: 'لا' },
+        {
+          $and: [
+            { type_parked: 'نعم' },
+            { vihicile_parked: 'مؤقت' },
+          ],
+        },
+      ],
     };
 
     if (startDate && endDate) {
@@ -440,6 +458,15 @@ export class StateService {
   async getInter_rural(startDate, endDate) {
     const matchConditions: any = {
       font_type: 'ريـفي',
+      $or: [
+        { vihicile_parked: 'لا' },
+        {
+          $and: [
+            { type_parked: 'نعم' },
+            { vihicile_parked: 'مؤقت' },
+          ],
+        },
+      ],
     };
 
     if (startDate && endDate) {
@@ -640,7 +667,13 @@ export class StateService {
   //inter urbain
   async getInter_urbain(startDate, endDate) {
     const matchConditions: any = {
-      font_type: 'نقل العمال',
+      font_type: 'حضري أو شبه حضري',
+      $nor: [
+        {
+          vihicile_parked: 'نعم',
+          type_parked: 'نهائي',
+        },
+      ],
     };
 
     if (startDate && endDate) {
@@ -842,6 +875,15 @@ export class StateService {
   async getInter_scolaire(startDate, endDate) {
     const matchConditions: any = {
       font_type: 'نقل مدرسي',
+      $or: [
+        { vihicile_parked: 'لا' },
+        {
+          $and: [
+            { type_parked: 'نعم' },
+            { vihicile_parked: 'مؤقت' },
+          ],
+        },
+      ],
     };
 
     if (startDate && endDate) {
@@ -1042,6 +1084,15 @@ export class StateService {
   async transport_travailleurs(startDate, endDate) {
     const matchConditions: any = {
       font_type: 'نقل العمال',
+      $or: [
+        { vihicile_parked: 'لا' },
+        {
+          $and: [
+            { type_parked: 'نعم' },
+            { vihicile_parked: 'مؤقت' },
+          ],
+        },
+      ],
     };
 
     if (startDate && endDate) {
@@ -1246,8 +1297,27 @@ export class StateService {
       let Vihicle = {};
       let CAPACITÉ = {};
 
+
       // Get vehicles within date range
-      const dateFilter: any = {};
+      const dateFilter: any = {
+        $or: [
+          { vihicile_parked: 'لا' },
+          {
+            $and: [
+              { type_parked: 'نعم' },
+              { vihicile_parked: 'مؤقت' },
+            ],
+          },
+        ],
+      };
+
+      if (startDate && endDate) {
+        dateFilter.createdAt = {
+          $gte: startDate,
+          $lt: endDate,
+        };
+      }
+
       if (startDate && endDate) {
         dateFilter.createdAt = {
           $gte: startDate,

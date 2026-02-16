@@ -288,26 +288,28 @@ export class OperateurDtwService {
       firstVehicule.font_type === 'حضري او شبه حضري'
     ) {
       const v = vihicules[0];
-      if (v.Number_of_seats !== undefined)
-        drawArabic(page1, v.Number_of_seats.toString(), 90, 620);
-      if (v.Style) drawArabic(page1, v.Style, 173, 620);
-      if (v.type) drawArabic(page1, v.type, 240, 620);
-      if (v.category) drawArabic(page1, v.category, 325, 620);
-      if (v.num_bus_registration)
-        drawArabic(page1, v.num_bus_registration, 420, 620);
+
+      drawArabic(page1, v.num_bus_registration ?? "", 420, 620);  // رقم التسجيل
+      drawArabic(page1, v.category ?? "", 325, 620);              // الصنف
+      drawArabic(page1, v.Style ?? "", 240, 620);                 // الطراز
+      drawArabic(page1, v.type ?? "", 173, 620);                  // النوع
+      drawArabic(page1, v.Number_of_seats?.toString() ?? "", 90, 620); // عدد المقاعد
+
     }
     if (
       firstVehicule.font_type === 'بين البلديات' ||
       firstVehicule.font_type === 'بين الولايات'
     ) {
       const v = vihicules[0];
-      if (v.Number_of_seats !== undefined)
-        drawArabic(page1, v.Number_of_seats.toString(), 80, 640);
-      if (v.Style) drawArabic(page1, v.Style, 175, 640);
-      if (v.type) drawArabic(page1, v.type, 250, 640);
-      if (v.category) drawArabic(page1, v.category, 335, 640);
-      if (v.num_bus_registration)
-        drawArabic(page1, v.num_bus_registration, 420, 640);
+
+      // Always draw to keep layout stable
+      drawArabic(page1, v.num_bus_registration ?? "", 420, 630);  // رقم التسجيل
+      drawArabic(page1, v.category ?? "", 335, 630);              // الصنف
+      drawArabic(page1, v.Style ?? "", 250, 630);                 // الطراز
+      drawArabic(page1, v.type ?? "", 175, 630);                  // النوع
+      drawArabic(page1, v.Number_of_seats?.toString() ?? "", 80, 630); // عدد المقاعد
+
+
     }
 
     if (
@@ -841,7 +843,7 @@ export class OperateurDtwService {
     const infoLeft = 40;
     const infoRight = width - 40;
 
-    console.log("operateur.num_registre_commerce",operateur.num_registre_commerce)
+    console.log("operateur.num_registre_commerce", operateur.num_registre_commerce)
     // Draw info section border
     page.drawLine({ start: { x: infoLeft, y: infoTop }, end: { x: infoRight, y: infoTop }, thickness: 1 });
     page.drawLine({ start: { x: infoLeft, y: infoBottom }, end: { x: infoRight, y: infoBottom }, thickness: 1 });
@@ -1256,7 +1258,7 @@ export class OperateurDtwService {
         String(v.font_symbol || ''),
         String(v.Number_of_seats ?? ''),
         v.font_type === 'نقل مدرسي'
-          ? String(v.note_chef_departement || '/')
+          ? String(v.vihicile_parked || '/')
           : '/',
       ]);
 
@@ -1437,7 +1439,7 @@ export class OperateurDtwService {
 
     page.drawText(reverseWords("2022/06/19"), {
       x: 30,
-      y: 660,
+      y: 630,
       size: 14,
       font: customFont,
       color: rgb(0, 0, 0),
@@ -1445,7 +1447,7 @@ export class OperateurDtwService {
 
     page.drawText(reverseWords("سليم فرحات"), {
       x: 70,
-      y: 640,
+      y: 610,
       size: 14,
       font: customFont,
       color: rgb(0, 0, 0),
@@ -1453,7 +1455,7 @@ export class OperateurDtwService {
 
     page.drawText(reverseWords('عين الدفلى'), {
       x: 70,
-      y: 585,
+      y: 545,
       size: 14,
       font: customFont,
       color: rgb(0, 0, 0),
@@ -1470,7 +1472,7 @@ export class OperateurDtwService {
     // 🏠 كتابة العنوان
     page.drawText(reverseWords(`${operateur.address_arabe || ''}`), {
       x: 380,
-      y: 380,
+      y: 340,
       size: 14,
       font: customFont,
       color: rgb(0, 0, 0),
