@@ -134,7 +134,7 @@ export class Vihicles {
   @Prop({ type: String })
   time_depart4: string;
 
-  @Prop({ type: String, enum: ['موقفة', 'لا'] })
+  @Prop({ type: String, enum: ['نعم', 'لا'] })
   vihicile_parked: string;
 
   @Prop({ type: String, enum: ['مؤقت', 'نهائي'] })
