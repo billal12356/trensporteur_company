@@ -163,7 +163,7 @@ export class CreateVihicleDto {
   time_depart4?: string;
 
   @IsOptional()
-  @IsEnum(['موقفة', 'لا'])
+  @IsEnum(['نعم', 'لا'])
   vihicile_parked?: string;
 
   @IsOptional()

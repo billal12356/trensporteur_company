@@ -121,36 +121,50 @@ export class VehiclesService {
 
 
   async findAll(params: any) {
-    const page = Number(params.page) || 1;
-    const limit = Number(params.limit) || 10;
+  const page = Number(params.page) || 1;
+  const limit = Number(params.limit) || 10;
 
-    const queryBuilder = new VihiclesQueryBuilder()
-      .setLimit(limit)
-      .setSkip(page)
-      .setSort(params.sort || 'asc')
-      .setSearch(params.search);
+  const queryBuilder = new VihiclesQueryBuilder()
+    .setLimit(limit)
+    .setSkip(page)
+    .setSort(params.sort || 'asc')
+    .setSearch(params.search);
 
-    const { query, limit: finalLimit, skip, sort } = queryBuilder.build();
+  const { query, limit: finalLimit, skip, sort } = queryBuilder.build();
 
-    query.$or = [
-      { vihicile_parked: "لا" },
-      { vihicile_parked: "نعم", type_parked: "مؤقت" }
-    ];
-    const data = await this.VihicileModel.find(query)
-      .limit(finalLimit)
-      .skip(skip)
-      .sort(sort)
-      .exec();
+  // ✅ دمج شروط البحث مع شروط الإيقاف
+  const finalQuery: any = {
+    $and: [
+      // شرط 1: المركبة غير موقوفة أو موقوفة مؤقتاً
+      {
+        $or: [
+          { vihicile_parked: "لا" },
+          { vihicile_parked: "نعم", type_parked: "مؤقت" }
+        ]
+      }
+    ]
+  };
 
-    const total = await this.VihicileModel.countDocuments(query).exec();
-
-    return {
-      total,
-      limit: finalLimit,
-      page,
-      data,
-    };
+  // شرط 2: إذا كان هناك بحث، أضفه
+  if (query.$or && query.$or.length > 0) {
+    finalQuery.$and.push({ $or: query.$or });
   }
+
+  const data = await this.VihicileModel.find(finalQuery)
+    .limit(finalLimit)
+    .skip(skip)
+    .sort(sort)
+    .exec();
+
+  const total = await this.VihicileModel.countDocuments(finalQuery).exec();
+
+  return {
+    total,
+    limit: finalLimit,
+    page,
+    data,
+  };
+}
 
   async findOne(id: string) {
     if (!Types.ObjectId.isValid(id)) {
@@ -183,7 +197,6 @@ export class VehiclesService {
     }
 
     const vehicle = await this.VihicileModel.findById(id);
-    console.log("vehicle", vehicle);
 
     if (!vehicle) {
       throw new NotFoundException('المركبة غير موجودة');
@@ -201,13 +214,54 @@ export class VehiclesService {
       updateVehicleDto.font_type &&
       updateVehicleDto.font_type !== vehicle.font_type;
 
+    /** 🔹 Check if font_symbol changed */
+    const isFontSymbolChanged =
+      updateVehicleDto.font_symbol &&
+      updateVehicleDto.font_symbol !== vehicle.font_symbol;
+
+    /** 🔹 Check if type_parked changed to "نهائي" */
+    const isPermanentlyParked =
+      updateVehicleDto.type_parked === 'نهائي' &&
+      vehicle.type_parked !== 'نهائي';
+
+    /** 🔹 Save old font_symbol value BEFORE merge */
+    let savedOldFontSymbol: string | null = null;
+    if (isFontSymbolChanged) {
+      savedOldFontSymbol = vehicle.font_symbol;
+      console.log(`🔄 Changing font_symbol from "${savedOldFontSymbol}" to "${updateVehicleDto.font_symbol}"`);
+    }
+
     /** 🔹 Merge values into existing document */
     Object.assign(vehicle, updateVehicleDto);
 
-    /** 🔹 Increment num_up if font_type changed */
-    if (shouldIncrementNumUp) {
+    /** 🔹 Restore old_font_symbol AFTER merge */
+    if (isFontSymbolChanged && savedOldFontSymbol !== null) {
+      vehicle.old_font_symbol = savedOldFontSymbol;
+      console.log(`✅ Saved old_font_symbol: ${vehicle.old_font_symbol}`);
+    }
+
+    /** 🔹 Increment num_up if font_type OR font_symbol changed */
+    if (shouldIncrementNumUp || isFontSymbolChanged) {
       vehicle.num_up = (vehicle.num_up ?? 0) + 1;
-      console.log(`font_type changed: ${vehicle.font_type} → num_up incremented to ${vehicle.num_up}`);
+
+      if (shouldIncrementNumUp) {
+        console.log(`font_type changed → num_up incremented to ${vehicle.num_up}`);
+      }
+      if (isFontSymbolChanged) {
+        console.log(`font_symbol changed → num_up incremented to ${vehicle.num_up}`);
+      }
+    }
+
+    /** 🔹 Update permanent parking fields */
+    if (isPermanentlyParked) {
+      vehicle.is_permanently_parked = true;
+      vehicle.permanent_parking_date = new Date();
+      console.log(`Vehicle permanently parked at ${vehicle.permanent_parking_date}`);
+    }
+    else if (shouldIncrementNumUp || isFontSymbolChanged) {
+      vehicle.is_permanently_parked = true;
+      vehicle.permanent_parking_date = new Date();
+      console.log(`Vehicle updated (font changed) → marked as permanently parked at ${vehicle.permanent_parking_date}`);
     }
 
     /** 🔹 Save - validates only modified fields */
@@ -219,6 +273,7 @@ export class VehiclesService {
       .setData(updatedVehicle)
       .build();
   }
+
 
 
   async remove(id: string) {
@@ -1889,13 +1944,31 @@ export class VehiclesService {
 
   async addFieldToVehicles() {
     try {
-      const field = await this.VihicileModel.updateMany(
-        { num_up: { $exists: false } },
-        { $set: { num_up: 0 } }
+      // ✅ إضافة جميع الحقول الجديدة في استعلام واحد
+      const allNewFields = await this.VihicileModel.updateMany(
+        {},  // ⬅️ فاضي = كل السجلات
+        {
+          $set: {
+            num_up: 0,
+            is_permanently_parked: false,
+            permanent_parking_date: null,
+            old_font_symbol: null  // ✅ الحقل الجديد
+          }
+        }
       );
-      return field;
+
+      console.log(`✅ تم إضافة جميع الحقول الجديدة لـ ${allNewFields.modifiedCount} مركبة`);
+
+      return {
+        success: true,
+        message: 'تم إضافة جميع الحقول الجديدة بنجاح',
+        modified_count: allNewFields.modifiedCount,
+        fields_added: ['num_up', 'is_permanently_parked', 'permanent_parking_date', 'old_font_symbol']
+      };
+
     } catch (error) {
-      console.log("error", error)
+      console.log("❌ خطأ:", error);
+      throw error;
     }
   }
 
