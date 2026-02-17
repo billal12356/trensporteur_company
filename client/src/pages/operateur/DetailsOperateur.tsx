@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
@@ -25,6 +25,9 @@ export default function OperateurDetails() {
   console.log("error", error);
 
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
+  const [activeTable, setActiveTable] = useState<"vehicles" | "historique">(
+    "vehicles"
+  );
   const dispatch = useDispatch<AppDispatch>();
   const { id } = useParams();
 
@@ -39,6 +42,15 @@ export default function OperateurDetails() {
       prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
     );
   };
+
+  const historiqueVehicles = useMemo(() => {
+    return vihicules.filter(
+      (v: any) => v.is_permanently_parked === true
+    );
+  }, [vihicules]);
+
+  console.log("historiqueVehicles", historiqueVehicles)
+
 
   const colsBuilder = useTableColumns<any>();
 
@@ -113,19 +125,19 @@ export default function OperateurDetails() {
   const columns = [
     selectColumn,
     ...vehicleColumns.map(([key, label]) => {
-    const keyStr = String(key);
-    if (
-      keyStr.toLowerCase().includes("date") ||
-      keyStr.toLowerCase().includes("history") ||
-      keyStr.toLowerCase().includes("_start_") ||
-      keyStr.toLowerCase().includes("_end_") ||
-      keyStr.toLowerCase().includes("depart") ||
-      keyStr.toLowerCase().includes("parked")
-    ) {
-      return colsBuilder.date(key, label, true);
-    }
-    return colsBuilder.text(key, label, true);
-  }),
+      const keyStr = String(key);
+      if (
+        keyStr.toLowerCase().includes("date") ||
+        keyStr.toLowerCase().includes("history") ||
+        keyStr.toLowerCase().includes("_start_") ||
+        keyStr.toLowerCase().includes("_end_") ||
+        keyStr.toLowerCase().includes("depart") ||
+        keyStr.toLowerCase().includes("parked")
+      ) {
+        return colsBuilder.date(key, label, true);
+      }
+      return colsBuilder.text(key, label, true);
+    }),
   ];
 
   // No action button for toggle any more; selection is handled via checkboxes
@@ -159,7 +171,7 @@ export default function OperateurDetails() {
     window.scrollTo(0, 0);
   }, []);
 
-  console.log("selectedVehicles",selectedVehicles)
+  console.log("selectedVehicles", selectedVehicles)
 
   return (
     <MainContainer>
@@ -379,17 +391,117 @@ export default function OperateurDetails() {
           </CardContent>
         </Card>
 
-        <h2 className="text-xl text-center font-bold">قائمة المركبة </h2>
-        <div className="rounded-md border">
-          <ListTable
-            columns={columns}
-            data={vihicules}
-            isLoading={loading}
-            isEmpty={!loading && vihicules.length === 0}
-            emptyMessage="لا توجد نتائج"
-            actions={actions}
-          />
+        {/* ===============================
+            TABLE SWITCH BUTTONS
+        =============================== */}
+        <div className="flex justify-center gap-4">
+          <Button
+            variant={activeTable === "vehicles" ? "default" : "outline"}
+            onClick={() => setActiveTable("vehicles")}
+          >
+            المركبات
+          </Button>
+
+          <Button
+            variant={activeTable === "historique" ? "default" : "outline"}
+            onClick={() => setActiveTable("historique")}
+          >
+            سجل التوقيف
+          </Button>
         </div>
+
+        {/* ===============================
+            VEHICLE TABLE (ListTable)
+        =============================== */}
+        {activeTable === "vehicles" && (
+          <div className="rounded-md border">
+            <ListTable
+              columns={columns}
+              data={vihicules}
+              isLoading={loading}
+              isEmpty={!loading && vihicules.length === 0}
+              emptyMessage="لا توجد نتائج"
+              actions={actions}
+            />
+          </div>
+        )}
+
+        {/* ===============================
+            HISTORIQUE TABLE (CUSTOM)
+        =============================== */}
+        {activeTable === "historique" && (
+          <div className="overflow-x-auto border rounded-md shadow-sm">
+            <table className="min-w-full border-collapse text-sm text-right">
+              <thead className="bg-gray-200 font-bold text-gray-800">
+                <tr>
+                  <th className="border px-3 py-2">ملف</th>
+                  <th className="border px-3 py-2">رقم الخط</th>
+                  <th className="border px-3 py-2">تاريخ الالغاء</th>
+                  <th className="border px-3 py-2">الخط</th>
+                  <th className="border px-3 py-2">الحالة</th>
+                  <th className="border px-3 py-2">السبب</th>
+                  <th className="border px-3 py-2">تسجيل المركبة</th>
+                  <th className="border px-3 py-2">الصنف</th>
+                  <th className="border px-3 py-2">النوع</th>
+                  <th className="border px-3 py-2">الطراز</th>
+                  <th className="border px-3 py-2">المقاعد</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {historiqueVehicles.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="text-center py-4 text-gray-500">
+                      لا توجد نتائج
+                    </td>
+                  </tr>
+                ) : (
+                  historiqueVehicles.map((vehicle: any) => (
+                    <tr
+                      key={vehicle._id}
+                      className="hover:bg-gray-50 transition"
+                    >
+                      <td className="border px-3 py-2">
+                        {vehicle.num_docier_client}
+                      </td>
+                      <td className="border px-3 py-2">
+                        {vehicle.font_symbol}
+                      </td>
+                      <td className="border px-3 py-2">
+                        {formatters.dateFrench(vehicle.permanent_parking_date)}
+                      </td>
+                      <td className="border px-3 py-2">
+                        {vehicle.point_depart} - {vehicle.point_arrive}
+                      </td>
+                      <td className="border px-3 py-2">
+                        
+                      </td>
+                      <td className="border px-3 py-2">
+                        
+                      </td>
+                      <td className="border px-3 py-2">
+                        {vehicle.num_bus_registration}
+                      </td>
+                      <td className="border px-3 py-2">
+                        {vehicle.category}
+                      </td>
+                      <td className="border px-3 py-2">
+                        {vehicle.type}
+                      </td>
+                      <td className="border px-3 py-2">
+                        {vehicle.Style}
+                      </td>
+                      <td className="border px-3 py-2">
+                        {vehicle.Number_of_seats}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
       </div>
     </MainContainer>
   );

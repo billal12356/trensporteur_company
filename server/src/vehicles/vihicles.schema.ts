@@ -160,6 +160,15 @@ export class Vihicles {
 
   @Prop({ type: Number,default: 0  })
   num_up: number;
+
+  @Prop({ type: Boolean, default: false })
+  is_permanently_parked: boolean;
+
+  @Prop({ type: Date })
+  permanent_parking_date: Date;
+
+  @Prop({ type: String,default:null })
+  old_font_symbol: string;
 }
 
 export const VihiclesSchema = SchemaFactory.createForClass(Vihicles);
