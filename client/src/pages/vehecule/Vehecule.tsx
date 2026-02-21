@@ -285,7 +285,7 @@ const EnhancedVehicle = React.memo((): ReactElement => {
                     </Button>
                     <Button
                       onClick={handleExport}
-                      disabled={isExporting || !searchQuery || vihicules.length === 0}
+                      disabled={isExporting || vihicules.length === 0}
                       className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
                     >
                       <Download className="w-4 h-4" />

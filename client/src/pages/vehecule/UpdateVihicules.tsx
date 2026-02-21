@@ -41,6 +41,10 @@ const EditOperateur = () => {
       setHasChanges(false);
     }
   }, [dispatch, id]);
+  useEffect(() => {
+    // Scroll to the top of the page when the component is mounted
+    window.scrollTo(0, 0);
+  }, []);
 
   // ✅ Populate form data once fetched
   useEffect(() => {
@@ -279,8 +283,8 @@ const EditOperateur = () => {
               value={
                 formData.driving_license_history
                   ? new Date(formData.driving_license_history)
-                      .toISOString()
-                      .split("T")[0]
+                    .toISOString()
+                    .split("T")[0]
                   : ""
               }
               onChange={(v) => handleChange("driving_license_history", v)}
@@ -303,8 +307,8 @@ const EditOperateur = () => {
               value={
                 formData.line_activity_start_date
                   ? new Date(formData.line_activity_start_date)
-                      .toISOString()
-                      .split("T")[0]
+                    .toISOString()
+                    .split("T")[0]
                   : ""
               }
               onChange={(v) => handleChange("line_activity_start_date", v)}
@@ -339,8 +343,8 @@ const EditOperateur = () => {
               value={
                 formData.Vehicle_activity_start_date
                   ? new Date(formData.Vehicle_activity_start_date)
-                      .toISOString()
-                      .split("T")[0]
+                    .toISOString()
+                    .split("T")[0]
                   : ""
               }
               onChange={(val) =>
@@ -510,8 +514,8 @@ const EditOperateur = () => {
               value={
                 formData.hestoire_parked
                   ? new Date(formData.hestoire_parked)
-                      .toISOString()
-                      .split("T")[0]
+                    .toISOString()
+                    .split("T")[0]
                   : ""
               }
               onChange={(v) => handleChange("hestoire_parked", v)}
@@ -524,8 +528,8 @@ const EditOperateur = () => {
               value={
                 formData.hestoire_parked_end
                   ? new Date(formData.hestoire_parked_end)
-                      .toISOString()
-                      .split("T")[0]
+                    .toISOString()
+                    .split("T")[0]
                   : ""
               }
               onChange={(v) => handleChange("hestoire_parked_end", v)}
@@ -575,9 +579,8 @@ const EditOperateur = () => {
           <Button
             type="submit"
             disabled={loading || !hasChanges} // disable if no changes
-            className={`w-full ${
-              !hasChanges ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`w-full ${!hasChanges ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
             {loading ? (
               <Loader />

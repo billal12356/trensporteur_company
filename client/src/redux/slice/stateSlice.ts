@@ -21,6 +21,11 @@ interface AnneeStats {
   CAPACITÉ: any;
 }
 
+interface VehicleGlobalStats {
+  totalVehicles: number;
+  stoppedVehicles: number;
+  changedLineVehicles: number;
+}
 
 interface StatsState {
   data: {
@@ -35,6 +40,7 @@ interface StatsState {
   scolaire: TransportStats | null;
   travailleur: TransportStats | null;
   anneeStats: AnneeStats | null;
+  vehicleGlobalStats: VehicleGlobalStats | null;
   loading: boolean;
   error: string | null;
 }
@@ -52,6 +58,7 @@ const initialState: StatsState = {
   scolaire: null,
   travailleur: null,
   anneeStats: null,
+  vehicleGlobalStats: null,
   loading: false,
   error: null,
 };
@@ -141,6 +148,26 @@ export const fetchAnneeStats = createAsyncThunk(
     }
     const response = await axios.get(url);
     return response.data; // { Operateur, Vihicle, CAPACITÉ }
+  }
+);
+
+export const fetchVehicleGlobalStats = createAsyncThunk<
+  VehicleGlobalStats
+>(
+  "stats/fetchVehicleGlobalStats",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/v1/state/stats-compt`
+      );
+
+      return response.data;
+
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch vehicle stats"
+      );
+    }
   }
 );
 
@@ -234,7 +261,7 @@ const statsSlice = createSlice({
         state.error = action.error.message || 'Error loading Scolaire stats';
       })
 
-      
+
       // Travailleurs
       .addCase(fetchtravailleursStats.pending, (state) => {
         state.loading = true;
@@ -263,7 +290,22 @@ const statsSlice = createSlice({
       .addCase(fetchAnneeStats.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Error loading annual stats';
-      });
+      })
+
+      //
+      // Vehicle Global Stats
+      .addCase(fetchVehicleGlobalStats.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchVehicleGlobalStats.fulfilled, (state, action) => {
+        state.loading = false;
+        state.vehicleGlobalStats = action.payload;
+      })
+      .addCase(fetchVehicleGlobalStats.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
   },
 });
 

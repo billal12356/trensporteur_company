@@ -172,7 +172,7 @@ const EnhancedChauffeur = React.memo((): ReactElement => {
                       <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                       تحديث
                     </Button>
-                    <Button onClick={handleExport} disabled={isExporting || !searchQuery || chauffeurs.length === 0} className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
+                    <Button onClick={handleExport} disabled={isExporting || chauffeurs.length === 0} className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
                       <Download className="w-4 h-4" />
                       {isExporting ? "جاري التصدير..." : "تصدير Excel"}
                     </Button>

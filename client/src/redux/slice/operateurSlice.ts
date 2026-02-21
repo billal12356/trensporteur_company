@@ -224,7 +224,7 @@ export const exportOperateurs = createAsyncThunk<
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "Operateurs.xlsx");
+    link.setAttribute("download", "قائمة المتعاملين.xlsx");
     document.body.appendChild(link);
     link.click();
     link.remove();
