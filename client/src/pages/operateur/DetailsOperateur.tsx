@@ -22,7 +22,6 @@ export default function OperateurDetails() {
     (state: RootState) => state.operateur
   );
 
-  console.log("error", error);
 
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [activeTable, setActiveTable] = useState<"vehicles" | "historique">(
@@ -49,7 +48,6 @@ export default function OperateurDetails() {
     );
   }, [vihicules]);
 
-  console.log("historiqueVehicles", historiqueVehicles)
 
 
   const colsBuilder = useTableColumns<any>();

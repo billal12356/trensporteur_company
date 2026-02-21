@@ -95,6 +95,10 @@ export class StateController {
 
 
 
+  @Get('stats-compt')
+  async getStats() {
+    return this.stateService.getVehicleStats();
+  }
 
 
 

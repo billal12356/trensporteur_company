@@ -229,7 +229,7 @@ export const exportVihicules = createAsyncThunk<
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "Vehicles.xlsx");
+    link.setAttribute("download", "قائمة المركبات.xlsx");
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -419,7 +419,7 @@ export const ExportLines = createAsyncThunk<
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "line-report.xlsx");
+    link.setAttribute("download", "تقرير الخط.xlsx");
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -464,7 +464,7 @@ export const downloadBaladyExcel = createAsyncThunk<
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "balady.xlsx");
+    link.setAttribute("download", "مخطط النقل ما بين البلديات.xlsx");
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -508,7 +508,7 @@ export const downloadRifiExcel = createAsyncThunk<
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "transporter_Rifi.xlsx");
+    link.setAttribute("download", "ريفي مخطط النقل نهائي.xlsx");
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -552,7 +552,7 @@ export const downloadWilayExcel = createAsyncThunk<
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "transporter_Wilay.xlsx");
+    link.setAttribute("download", "مخطط النقل ما بين الولايات.xlsx");
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -595,7 +595,7 @@ export const downloadHadariExcel = createAsyncThunk<
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "transporter_Hadari.xlsx");
+    link.setAttribute("download", "مخطط النقل الحضري نهائي.xlsx");
     document.body.appendChild(link);
     link.click();
     link.remove();

@@ -31,6 +31,11 @@ const EditOperateur = () => {
     (state: RootState) => state.operateur
   );
 
+  useEffect(() => {
+    // Scroll to the top of the page when the component is mounted
+    window.scrollTo(0, 0);
+  }, []);
+
   const [formData, setFormData] = useState<Operateur>({} as Operateur);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -876,9 +881,8 @@ const EditOperateur = () => {
           <Button
             type="submit"
             disabled={loading || !hasChanges} // disable if no changes
-            className={`w-full ${
-              !hasChanges ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`w-full ${!hasChanges ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
             {loading ? (
               <Loader />

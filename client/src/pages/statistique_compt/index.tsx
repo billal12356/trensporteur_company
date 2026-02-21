@@ -12,10 +12,10 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
+import { fetchVehicleGlobalStats } from "@/redux/slice/stateSlice"
 
 const StatistiqueCompt = () => {
     const dispatch = useDispatch<AppDispatch>()
-    const { vihicules } = useSelector((state: RootState) => state.vihicule)
     const [page] = useState(1)
 
     // Ref عشان نحدد الجزء اللي نطبعو
@@ -25,21 +25,14 @@ const StatistiqueCompt = () => {
         dispatch(fetchVihicules({ search: "", page, limit: 1000000 }))
     }, [dispatch, page])
 
-    // 🔹 احصائيات
-    const totalVehicles = vihicules.length
-    console.log("vihicules",vihicules)
-    const stoppedVehicles = vihicules.filter(
-        (v) => v.vihicile_parked === "نعم"
-    ).length
-    const changedLineVehicles = vihicules.reduce(
-        (sum, v) => sum + (v.num_up ?? 0),
-        0
+    const { vehicleGlobalStats } = useSelector(
+        (state:RootState) => state.stats
     );
 
+    useEffect(() => {
+        dispatch(fetchVehicleGlobalStats());
+    }, [dispatch]);
 
-    // const np = vihicules.map((v)=>{
-    //     return v.NUM
-    // })
 
     const handlePrint = () => {
         if (printRef.current) {
@@ -90,9 +83,9 @@ const StatistiqueCompt = () => {
                         </TableHeader>
                         <TableBody>
                             <TableRow>
-                                <TableCell className="text-right font-medium">{totalVehicles}</TableCell>
-                                <TableCell className="text-right text-red-600">{stoppedVehicles}</TableCell>
-                                <TableCell className="text-right text-blue-600">{changedLineVehicles}</TableCell>
+                                <TableCell className="text-right font-medium">{vehicleGlobalStats?.totalVehicles}</TableCell>
+                                <TableCell className="text-right text-red-600">{vehicleGlobalStats?.stoppedVehicles}</TableCell>
+                                <TableCell className="text-right text-blue-600">{vehicleGlobalStats?.changedLineVehicles}</TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>

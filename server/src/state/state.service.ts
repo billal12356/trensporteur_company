@@ -1579,5 +1579,38 @@ export class StateService {
     }
   }
 
+  async getVehicleStats() {
+    const result = await this.vehiculeModel.aggregate([
+      {
+        $group: {
+          _id: null,
+
+          // ✅ Total vehicles
+          totalVehicles: { $sum: 1 },
+
+          // ✅ Parked vehicles
+          stoppedVehicles: {
+            $sum: {
+              $cond: [{ $eq: ['$vihicile_parked', 'نعم'] }, 1, 0],
+            },
+          },
+
+          // ✅ Sum of num_up
+          changedLineVehicles: {
+            $sum: { $ifNull: ['$num_up', 0] },
+          },
+        },
+      },
+    ]);
+
+    return (
+      result[0] || {
+        totalVehicles: 0,
+        stoppedVehicles: 0,
+        changedLineVehicles: 0,
+      }
+    );
+  }
+
 
 }
