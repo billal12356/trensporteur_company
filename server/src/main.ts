@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 
 
 async function bootstrap() {
+  console.log('MONGO_URI =', process.env.MONGO_URI);
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api/v1')
   app.enableCors({
