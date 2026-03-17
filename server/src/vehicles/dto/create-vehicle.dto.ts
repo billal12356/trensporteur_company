@@ -1,73 +1,89 @@
 import {
   IsString,
-  IsNotEmpty,
   IsOptional,
   IsNumber,
   IsEnum,
-  IsDate,
-  IsDateString
+  IsDate
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateVihicleDto {
+
+  @IsOptional()
   @IsNumber()
-  num_wilaya: number;
+  num_wilaya?: number;
 
+  @IsOptional()
   @IsNumber()
-  num_docier_client: number;
+  num_docier_client?: number;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: "الاسم الكامل بالعربية مطلوب!" })
-  fullName_arabe: string;
+  fullName_arabe?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: "الاسم الكامل بالفرنسية مطلوب!" })
-  fullName_francais: string;
+  fullName_francais?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: "النشاط مطلوب!" })
-  activite: string;
+  activite?: string;
 
   @IsOptional()
   @IsString()
   colonne1?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: "طبيعة النشاط مطلوبة!" })
-  nature_activite: string;
+  nature_activite?: string;
 
   @IsOptional()
   @IsString()
   colonne2?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: "حالة النشاط مطلوبة!" })
-  status_activite: string;
+  status_activite?: string;
 
   @IsOptional()
   @IsString()
   colonne3?: string;
 
+  @IsOptional()
   @IsString()
-  num_bus_registration: string;
+  num_bus_registration?: string;
 
+  @IsOptional()
   @IsString()
-  circle: string;
+  circle?: string;
 
+  @IsOptional()
   @IsString()
-  Municipality: string;
+  Municipality?: string;
 
+  @IsOptional()
   @IsString()
-  Style: string;
+  Style?: string;
 
+  @IsOptional()
   @IsString()
-  category: string;
+  category?: string;
 
+  @IsOptional()
   @IsString()
-  type: string;
+  type?: string;
 
+  @IsOptional()
   @IsNumber()
-  First_year_of_use: number;
+  First_year_of_use?: number;
+
+  @IsOptional()
+  @IsNumber()
+  total_load_trucks?: number;
+
+  @IsOptional()
+  @IsNumber()
+  restricted_load?: number;
 
   @IsOptional()
   @IsNumber()
@@ -77,8 +93,9 @@ export class CreateVihicleDto {
   @IsString()
   Energy?: string;
 
+  @IsOptional()
   @IsNumber()
-  num_driving_license: number;
+  num_driving_license?: number;
 
   @IsOptional()
   @Type(() => Date)
@@ -94,25 +111,30 @@ export class CreateVihicleDto {
   @IsDate()
   line_activity_start_date?: Date;
 
+  @IsOptional()
   @Type(() => Date)
   @IsDate()
-  Vehicle_activity_start_date: Date;
+  Vehicle_activity_start_date?: Date;
 
   @IsOptional()
   @IsString()
   font_type?: string;
 
+  @IsOptional()
   @IsString()
-  colonne4: string;
+  colonne4?: string;
 
+  @IsOptional()
   @IsString()
-  font_symbol: string;
+  font_symbol?: string;
 
+  @IsOptional()
   @IsString()
-  point_depart: string;
+  point_depart?: string;
 
+  @IsOptional()
   @IsString()
-  point_arrive: string;
+  point_arrive?: string;
 
   @IsOptional()
   @IsString()
@@ -196,7 +218,6 @@ export class CreateVihicleDto {
   @IsString()
   path?: string;
 
-
-  @IsNumber()
-  num_up: number;
+  @IsOptional()
+  num_up?: number;
 }
