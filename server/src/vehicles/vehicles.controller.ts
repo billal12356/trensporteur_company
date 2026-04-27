@@ -212,6 +212,11 @@ export class VehiclesController {
     return await this.vehiclesService.addFieldToVehicles();
   }
 
+  @Get('by-font-symbol/:font_symbol')
+    async getByFontSymbol(@Param('font_symbol') fontSymbol: string) {
+    return this.vehiclesService.findByFontSymbol(fontSymbol);
+  }
+
   
 
 }

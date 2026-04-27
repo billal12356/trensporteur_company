@@ -85,6 +85,10 @@ export interface Vihicles {
 
   First_year_of_use: string;
 
+  registration_number: number;
+
+  model_serial_number: number;
+
   Number_of_seats: number;
 
   Energy: string;

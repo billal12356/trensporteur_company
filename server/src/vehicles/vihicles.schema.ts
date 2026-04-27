@@ -63,6 +63,9 @@ export class Vihicles {
   restricted_load: number;
 
   @Prop({ type: Number })
+  registration_number: number;
+
+  @Prop({ type: Number })
   Number_of_seats: number;
 
   @Prop({ type: String })

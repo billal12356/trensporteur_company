@@ -1,5 +1,5 @@
 import MainContainer from "@/components/MainContainer";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,24 +13,39 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { useDispatch, useSelector } from "react-redux";
 import { Vihicles } from "@/components/types/OperateurTypes";
 import { Loader } from "lucide-react";
-import { createVihicules } from "@/redux/slice/vihiculeSlice";
+import { createVihicules, fetchByFontSymbol, resetFontSymbolStatus } from "@/redux/slice/vihiculeSlice";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 
 const FormOperateur: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { loading, errorDetails } = useSelector(
+  const { loading, errorDetails, fontSymbolStatus, fontSymbolError   } = useSelector(
     (state: RootState) => state.vihicule
   );
 
   // ✅ useState for all form fields
   const [formData, setFormData] = useState<Partial<Vihicles>>({});
+  const [fontSymbol, setFontSymbol] = useState("");
 
   // ✅ update handler
   const handleChange = (field: keyof Vihicles, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  setFormData((prev) => ({ ...prev, [field]: value }));
+
+  if (field === "font_symbol") {
+    setFontSymbol(value);
+    dispatch(resetFontSymbolStatus()); // 👈 reset on every keystroke
+
+    if (!value || value.trim() === "") {
+      setFormData((prev) => ({
+        ...prev,
+        font_symbol: value,
+        point_depart: "",
+        point_arrive: "",
+      }));
+    }
+  }
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,8 +56,39 @@ const FormOperateur: React.FC = () => {
       console.error("Error:", error);
     }
   };
-
-
+  
+  const handleFontSymbolBlur = () => {
+    console.log("fontSymbol ==>",fontSymbol)
+    console.log("fontSymbolStatus ==>",fontSymbolStatus)
+  if (!fontSymbol || fontSymbol.trim() === "") return;
+   if (fontSymbolStatus === "error") {
+    // 👇 clear if font_symbol is empty on blur
+    setFormData((prev) => ({
+      ...prev,
+      point_depart: "",
+      point_arrive: "",
+    }));
+    dispatch(resetFontSymbolStatus());
+    return;
+  }
+  dispatch(fetchByFontSymbol(fontSymbol))
+    .unwrap()
+    .then((res) => {
+      setFormData((prev) => ({
+        ...prev,
+        point_depart: res.point_depart,
+        point_arrive: res.point_arrive,
+      }));
+    })
+    .catch((err) => {
+      console.log(err);
+      setFormData((prev) => ({
+    ...prev,
+    point_depart: "",
+    point_arrive: "",
+  }));
+    });
+};
   return (
     <MainContainer>
       <Helmet>
@@ -203,10 +249,12 @@ const FormOperateur: React.FC = () => {
               value={formData.type ?? ""}
               onChange={(v) => handleChange("type", v)}
               options={[
-                { label: "حافلة", value: "حافلة" },
-                { label: "حافلة صغيرة", value: "حافلة صغيرة" },
-                { label: "MINI CAR", value: "MINI CAR" },
-                { label: "مجهزة سيارة", value: "مجهزة سيارة" },
+                { label: "AUTO CAR", value: "autoCar" },
+                { label: "MINI CAR", value: "miniCar" },
+                { label: "MINI BUS", value: "miniBus" },
+                { label: "AUTO BUS", value: "autoBus" },
+                { label: "CAMION AMENAGE", value: "camionAmenage" },
+                { label: "AUTRE", value: "autre" },
               ]}
             />
           </div>
@@ -313,11 +361,22 @@ const FormOperateur: React.FC = () => {
           {/* Row 13 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField
-              label="رمز الخط"
-              type="text"
-              value={formData.font_symbol ?? ""}
-              onChange={(v) => handleChange("font_symbol", v)}
-            />
+  label="رمز الخط"
+  type="text"
+  value={formData.font_symbol ?? ""}
+  onChange={(v) => handleChange("font_symbol", v)}
+  onBlur={handleFontSymbolBlur} 
+  status={fontSymbolStatus}
+  message={
+    fontSymbolStatus === "loading"
+      ? "جاري البحث..."
+      : fontSymbolStatus === "error"
+      ? fontSymbolError
+      : fontSymbolStatus === "success"
+      ? "رمز الخط موجود"
+      : ""
+  }
+/>
             <SelectField
               label="colonne 4"
               value={formData.colonne4 ?? ""}
@@ -347,6 +406,26 @@ const FormOperateur: React.FC = () => {
               type="text"
               value={formData.point_depart ?? ""}
               onChange={(v) => handleChange("point_depart", v)}
+            />
+          </div>
+
+          {/* Row 15 - Registration and Serial Numbers */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InputField
+              label="رقم القيد"
+              type="number"
+              value={formData.registration_number ?? ""}
+              onChange={(val) =>
+                handleChange("registration_number", Number(val as number))
+              }
+            />
+            <InputField
+              label="رقم التسلسلي في الطراز"
+              type="number"
+              value={formData.model_serial_number ?? ""}
+              onChange={(val) =>
+                handleChange("model_serial_number", Number(val as number))
+              }
             />
           </div>
 
@@ -579,19 +658,23 @@ const InputField = ({
   type,
   value,
   onChange,
+  onBlur, 
   disabled = false,
+  status,
+  message,
 }: {
   label: string;
   type: string;
   value: string | number | Date | null | undefined;
   onChange: (v: string | number | Date) => void;
+  onBlur?: () => void;
   disabled?: boolean;
+  status?: "idle" | "loading" | "success" | "error";
+  message?: string;
 }) => {
-  // 🧠 Prepare display value (string or number only)
   let displayValue: string | number | undefined = "";
 
   if (type === "date" && value) {
-    // Convert Date to ISO string
     displayValue =
       value instanceof Date
         ? value.toISOString().split("T")[0]
@@ -599,6 +682,22 @@ const InputField = ({
   } else if (value !== null && value !== undefined) {
     displayValue = value as string | number;
   }
+
+  const borderClass =
+    status === "error"
+      ? "border-red-500 focus-visible:ring-red-500"
+      : status === "success"
+      ? "border-green-500 focus-visible:ring-green-500"
+      : status === "loading"
+      ? "border-gray-400"
+      : "";
+
+  const messageColor =
+    status === "error"
+      ? "text-red-600"
+      : status === "success"
+      ? "text-green-600"
+      : "text-gray-500";
 
   return (
     <div className="flex flex-col gap-2">
@@ -610,6 +709,8 @@ const InputField = ({
         type={type}
         value={displayValue}
         disabled={disabled}
+        className={`transition-all ${borderClass}`}
+        onBlur={onBlur} 
         onChange={(e) => {
           const inputVal = e.target.value;
 
@@ -622,6 +723,13 @@ const InputField = ({
           }
         }}
       />
+
+      {/* 👇 message UNDER field */}
+      {message && status !== "idle" && (
+        <p className={`text-sm text-end ${messageColor}`}>
+          {message}
+        </p>
+      )}
     </div>
   );
 };

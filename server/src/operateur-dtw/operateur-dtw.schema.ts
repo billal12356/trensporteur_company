@@ -65,6 +65,9 @@ export class Operateur {
   @Prop({ type: Number, required: [true, "رقم التعريف الوطني مطلوب!"] })
   num_didentification_national_NIN: number;
 
+  @Prop({ type: Number, required: [true, "رقم التعريف الجبائي مطلوب!"] })
+  Tax_identification_number_NIF: number;
+
   @Prop({ type: Date, required: [true, "تاريخ الميلاد مطلوب!"] })
   date_naissance: Date;
 

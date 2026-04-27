@@ -5,6 +5,8 @@ import {
   IsOptional,
   IsDate,
   IsIn,
+  IsNumberString,
+  Length,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -81,7 +83,11 @@ export class CreateOperateurDto {
   num_dacte_naissance: number;
 
   @IsNumber()
-  num_didentification_national_NIN: number;
+  @Length(18, 18, { message: "رقم التعريف الوطني يجب أن يكون 18 رقم بالضبط" })
+  num_didentification_national_NIN: string;
+  
+  @IsNumber()
+  Tax_identification_number_NIF: number;
 
   @IsDate()
   @Type(() => Date)

@@ -17,7 +17,7 @@ import { Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Operateur } from "@/components/types/OperateurTypes";
-
+import { toast } from "sonner";
 const FormOperateur: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -25,13 +25,18 @@ const FormOperateur: React.FC = () => {
   // --- Local state for all fields ---
   const [operateur, setOperateur] = useState<Partial<Operateur>>({});
   const depnd = operateur.depend_activite;
-
-  const { successMessage, loading } = useSelector(
+  const [mereLastNameAr, setMereLastNameAr] = useState("");
+  const [mereFirstNameAr, setMereFirstNameAr] = useState("");
+  const [mereLastNameFr, setMereLastNameFr] = useState("");
+  const [mereFirstNameFr, setMereFirstNameFr] = useState("");
+  const [ninError, setNinError] = useState("");
+  const [ninStatus, setNinStatus] = useState<"warning" | "error" | "success" | "">("");
+  const { successMessage, loading,error } = useSelector(
     (state: RootState) => state.operateur
   );
 
+  console.log("error ==>",error)
   console.log("successMessage", successMessage)
-
 
   // Generic field handler
   const handleChange = (field: keyof Operateur, value: any) => {
@@ -41,15 +46,39 @@ const FormOperateur: React.FC = () => {
   // Submit function
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = {
+      ...operateur,
+
+      fullName_mere_arabe:
+        `${mereLastNameAr} ${mereFirstNameAr}`.trim(),
+
+      fullName_mere_francais:
+        `${mereLastNameFr} ${mereFirstNameFr}`.trim(),
+    };
     try {
-      await dispatch(createOperateur(operateur)).unwrap();
+      await dispatch(createOperateur(payload)).unwrap();
       navigate("/operateur"); // ✅ 100% reliable
     } catch (err) {
-      // optional: error is already in Redux
-      console.error(err);
+      toast.error(err[0]);
     }
   };
 
+  const handleNinChange = (value: string) => {
+    const onlyNumbers = value.replace(/\D/g, "");
+
+    handleChange("num_didentification_national_NIN", onlyNumbers);
+
+    if (onlyNumbers.length < 18) {
+      setNinError("رقم التعريف الوطني يجب ان يكون 18 ليس اقل");
+      setNinStatus("warning");
+    } else if (onlyNumbers.length > 18) {
+      setNinError("رقم التعريف الوطني يجب ان يكون 18 ليس اكثر");
+      setNinStatus("error");
+    } else {
+      setNinError("");
+      setNinStatus("success");
+    }
+  };
 
 
   return (
@@ -451,15 +480,44 @@ const FormOperateur: React.FC = () => {
               </label>
               <Input
                 type="number"
+                maxLength={19}
                 value={operateur.num_didentification_national_NIN ?? ""}
-                onChange={(e) =>
-                  handleChange(
-                    "num_didentification_national_NIN",
-                    Number(e.target.value)
-                  )
-                }
+                onChange={(e) => handleNinChange(e.target.value)}
+                className={`
+                  ${ninStatus === "warning" ? "bg-yellow-100 border-yellow-500" : ""}
+                  ${ninStatus === "error" ? "bg-red-100 border-red-500" : ""}
+                  ${ninStatus === "success" ? "bg-green-100 border-green-500" : ""}
+                `}
               />
+              {ninError && (
+                <p
+                  className={`
+                  text-sm text-end mt-1
+                  ${ninStatus === "warning" ? "text-yellow-600" : ""}
+                  ${ninStatus === "error" ? "text-red-600" : ""}
+                  `}
+                >
+                 {ninError}
+                </p>
+              )}
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-end text-gray-700">
+              رقم التعريف الجبائي NIF
+            </label>
+
+             <Input
+              type="number"
+              value={operateur.Tax_identification_number_NIF ?? ""}
+              onChange={(e) =>
+               handleChange(
+               "Tax_identification_number_NIF",
+               e.target.value === "" ? "" : Number(e.target.value)
+              )
+              }
+              placeholder="أدخل رقم التعريف الجبائي"
+            />
           </div>
 
           {/* Row 10 - معلومات الميلاد */}
@@ -506,13 +564,21 @@ const FormOperateur: React.FC = () => {
               <label className="block text-sm font-medium text-end text-gray-700">
                 اسم و لقب الام بالعربية
               </label>
-              <Input
-                type="text"
-                value={operateur.fullName_mere_arabe ?? ""}
-                onChange={(e) =>
-                  handleChange("fullName_mere_arabe", e.target.value)
-                }
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <Input
+                  type="text"
+                  placeholder="لقب الأم"
+                  value={mereLastNameAr}
+                  onChange={(e) => setMereLastNameAr(e.target.value)}
+                />
+
+                <Input
+                  type="text"
+                  placeholder="اسم الأم"
+                  value={mereFirstNameAr}
+                  onChange={(e) => setMereFirstNameAr(e.target.value)}
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
@@ -568,13 +634,21 @@ const FormOperateur: React.FC = () => {
               <label className="block text-sm font-medium text-end text-gray-700">
                 اسم و لقب الام بالفرنسية
               </label>
-              <Input
-                type="text"
-                value={operateur.fullName_mere_francais ?? ""}
-                onChange={(e) =>
-                  handleChange("fullName_mere_francais", e.target.value)
-                }
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+  <Input
+    type="text"
+    placeholder="Nom de famille mère"
+    value={mereLastNameFr}
+    onChange={(e) => setMereLastNameFr(e.target.value)}
+  />
+
+  <Input
+    type="text"
+    placeholder="Prénom mère"
+    value={mereFirstNameFr}
+    onChange={(e) => setMereFirstNameFr(e.target.value)}
+  />
+</div>
             </div>
           </div>
 

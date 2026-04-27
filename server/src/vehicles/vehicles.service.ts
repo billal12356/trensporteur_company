@@ -1972,6 +1972,24 @@ export class VehiclesService {
     }
   }
 
+  async findByFontSymbol(fontSymbol: string) {
+    console.log("fontSymbol",fontSymbol)
+  const vehicle = await this.VihicileModel.findOne({
+    font_symbol: fontSymbol,
+  });
+  console.log("vehicle",vehicle)
+
+  if (!vehicle) {
+    throw new NotFoundException('رمز الخط خاطئ');
+  }
+
+  return {
+    point_depart: vehicle.point_depart,
+    point_arrive: vehicle.point_arrive,
+    font_symbol: vehicle.font_symbol,
+  };
+}
+
 }
 function formatDate(date?: Date | string | null): string {
   if (!date) return '/';

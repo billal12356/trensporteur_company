@@ -130,6 +130,10 @@ interface VihiclesState {
   fileURL: string | null;
   successMessage: null;
   statistiqueAnnee: any;
+  fontSearchLoading: boolean;
+  vehicleRouteLoading: boolean;
+   fontSymbolError: string | null;
+   fontSymbolStatus: "idle" | "loading" | "success" | "error";
 }
 
 // Initial State
@@ -148,6 +152,10 @@ const initialState: VihiclesState = {
   fileURL: null as string | null,
   successMessage: null,
   statistiqueAnnee: {},
+  fontSearchLoading: false,
+  vehicleRouteLoading: false,
+  fontSymbolError: null,
+  fontSymbolStatus: "idle",
 };
 
 export const downloadRegistrationStats = createAsyncThunk<
@@ -641,6 +649,25 @@ export const fetchStatistiqueAnnee = createAsyncThunk(
   }
 );
 
+export const fetchByFontSymbol = createAsyncThunk<
+  { point_depart: string; point_arrive: string; font_symbol: string },
+  string,
+  { rejectValue: string }
+>("vihicules/fetchByFontSymbol", async (font_symbol, { rejectWithValue }) => {
+  try {
+    const res = await axios.get(
+      `${API_URL}/api/v1/vehicles/by-font-symbol/${font_symbol}`,
+      { withCredentials: true }
+    );
+    return res.data;
+  } catch (error: any) {
+    console.log("error",error)
+    return rejectWithValue(
+      error.response?.data?.message || "خطأ في البحث عن الخط"
+    );
+  }
+});
+
 // Create Slice
 const operateurSlice = createSlice({
   name: "operateur",
@@ -659,6 +686,10 @@ const operateurSlice = createSlice({
     },
     clearMessageUpdate: (state) => {
       state.messageUpdate = '';
+    },
+    resetFontSymbolStatus: (state) => {
+      state.fontSymbolStatus = "idle";
+      state.fontSymbolError = null;
     },
   },
   extraReducers: (builder) => {
@@ -904,9 +935,35 @@ const operateurSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
-  },
+
+    builder
+
+      /* ================== FONT SYMBOL ================== */
+      .addCase(fetchByFontSymbol.pending, (state) => {
+        state.vehicleRouteLoading = true;
+        state.fontSymbolStatus = "loading";
+        state.fontSymbolError = null;
+      })
+      .addCase(fetchByFontSymbol.fulfilled, (state, action) => {
+        state.vehicleRouteLoading = false;
+        state.vihicule = {
+          ...(state.vihicule as Vihicles),
+          point_depart: action.payload.point_depart,
+          point_arrive: action.payload.point_arrive,
+          font_symbol: action.payload.font_symbol,
+        };
+        state.fontSymbolStatus = "success";
+        state.fontSymbolError = null;
+      })
+      .addCase(fetchByFontSymbol.rejected, (state, action) => {
+        console.log("action.payload ==>",action.payload)
+        state.vehicleRouteLoading = false;
+        state.fontSymbolStatus = "error";
+        state.fontSymbolError = action.payload as string;
+      });
+      },
 });
 
 // Export Actions & Reducer
-export const { setMessage, resetDownloadState, clearMessageUpdate } = operateurSlice.actions;
+export const { setMessage, resetDownloadState, clearMessageUpdate , resetFontSymbolStatus } = operateurSlice.actions;
 export default operateurSlice.reducer;

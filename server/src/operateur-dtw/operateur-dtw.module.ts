@@ -8,7 +8,9 @@ import { ChauffeursModule } from 'src/chauffeurs/chauffeurs.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Operateur.name, schema: OperateurSchema }]),
+    MongooseModule.forFeature([
+      { name: Operateur.name, schema: OperateurSchema },
+    ]),
     forwardRef(() => VehiclesModule),
     forwardRef(() => ChauffeursModule)
   ],
