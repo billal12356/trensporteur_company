@@ -66,6 +66,9 @@ export class Vihicles {
   registration_number: number;
 
   @Prop({ type: Number })
+  model_serial_number: number;
+
+  @Prop({ type: Number })
   Number_of_seats: number;
 
   @Prop({ type: String })
