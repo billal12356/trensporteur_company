@@ -26,6 +26,7 @@ interface Operateur {
   fullName_gerent_person_moral?: string;
   num_dacte_naissance: number;
   num_didentification_national_NIN: number;
+  Tax_identification_number_NIF: number;
   date_naissance: string;
   lieu_naissance_arabe: string;
   lieu_naissance_francais: string;
@@ -308,7 +309,7 @@ export const createOperateur = createAsyncThunk<
         { withCredentials: true }
       );
 
-      console.log("res",res.data)
+      console.log("res", res.data)
       return {
         message: res.data.message || "تم التسجيل بنجاح",
         operateur: res.data.operateur,
@@ -489,7 +490,7 @@ const operateurSlice = createSlice({
       })
 
       .addCase(createOperateur.fulfilled, (state, action) => {
-        console.log("action.payload.operateur",action.payload)
+        console.log("action.payload.operateur", action.payload)
         state.loading = false;
         state.operateurs.push(action.payload.operateur);
         state.successMessage = action.payload.message; // ✅ success

@@ -105,6 +105,8 @@ const EnhancedVehicle = React.memo((): ReactElement => {
     ["category", "الصنف"],
     ["type", "النوع"],
     ["First_year_of_use", "أول سنة استعمال"],
+    ["model_serial_number", "الرقم التسلسلي للطراز"],
+    ["registration_number", "رقم التسجيل"],
     ["total_load_trucks", "جملة الحمولة (للشاحنات)"],
     ["restricted_load", "الحمولة المقيدة"],
     ["Number_of_seats", "عدد المقاعد"],

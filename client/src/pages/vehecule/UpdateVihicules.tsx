@@ -254,6 +254,26 @@ const EditOperateur = () => {
             />
           </div>
 
+          {/* Row 8b - الرقم التسلسلي ورقم التسجيل */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InputField
+              label="الرقم التسلسلي للطراز"
+              type="number"
+              value={formData.model_serial_number ?? ""}
+              onChange={(val) =>
+                handleChange("model_serial_number", Number(val as number))
+              }
+            />
+            <InputField
+              label="رقم التسجيل"
+              type="number"
+              value={formData.registration_number ?? ""}
+              onChange={(val) =>
+                handleChange("registration_number", Number(val as number))
+              }
+            />
+          </div>
+
           {/* Row 9 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField

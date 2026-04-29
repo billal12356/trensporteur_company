@@ -510,6 +510,25 @@ const EditOperateur = () => {
             </div>
           </div>
 
+          {/* Row 9b - NIF */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-end text-gray-700">
+                رقم التعريف الجبائي NIF
+              </label>
+              <Input
+                type="text"
+                defaultValue={operateur.Tax_identification_number_NIF ?? ""}
+                onChange={(e) =>
+                  handleChange(
+                    "Tax_identification_number_NIF",
+                    e.target.value
+                  )
+                }
+              />
+            </div>
+          </div>
+
           {/* Row 10 - معلومات الميلاد */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>

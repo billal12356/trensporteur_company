@@ -1,4 +1,4 @@
-export interface Operateur  {
+export interface Operateur {
   _id: string,
   num_wilaya: number,
   num_docier_client: number,
@@ -20,6 +20,7 @@ export interface Operateur  {
   fullName_gerent_person_moral?: string,
   num_dacte_naissance: number,
   num_didentification_national_NIN: number,
+  Tax_identification_number_NIF: number,
   date_naissance: string,
   lieu_naissance_arabe: string,
   lieu_naissance_francais: string,
@@ -134,24 +135,24 @@ export interface Vihicles {
   time_depart2: string;
 
   time_depart3?: string;
-  
+
   time_depart4?: string;
 
   vihicile_parked?: string;
 
-  type_parked :string;
+  type_parked: string;
 
-  hestoire_parked:string;
+  hestoire_parked: string;
 
-  hestoire_parked_end:string;
+  hestoire_parked_end: string;
 
-  comments:string;
+  comments: string;
 
-  person_concerned:string;
+  person_concerned: string;
 
   note_chef_departement?: string;
 
-  path:string
+  path: string
 }
 
 export interface Chauffeur {

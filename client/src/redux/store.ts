@@ -5,6 +5,7 @@ import vihiculeReducer from './slice/vihiculeSlice'
 import chauffeurReducer from './slice/chauffeurSlice'
 import statsReducer from './slice/stateSlice';
 import userReducer from './slice/userSlice';
+import canevasReducer from './slice/canevasSlice';
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -12,7 +13,8 @@ export const store = configureStore({
     vihicule:vihiculeReducer,
     chauffeur:chauffeurReducer,
     stats:statsReducer,
-    user:userReducer
+    user:userReducer,
+    canevas: canevasReducer,
   },
 });
 

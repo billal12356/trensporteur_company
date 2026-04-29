@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res } from '@nestjs/common';
 import { StateService } from './state.service';
 import { CreateStateDto } from './dto/create-state.dto';
 import { UpdateStateDto } from './dto/update-state.dto';
+import { Response } from 'express';
 
 @Controller('state')
 export class StateController {
@@ -100,6 +101,45 @@ export class StateController {
     return this.stateService.getVehicleStats();
   }
 
+  // ======================= Canevas n°01 =======================
 
+  @Get('canevas-transport')
+  async getCanevasTransport(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    let start: Date | undefined;
+    let end: Date | undefined;
+    if (startDate && endDate) {
+      start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+      end = new Date(endDate);
+      end.setUTCHours(0, 0, 0, 0);
+      end.setUTCDate(end.getUTCDate() + 1);
+    }
+    return this.stateService.getCanevasTransport(start, end);
+  }
+
+  @Get('canevas-transport/export')
+  async exportCanevasExcel(
+    @Res() res: Response,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    let start: Date | undefined;
+    let end: Date | undefined;
+    if (startDate && endDate) {
+      start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+      end = new Date(endDate);
+      end.setUTCHours(0, 0, 0, 0);
+      end.setUTCDate(end.getUTCDate() + 1);
+    }
+    const workbook = await this.stateService.exportCanevasExcel(start, end);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="Canevas_01_Transport.xlsx"`);
+    await workbook.xlsx.write(res);
+    res.end();
+  }
 
 }

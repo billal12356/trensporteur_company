@@ -368,6 +368,10 @@ export default function OperateurDetails() {
                   label: "رقم السجل التجاري",
                   value: operateur.num_registre_commerce,
                 },
+                {
+                  label: "رقم التعريف الوطني NIN",
+                  value: operateur.num_didentification_national_NIN,
+                },
               ],
             ].map((section, idx) => (
               <div

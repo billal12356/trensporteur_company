@@ -1579,6 +1579,261 @@ export class StateService {
     }
   }
 
+  // =====================================================================
+  // Canevas n°01: TRANSPORT ROUTIER DE VOYAGEURS
+  // =====================================================================
+
+  private classifyVehicleCategory(seats: number): string {
+    if (!seats || seats <= 0) return 'autresVehicules';
+    if (seats >= 70) return 'autobus';
+    if (seats >= 40) return 'minibus';
+    if (seats >= 35) return 'autocar';
+    if (seats >= 24) return 'minicar';
+    return 'autresVehicules';
+  }
+
+  private emptyBreakdown() {
+    return {
+      autocar: 0, minicar: 0, autobus: 0, minibus: 0,
+      autresVehicules: 0, camionAmenage: 0, total: 0,
+      placesOffertes: 0, nombreOperateurs: 0, pourcentage: 0,
+      nombreChauffeurs: 0, voyageursJour: 0, voyageursMois: 0,
+      nombreOperateursReel: 0,
+    };
+  }
+
+  private addBreakdowns(a: any, b: any) {
+    const result = this.emptyBreakdown();
+    for (const key of Object.keys(result)) {
+      result[key] = (a[key] || 0) + (b[key] || 0);
+    }
+    return result;
+  }
+
+  private emptySection() {
+    return {
+      transportPublicVoyageurs: {
+        interWilaya: this.emptyBreakdown(),
+        interCommunale: this.emptyBreakdown(),
+        rural: this.emptyBreakdown(),
+        urbain: this.emptyBreakdown(),
+        sousTotal: this.emptyBreakdown(),
+      },
+      transport: {
+        universitaire: this.emptyBreakdown(),
+        scolaire: this.emptyBreakdown(),
+        personnel: this.emptyBreakdown(),
+        sousTotal: this.emptyBreakdown(),
+      },
+      total: this.emptyBreakdown(),
+    };
+  }
+
+  private recalcSectionTotals(section: any) {
+    const tpv = section.transportPublicVoyageurs;
+    tpv.sousTotal = this.addBreakdowns(
+      this.addBreakdowns(tpv.interWilaya, tpv.interCommunale),
+      this.addBreakdowns(tpv.rural, tpv.urbain),
+    );
+    const tr = section.transport;
+    tr.sousTotal = this.addBreakdowns(
+      this.addBreakdowns(tr.universitaire, tr.scolaire),
+      tr.personnel,
+    );
+    section.total = this.addBreakdowns(tpv.sousTotal, tr.sousTotal);
+  }
+
+  private mapFontTypeToRow(fontType: string): { group: string; row: string } | null {
+    const mapping: Record<string, { group: string; row: string }> = {
+      'بين الولايات': { group: 'transportPublicVoyageurs', row: 'interWilaya' },
+      'بين البلديات': { group: 'transportPublicVoyageurs', row: 'interCommunale' },
+      'ريـفي': { group: 'transportPublicVoyageurs', row: 'rural' },
+      'ريفي': { group: 'transportPublicVoyageurs', row: 'rural' },
+      'حضري أو شبه حضري': { group: 'transportPublicVoyageurs', row: 'urbain' },
+      'نقل جامعي': { group: 'transport', row: 'universitaire' },
+      'نقل مدرسي': { group: 'transport', row: 'scolaire' },
+      'نقل العمال': { group: 'transport', row: 'personnel' },
+    };
+    return mapping[fontType] || null;
+  }
+
+  /**
+   * Calcul du Canevas n°01 depuis la base de données
+   */
+  async getCanevasTransport(startDate?: Date, endDate?: Date) {
+    try {
+      // Filtre: exclure les véhicules arrêtés définitivement
+      const dateFilter: any = {
+        $nor: [{ vihicile_parked: 'نعم', type_parked: 'نهائي' }],
+      };
+      if (startDate && endDate) {
+        dateFilter.createdAt = { $gte: startDate, $lt: endDate };
+      }
+
+      // 1. Récupérer les véhicules
+      const vehicles = await this.vehiculeModel.find(dateFilter).lean();
+
+      // 2. Récupérer les opérateurs valides
+      const allClientIds = [...new Set(vehicles.map(v => v.num_docier_client).filter(Boolean))];
+      const operateurs = await this.operateurModel
+        .find({ num_docier_client: { $in: allClientIds } })
+        .select('num_docier_client').lean();
+      const operateurSet = new Set(operateurs.map(o => o.num_docier_client));
+
+      // 3. Compter les chauffeurs par opérateur
+      const chauffeurAgg = await this.chauffeurModel.aggregate([
+        { $group: { _id: '$num_enregistrement_du_transporteur', count: { $sum: 1 } } },
+      ]);
+      const chauffeurMap = new Map<number, number>();
+      for (const ch of chauffeurAgg) chauffeurMap.set(ch._id, ch.count);
+
+      // 4. Initialiser les deux sections
+      const statutPublic = this.emptySection();
+      const statutPrive = this.emptySection();
+
+      // Tracker opérateurs uniques par ligne
+      const opTracker: Record<string, Set<number>> = {};
+
+      // 5. Traiter chaque véhicule
+      for (const v of vehicles) {
+        const mapping = this.mapFontTypeToRow(v.font_type);
+        if (!mapping) continue;
+
+        const { group, row } = mapping;
+        const section = v.status_activite === 'PUBLIC' ? statutPublic : statutPrive;
+        const sKey = v.status_activite === 'PUBLIC' ? 'pub' : 'prv';
+        const rowData = section[group]?.[row];
+        if (!rowData) continue;
+
+        const seats = Number(v.Number_of_seats) || 0;
+        const cat = this.classifyVehicleCategory(seats);
+
+        rowData[cat] += 1;
+        rowData.total += 1;
+        rowData.placesOffertes += seats;
+
+        // Tracker opérateur unique
+        const tKey = `${sKey}_${group}_${row}`;
+        if (!opTracker[tKey]) opTracker[tKey] = new Set();
+        if (v.num_docier_client && operateurSet.has(v.num_docier_client)) {
+          opTracker[tKey].add(v.num_docier_client);
+        }
+      }
+
+      // 6. Injecter nombre d'opérateurs et chauffeurs
+      const injectCounts = (section: any, sKey: string) => {
+        for (const gKey of ['transportPublicVoyageurs', 'transport']) {
+          for (const rKey of Object.keys(section[gKey])) {
+            if (rKey === 'sousTotal') continue;
+            const tKey = `${sKey}_${gKey}_${rKey}`;
+            const ops = opTracker[tKey] || new Set();
+            section[gKey][rKey].nombreOperateurs = ops.size;
+            section[gKey][rKey].nombreOperateursReel = ops.size;
+            let chCount = 0;
+            for (const opId of ops) chCount += chauffeurMap.get(opId) || 0;
+            section[gKey][rKey].nombreChauffeurs = chCount;
+          }
+        }
+      };
+      injectCounts(statutPublic, 'pub');
+      injectCounts(statutPrive, 'prv');
+
+      // 7. Calculer sous-totaux
+      this.recalcSectionTotals(statutPublic);
+      this.recalcSectionTotals(statutPrive);
+
+      // 8. Section combinée (Public + Privé)
+      const combined = this.emptySection();
+      for (const gKey of ['transportPublicVoyageurs', 'transport']) {
+        for (const rKey of Object.keys(combined[gKey])) {
+          combined[gKey][rKey] = this.addBreakdowns(statutPublic[gKey][rKey], statutPrive[gKey][rKey]);
+        }
+      }
+      combined.total = this.addBreakdowns(statutPublic.total, statutPrive.total);
+
+      // 9. Pourcentages
+      const calcPct = (sec: any) => {
+        const t = sec.total.nombreOperateurs || 1;
+        for (const gKey of ['transportPublicVoyageurs', 'transport']) {
+          for (const rKey of Object.keys(sec[gKey])) {
+            sec[gKey][rKey].pourcentage = Math.round((sec[gKey][rKey].nombreOperateurs / t) * 10000) / 100;
+          }
+        }
+        sec.total.pourcentage = 100;
+      };
+      calcPct(statutPublic);
+      calcPct(statutPrive);
+      calcPct(combined);
+
+      return { wilaya: '', annee: new Date().getFullYear().toString(), trimestre: '1', statutPublic, statutPrive, combined };
+    } catch (error) {
+      console.error('❌ getCanevasTransport error:', error);
+      throw new InternalServerErrorException({ message: 'Erreur calcul Canevas', error: error.message });
+    }
+  }
+
+  /**
+   * Export Excel du Canevas n°01
+   */
+  async exportCanevasExcel(startDate?: Date, endDate?: Date) {
+    const ExcelJS = require('exceljs');
+    const data = await this.getCanevasTransport(startDate, endDate);
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Canevas n°01');
+
+    const cols = ['STATUT', 'Autocar', 'Minicar', 'Autobus', 'Minibus', 'Autres Véh.', 'Camion Am.', 'TOTAL', 'Places off.', 'Nb opér.', '%', 'Nb Chauff.', 'Voy/Jour', 'Voy/Mois', 'Nb opér.(réel)'];
+
+    // Titre
+    sheet.mergeCells('A1:O1');
+    const tc = sheet.getCell('A1');
+    tc.value = 'Canevas n°01: TRANSPORT ROUTIER DE VOYAGEURS';
+    tc.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
+    tc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } };
+    tc.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    sheet.mergeCells('A2:O2');
+    sheet.getCell('A2').value = `Wilaya: ${data.wilaya || '___'} | Année: ${data.annee} | Trimestre: ${data.trimestre}`;
+    sheet.getCell('A2').alignment = { horizontal: 'center' };
+
+    const hr = sheet.addRow(cols);
+    hr.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } };
+    hr.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
+    hr.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    sheet.getColumn(1).width = 35;
+    for (let i = 2; i <= 15; i++) sheet.getColumn(i).width = 12;
+
+    const addRow = (label: string, bd: any, opts: any = {}) => {
+      const r = sheet.addRow([label, bd.autocar, bd.minicar, bd.autobus, bd.minibus, bd.autresVehicules, bd.camionAmenage, bd.total, bd.placesOffertes, bd.nombreOperateurs, bd.pourcentage, bd.nombreChauffeurs, bd.voyageursJour, bd.voyageursMois, bd.nombreOperateursReel]);
+      if (opts.isTotal) { r.font = { bold: true, color: { argb: 'FFFFFFFF' } }; r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } }; }
+      else if (opts.isSubtotal) { r.font = { bold: true }; r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDBEAFE' } }; }
+      r.alignment = { horizontal: 'center', vertical: 'middle' };
+      r.eachCell(c => { c.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }; });
+    };
+
+    const renderSec = (sec: any, label: string) => {
+      const sh = sheet.addRow([label]); sheet.mergeCells(`A${sh.number}:O${sh.number}`);
+      sh.font = { bold: true, color: { argb: 'FFFFFFFF' } }; sh.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
+      addRow('  Inter-wilaya', sec.transportPublicVoyageurs.interWilaya);
+      addRow('  Inter-communale', sec.transportPublicVoyageurs.interCommunale);
+      addRow('  RURAL', sec.transportPublicVoyageurs.rural);
+      addRow('  URBAIN', sec.transportPublicVoyageurs.urbain);
+      addRow('  S/TOTAL', sec.transportPublicVoyageurs.sousTotal, { isSubtotal: true });
+      addRow('  universitaire', sec.transport.universitaire);
+      addRow('  scolaire', sec.transport.scolaire);
+      addRow('  personnel', sec.transport.personnel);
+      addRow('  S/TOTAL', sec.transport.sousTotal, { isSubtotal: true });
+    };
+
+    renderSec(data.statutPublic, '1. STATUT PUBLIC');
+    addRow('TOTAL 01 (STATUT PUBLIC)', data.statutPublic.total, { isTotal: true });
+    renderSec(data.statutPrive, '2. STATUT PRIVÉ');
+    addRow('TOTAL 02 (STATUT PRIVÉ)', data.statutPrive.total, { isTotal: true });
+    renderSec(data.combined, '3. COMBINÉ (PUBLIC + PRIVÉ)');
+    addRow('TOTAL GÉNÉRAL (1+2)', data.combined.total, { isTotal: true });
+
+    return workbook;
+  }
+
   async getVehicleStats() {
     const result = await this.vehiculeModel.aggregate([
       {

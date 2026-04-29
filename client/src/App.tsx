@@ -14,6 +14,7 @@ import ChangePasswordForm from './pages/auth/Resset Password/ChangePasswordForm'
 import TransportTable from './pages/statique_2025';
 import PageExcelVihecles from './pages/excel-vehicles';
 import StatistiqueCompt from './pages/statistique_compt';
+const CanevasTransport = lazy(() => import("./pages/canevas_transport"));
 const Home = lazy(() => import("./pages/home/Page"));
 const Login = lazy(() => import("./pages/auth/SignIn"));
 const Operateur = lazy(() => import("./pages/operateur/Operateur"));
@@ -54,6 +55,7 @@ function App() {
           <Route path="/statistique-2025" element={userData ? <TransportTable /> : <Login />} />
           <Route path="/Excel-vihecles" element={userData ? <PageExcelVihecles /> : <Login />} />
           <Route path="/statistique-compte" element={userData ? <StatistiqueCompt /> : <Login />} />
+          <Route path="/canevas-transport" element={userData ? <CanevasTransport /> : <Login />} />
 
           <Route path="/create-chauffeur" element={userData ? <CreateChauffeur /> : <Login />} />
 

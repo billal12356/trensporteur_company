@@ -98,6 +98,12 @@ const navigationItems: NavItem[] = [
         icon: BarChart4,
         description: "إدارة وعرض احصائيات المركبات",
       },
+      {
+        label: "كنفاس النقل",
+        href: "/canevas-transport",
+        icon: BarChart4,
+        description: "كنفاس رقم 01: النقل البري للمسافرين",
+      },
     ],
   },
   {
