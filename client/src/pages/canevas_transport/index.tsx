@@ -3,6 +3,8 @@ import MainContainer from "@/components/MainContainer";
 import CanevasHeader from "./components/CanevasHeader";
 import CanevasToolbar from "./components/CanevasToolbar";
 import CanevasTable from "./components/CanevasTable";
+import CanevasAgeTable from "./components/CanevasAgeTable";
+import CanevasMoyensTable from "./components/CanevasMoyensTable";
 
 const CanevasTransport: React.FC = () => {
   const tableRef = useRef<HTMLDivElement>(null);
@@ -16,9 +18,11 @@ const CanevasTransport: React.FC = () => {
         {/* Barre d'outils */}
         <CanevasToolbar tableRef={tableRef} />
 
-        {/* Tableau principal */}
+        {/* Tableaux principaux (capturés ensemble pour impression) */}
         <div ref={tableRef}>
           <CanevasTable />
+          <CanevasAgeTable />
+          <CanevasMoyensTable />
         </div>
 
         {/* Pied de page */}
@@ -32,3 +36,4 @@ const CanevasTransport: React.FC = () => {
 };
 
 export default CanevasTransport;
+

@@ -14,7 +14,7 @@ interface CanevasToolbarProps {
 
 const CanevasToolbar: React.FC<CanevasToolbarProps> = ({ tableRef }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { data, loading, saving } = useSelector(
+  const { data, loading, saving, wilaya, annee, trimestre } = useSelector(
     (state: RootState) => state.canevas
   );
 
@@ -25,7 +25,13 @@ const CanevasToolbar: React.FC<CanevasToolbarProps> = ({ tableRef }) => {
   const handleLoad = async () => {
     try {
       await dispatch(
-        fetchCanevasData({ startDate: startDate || undefined, endDate: endDate || undefined })
+        fetchCanevasData({
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          wilaya,
+          annee,
+          trimestre,
+        })
       ).unwrap();
       toast.success("Données chargées avec succès");
     } catch (err) {
@@ -56,7 +62,7 @@ const CanevasToolbar: React.FC<CanevasToolbarProps> = ({ tableRef }) => {
           <body onload="window.print(); window.close();">
             <h2>Canevas n°01: TRANSPORT ROUTIER DE VOYAGEURS</h2>
             <div class="header-info">
-              Wilaya: ${data?.wilaya || "___"} | Année: ${data?.annee || "___"} | Trimestre: ${data?.trimestre || "___"}
+              Wilaya: ${wilaya || "___"} | Année: ${annee || "___"} | Trimestre: ${trimestre || "___"}
             </div>
             ${printContents}
           </body>
@@ -73,6 +79,9 @@ const CanevasToolbar: React.FC<CanevasToolbarProps> = ({ tableRef }) => {
         exportCanevasExcel({
           startDate: startDate || undefined,
           endDate: endDate || undefined,
+          wilaya,
+          annee,
+          trimestre,
         })
       ).unwrap();
       toast.success("Export Excel réussi");

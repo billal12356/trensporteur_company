@@ -11,7 +11,10 @@ import {
 // ============================
 
 const initialState: CanevasState = {
-  data: null as unknown as CanevasData,
+  data: null,
+  wilaya: "",
+  annee: new Date().getFullYear().toString(),
+  trimestre: "1",
   loading: false,
   saving: false,
   error: null,
@@ -25,7 +28,7 @@ const initialState: CanevasState = {
 export const fetchCanevasData = createAsyncThunk(
   "canevas/fetchData",
   async (
-    params: { startDate?: string; endDate?: string },
+    params: { startDate?: string; endDate?: string; wilaya?: string; annee?: string; trimestre?: string },
     { rejectWithValue }
   ) => {
     try {
@@ -49,7 +52,7 @@ export const fetchCanevasData = createAsyncThunk(
 /** Exporter vers Excel (téléchargement direct depuis le serveur) */
 export const exportCanevasExcel = createAsyncThunk<
   void,
-  { startDate?: string; endDate?: string },
+  { startDate?: string; endDate?: string; wilaya?: string; annee?: string; trimestre?: string },
   { rejectValue: string }
 >("canevas/exportExcel", async (params, { rejectWithValue }) => {
   try {
@@ -103,17 +106,17 @@ const canevasSlice = createSlice({
   name: "canevas",
   initialState,
   reducers: {
-    /** Mettre à jour la wilaya (côté affichage seulement) */
+    /** Mettre à jour la wilaya */
     setWilaya: (state, action: PayloadAction<string>) => {
-      if (state.data) state.data.wilaya = action.payload;
+      state.wilaya = action.payload;
     },
-    /** Mettre à jour l'année (côté affichage seulement) */
+    /** Mettre à jour l'année */
     setAnnee: (state, action: PayloadAction<string>) => {
-      if (state.data) state.data.annee = action.payload;
+      state.annee = action.payload;
     },
-    /** Mettre à jour le trimestre (côté affichage seulement) */
+    /** Mettre à jour le trimestre */
     setTrimestre: (state, action: PayloadAction<string>) => {
-      if (state.data) state.data.trimestre = action.payload;
+      state.trimestre = action.payload;
     },
     /** Réinitialiser */
     resetCanevas: (state) => {

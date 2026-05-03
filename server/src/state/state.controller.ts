@@ -107,6 +107,9 @@ export class StateController {
   async getCanevasTransport(
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('wilaya') wilaya?: string,
+    @Query('annee') annee?: string,
+    @Query('trimestre') trimestre?: string,
   ) {
     let start: Date | undefined;
     let end: Date | undefined;
@@ -117,7 +120,7 @@ export class StateController {
       end.setUTCHours(0, 0, 0, 0);
       end.setUTCDate(end.getUTCDate() + 1);
     }
-    return this.stateService.getCanevasTransport(start, end);
+    return this.stateService.getCanevasTransport(start, end, wilaya, annee, trimestre);
   }
 
   @Get('canevas-transport/export')
@@ -125,6 +128,9 @@ export class StateController {
     @Res() res: Response,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('wilaya') wilaya?: string,
+    @Query('annee') annee?: string,
+    @Query('trimestre') trimestre?: string,
   ) {
     let start: Date | undefined;
     let end: Date | undefined;
@@ -135,7 +141,7 @@ export class StateController {
       end.setUTCHours(0, 0, 0, 0);
       end.setUTCDate(end.getUTCDate() + 1);
     }
-    const workbook = await this.stateService.exportCanevasExcel(start, end);
+    const workbook = await this.stateService.exportCanevasExcel(start, end, wilaya, annee, trimestre);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="Canevas_01_Transport.xlsx"`);
     await workbook.xlsx.write(res);

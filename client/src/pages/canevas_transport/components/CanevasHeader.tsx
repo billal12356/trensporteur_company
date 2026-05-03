@@ -19,11 +19,7 @@ const WILAYAS = [
 
 const CanevasHeader: React.FC = () => {
   const dispatch = useDispatch();
-  const data = useSelector((state: RootState) => state.canevas.data);
-
-  const wilaya = data?.wilaya || "";
-  const annee = data?.annee || new Date().getFullYear().toString();
-  const trimestre = data?.trimestre || "1";
+  const { wilaya, annee, trimestre } = useSelector((state: RootState) => state.canevas);
 
   return (
     <div className="bg-gradient-to-r from-blue-800 via-blue-700 to-blue-600 rounded-xl p-6 shadow-lg mb-6">
@@ -50,7 +46,13 @@ const CanevasHeader: React.FC = () => {
             onChange={(e) => dispatch(setWilaya(e.target.value))}
             className="bg-white/10 backdrop-blur text-white border border-blue-400/40 rounded-lg px-3 py-2.5 text-sm
               focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent
-              appearance-none cursor-pointer"
+              appearance-none cursor-pointer pr-10"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 0.75rem center',
+              backgroundSize: '1rem'
+            }}
           >
             <option value="" className="text-gray-800">
               — Sélectionner —
@@ -74,7 +76,13 @@ const CanevasHeader: React.FC = () => {
             onChange={(e) => dispatch(setAnnee(e.target.value))}
             className="bg-white/10 backdrop-blur text-white border border-blue-400/40 rounded-lg px-3 py-2.5 text-sm
               focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent
-              appearance-none cursor-pointer"
+              appearance-none cursor-pointer pr-10"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 0.75rem center',
+              backgroundSize: '1rem'
+            }}
           >
             {Array.from({ length: 6 }, (_, i) => {
               const y = new Date().getFullYear() - 2 + i;
@@ -98,7 +106,13 @@ const CanevasHeader: React.FC = () => {
             onChange={(e) => dispatch(setTrimestre(e.target.value))}
             className="bg-white/10 backdrop-blur text-white border border-blue-400/40 rounded-lg px-3 py-2.5 text-sm
               focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent
-              appearance-none cursor-pointer"
+              appearance-none cursor-pointer pr-10"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 0.75rem center',
+              backgroundSize: '1rem'
+            }}
           >
             <option value="1" className="text-gray-800">1er Trimestre</option>
             <option value="2" className="text-gray-800">2ème Trimestre</option>
