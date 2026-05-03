@@ -17,18 +17,16 @@ export class Chauffeur {
   })
   num_demende: number;
 
-  @Prop({ type: Date, required: true })
+  @Prop({ type: Date })
   hestoire_demende: Date;
 
   @Prop({
     type: Number,
-    required: true
   })
   num_enregistrement_du_transporteur: number;
 
   @Prop({
     type: String,
-    required: true
   })
   operateur: string;
 
@@ -39,7 +37,6 @@ export class Chauffeur {
 
   @Prop({
     type: String,
-    required: true
   })
   num_vehicule: string;
 
@@ -50,7 +47,6 @@ export class Chauffeur {
 
   @Prop({
     type: String,
-    required: true
   })
   nom_prenom_chauffeur: string;
 
@@ -64,7 +60,6 @@ export class Chauffeur {
 
   @Prop({
     type: String,
-    required: true
   })
   num_permis_conduire: string;
 
@@ -85,7 +80,6 @@ export class Chauffeur {
 
   @Prop({
     type: String,
-    required: true
   })
   lieu_naissance: string;
 

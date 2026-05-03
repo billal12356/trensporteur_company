@@ -16,29 +16,34 @@ export class CreateChauffeurDto {
   @IsNumber()
   num_demende?: number;
 
+  @IsOptional()
   @Type(() => Date)
   @IsDate()
-  hestoire_demende: Date;
+  hestoire_demende?: Date;
 
+  @IsOptional()
   @IsNumber()
-  num_enregistrement_du_transporteur: number;
+  num_enregistrement_du_transporteur?: number;
 
+  @IsOptional()
   @IsString()
-  operateur: string;
+  operateur?: string;
 
   @IsOptional()
   @IsString()
   ligne_exploitée?: string;
 
+  @IsOptional()
   @IsString()
-  num_vehicule: string;
+  num_vehicule?: string;
 
   @IsOptional()
   @IsString()
   nature_ligne?: string;
 
+  @IsOptional()
   @IsString()
-  nom_prenom_chauffeur: string;
+  nom_prenom_chauffeur?: string;
 
   @IsOptional()
   @IsString()
@@ -48,8 +53,9 @@ export class CreateChauffeurDto {
   @IsNumber()
   num_didentification_national_NIN?: number;
 
+  @IsOptional()
   @IsString()
-  num_permis_conduire: string;
+  num_permis_conduire?: string;
 
   @IsOptional()
   @Type(() => Date)
@@ -70,8 +76,9 @@ export class CreateChauffeurDto {
   @IsDate()
   date_naissance?: Date;
 
+  @IsOptional()
   @IsString()
-  lieu_naissance: string;
+  lieu_naissance?: string;
 
   @IsOptional()
   @IsString()

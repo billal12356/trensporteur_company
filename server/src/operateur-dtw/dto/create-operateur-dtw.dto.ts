@@ -11,61 +11,67 @@ import {
 import { Type } from 'class-transformer';
 
 export class CreateOperateurDto {
+  @IsOptional()
   @IsNumber()
-  num_wilaya: number;
+  num_wilaya?: number;
 
+  @IsOptional()
   @IsNumber()
-  num_docier_client: number;
+  num_docier_client?: number;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  fullName_arabe: string;
+  fullName_arabe?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  fullName_francais: string;
+  fullName_francais?: string;
 
+  @IsOptional()
   @IsDate()
   @Type(() => Date)
-  date_expiration: Date;
+  date_expiration?: Date;
 
+  @IsOptional()
   @IsDate()
   @Type(() => Date)
-  date_prévue: Date;
+  date_prévue?: Date;
 
+  @IsOptional()
   @IsNumber()
-  num_dhoraire: number;
+  num_dhoraire?: number;
 
+  @IsOptional()
   @IsNumber()
-  num_cate_enregistement: number;
+  num_cate_enregistement?: number;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  activite: string;
+  activite?: string;
 
   @IsOptional()
   @IsString()
   colonne1?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  nature_activite: string;
+  nature_activite?: string;
 
   @IsOptional()
   @IsString()
   colonne2?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  status_activite: string;
+  status_activite?: string;
 
   @IsOptional()
   @IsString()
   colonne3?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  type_client: string;
+  type_client?: string;
 
   @IsOptional()
   @IsString()
@@ -79,87 +85,94 @@ export class CreateOperateurDto {
   @IsString()
   fullName_gerent_person_moral?: string;
 
+  @IsOptional()
   @IsNumber()
-  num_dacte_naissance: number;
+  num_dacte_naissance?: number;
 
-  @IsNumber()
+  @IsOptional()
+  @IsString()
   @Length(18, 18, { message: "رقم التعريف الوطني يجب أن يكون 18 رقم بالضبط" })
-  num_didentification_national_NIN: string;
+  num_didentification_national_NIN?: string;
   
+  @IsOptional()
   @IsNumber()
-  Tax_identification_number_NIF: number;
+  Tax_identification_number_NIF?: number;
 
+  @IsOptional()
   @IsDate()
   @Type(() => Date)
-  date_naissance: Date;
+  date_naissance?: Date;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  lieu_naissance_arabe: string;
+  lieu_naissance_arabe?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  lieu_naissance_francais: string;
+  lieu_naissance_francais?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  nom_pere_arabe: string;
+  nom_pere_arabe?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  nom_pere_francais: string;
+  nom_pere_francais?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  fullName_mere_arabe: string;
+  fullName_mere_arabe?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  fullName_mere_francais: string;
+  fullName_mere_francais?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  communes_naissance_arabe: string;
+  communes_naissance_arabe?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  communes_naissance_francais: string;
+  communes_naissance_francais?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  address_arabe: string;
+  address_arabe?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  address_francais: string;
+  address_francais?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  address_municipalité_arabe: string;
+  address_municipalité_arabe?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  address_municipalité_francais: string;
+  address_municipalité_francais?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  num_registre_commerce: string;
+  num_registre_commerce?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  num_registre_commerce_n5: string;
+  num_registre_commerce_n5?: string;
 
+  @IsOptional()
   @IsDate()
   @Type(() => Date)
-  hestoire_registre_commerce: Date;
+  hestoire_registre_commerce?: Date;
 
+  @IsOptional()
   @IsDate()
   @Type(() => Date)
-  modifier_hestoire_registre_commerce: Date;
+  modifier_hestoire_registre_commerce?: Date;
 
+  @IsOptional()
   @IsDate()
   @Type(() => Date)
-  date_debut_activite: Date;
+  date_debut_activite?: Date;
 
   @IsOptional()
   @IsNumber()

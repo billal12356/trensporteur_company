@@ -5,55 +5,55 @@ export type VihiclesDocument = HydratedDocument<Vihicles>;
 
 @Schema({ timestamps: true })
 export class Vihicles {
-  @Prop({ type: Number, required: true })
+  @Prop({ type: Number })
   num_wilaya: number;
 
-  @Prop({ type: Number, required: true })
+  @Prop({ type: Number })
   num_docier_client: number;
 
-  @Prop({ type: String, required: [true, "الاسم الكامل بالعربية مطلوب!"] })
+  @Prop({ type: String })
   fullName_arabe: string;
 
-  @Prop({ type: String, required: [true, "الاسم الكامل بالفرنسية مطلوب!"] })
+  @Prop({ type: String })
   fullName_francais: string;
 
-  @Prop({ type: String, required: [true, "النشاط مطلوب!"] })
+  @Prop({ type: String })
   activite: string;
 
   @Prop({ type: String })
   colonne1: string;
 
-  @Prop({ type: String, required: [true, "طبيعة النشاط مطلوبة!"] })
+  @Prop({ type: String })
   nature_activite: string;
 
   @Prop({ type: String })
   colonne2: string;
 
-  @Prop({ type: String, required: [true, "حالة النشاط مطلوبة!"] })
+  @Prop({ type: String })
   status_activite: string;
 
   @Prop({ type: String })
   colonne3: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   num_bus_registration: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   circle: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   Municipality: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   Style: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   category: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   type: string;
 
-  @Prop({ type: Number, required: true })
+  @Prop({ type: Number })
   First_year_of_use: number;
 
   @Prop({ type: Number })
@@ -74,7 +74,7 @@ export class Vihicles {
   @Prop({ type: String })
   Energy: string;
 
-  @Prop({ type: Number, required: true })
+  @Prop({ type: Number })
   num_driving_license: number;
 
   @Prop({ type: Date })
@@ -86,22 +86,22 @@ export class Vihicles {
   @Prop({ type: Date })
   line_activity_start_date: Date;
 
-  @Prop({ type: Date, required: true })
+  @Prop({ type: Date })
   Vehicle_activity_start_date: Date;
 
   @Prop({ type: String })
   font_type: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   colonne4: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   font_symbol: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   point_depart: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   point_arrive: string;
 
   @Prop({ type: String })
