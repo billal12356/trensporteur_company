@@ -11,6 +11,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    host: true,
+    proxy: {
+      '/api': 'http://192.168.1.4:3000'
+    }
+  },
   build: {
     rollupOptions: {
       output: {

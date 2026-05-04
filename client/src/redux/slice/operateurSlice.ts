@@ -312,7 +312,7 @@ export const createOperateur = createAsyncThunk<
       console.log("res", res.data)
       return {
         message: res.data.message || "تم التسجيل بنجاح",
-        operateur: res.data.operateur,
+        operateur: res.data.data, // 👈 Fix: server returns it in 'data'
       };
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {

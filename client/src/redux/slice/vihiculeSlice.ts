@@ -132,8 +132,8 @@ interface VihiclesState {
   statistiqueAnnee: any;
   fontSearchLoading: boolean;
   vehicleRouteLoading: boolean;
-   fontSymbolError: string | null;
-   fontSymbolStatus: "idle" | "loading" | "success" | "error";
+  fontSymbolError: string | null;
+  fontSymbolStatus: "idle" | "loading" | "success" | "error";
 }
 
 // Initial State
@@ -661,7 +661,7 @@ export const fetchByFontSymbol = createAsyncThunk<
     );
     return res.data;
   } catch (error: any) {
-    console.log("error",error)
+    console.log("error", error)
     return rejectWithValue(
       error.response?.data?.message || "خطأ في البحث عن الخط"
     );
@@ -956,14 +956,14 @@ const operateurSlice = createSlice({
         state.fontSymbolError = null;
       })
       .addCase(fetchByFontSymbol.rejected, (state, action) => {
-        console.log("action.payload ==>",action.payload)
+        console.log("action.payload ==>", action.payload)
         state.vehicleRouteLoading = false;
         state.fontSymbolStatus = "error";
         state.fontSymbolError = action.payload as string;
       });
-      },
+  },
 });
 
 // Export Actions & Reducer
-export const { setMessage, resetDownloadState, clearMessageUpdate , resetFontSymbolStatus } = operateurSlice.actions;
+export const { setMessage, resetDownloadState, clearMessageUpdate, resetFontSymbolStatus } = operateurSlice.actions;
 export default operateurSlice.reducer;

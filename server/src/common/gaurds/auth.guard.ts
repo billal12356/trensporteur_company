@@ -17,7 +17,7 @@ export class AuthGuard implements CanActivate {
     console.log("tokeen" + token);
 
     if (!token) {
-      throw new UnauthorizedException('🚫 غير مصرح لك بالدخول، لم يتم العثور على التوكن!');
+      throw new UnauthorizedException('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى.');
     }
     try {
       const payload = await this.jwtService.verifyAsync(token, {

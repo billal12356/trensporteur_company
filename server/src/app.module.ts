@@ -10,6 +10,8 @@ import { ChauffeursModule } from './chauffeurs/chauffeurs.module';
 import { StateModule } from './state/state.module';
 import { ImportOperateurModule } from './import-operateur/import-operateur.module';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { join } from 'path';
+import { ServeStaticModule } from '@nestjs/serve-static';
 
 @Module({
   imports: [
@@ -17,7 +19,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
     MongooseModule.forRoot(process.env.MONGO_URL),
     MailerModule.forRoot({
       transport: {
-        service:"gmail",
+        service: "gmail",
         secure: false,
         auth: {
           user: process.env.EMAIL,
@@ -28,6 +30,9 @@ import { MailerModule } from '@nestjs-modules/mailer';
     JwtModule.register({
       global: true,
       secret: process.env.JWT_TOKEN,
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
     }),
     UsersModule,
     AuthModule,
@@ -40,4 +45,4 @@ import { MailerModule } from '@nestjs-modules/mailer';
   providers: [],
   controllers: [],
 })
-export class AppModule {}
+export class AppModule { }

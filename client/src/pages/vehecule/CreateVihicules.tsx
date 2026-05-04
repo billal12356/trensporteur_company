@@ -1,5 +1,5 @@
 import MainContainer from "@/components/MainContainer";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +20,7 @@ import { useNavigate } from "react-router-dom";
 const FormOperateur: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { loading, errorDetails, fontSymbolStatus, fontSymbolError   } = useSelector(
+  const { loading, errorDetails, fontSymbolStatus, fontSymbolError } = useSelector(
     (state: RootState) => state.vihicule
   );
 
@@ -30,22 +30,22 @@ const FormOperateur: React.FC = () => {
 
   // ✅ update handler
   const handleChange = (field: keyof Vihicles, value: any) => {
-  setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
-  if (field === "font_symbol") {
-    setFontSymbol(value);
-    dispatch(resetFontSymbolStatus()); // 👈 reset on every keystroke
+    if (field === "font_symbol") {
+      setFontSymbol(value);
+      dispatch(resetFontSymbolStatus()); // 👈 reset on every keystroke
 
-    if (!value || value.trim() === "") {
-      setFormData((prev) => ({
-        ...prev,
-        font_symbol: value,
-        point_depart: "",
-        point_arrive: "",
-      }));
+      if (!value || value.trim() === "") {
+        setFormData((prev) => ({
+          ...prev,
+          font_symbol: value,
+          point_depart: "",
+          point_arrive: "",
+        }));
+      }
     }
-  }
-};
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,39 +56,46 @@ const FormOperateur: React.FC = () => {
       console.error("Error:", error);
     }
   };
-  
+
+  const formatDate = (date: any) => {
+    if (!date) return "";
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "";
+    return d.toISOString().split("T")[0];
+  };
+
   const handleFontSymbolBlur = () => {
-    console.log("fontSymbol ==>",fontSymbol)
-    console.log("fontSymbolStatus ==>",fontSymbolStatus)
-  if (!fontSymbol || fontSymbol.trim() === "") return;
-   if (fontSymbolStatus === "error") {
-    // 👇 clear if font_symbol is empty on blur
-    setFormData((prev) => ({
-      ...prev,
-      point_depart: "",
-      point_arrive: "",
-    }));
-    dispatch(resetFontSymbolStatus());
-    return;
-  }
-  dispatch(fetchByFontSymbol(fontSymbol))
-    .unwrap()
-    .then((res) => {
+    console.log("fontSymbol ==>", fontSymbol)
+    console.log("fontSymbolStatus ==>", fontSymbolStatus)
+    if (!fontSymbol || fontSymbol.trim() === "") return;
+    if (fontSymbolStatus === "error") {
+      // 👇 clear if font_symbol is empty on blur
       setFormData((prev) => ({
         ...prev,
-        point_depart: res.point_depart,
-        point_arrive: res.point_arrive,
+        point_depart: "",
+        point_arrive: "",
       }));
-    })
-    .catch((err) => {
-      console.log(err);
-      setFormData((prev) => ({
-    ...prev,
-    point_depart: "",
-    point_arrive: "",
-  }));
-    });
-};
+      dispatch(resetFontSymbolStatus());
+      return;
+    }
+    dispatch(fetchByFontSymbol(fontSymbol))
+      .unwrap()
+      .then((res) => {
+        setFormData((prev) => ({
+          ...prev,
+          point_depart: res.point_depart,
+          point_arrive: res.point_arrive,
+        }));
+      })
+      .catch((err) => {
+        console.log(err);
+        setFormData((prev) => ({
+          ...prev,
+          point_depart: "",
+          point_arrive: "",
+        }));
+      });
+  };
   return (
     <MainContainer>
       <Helmet>
@@ -285,13 +292,7 @@ const FormOperateur: React.FC = () => {
             <InputField
               label="تاريخ رخصة السير"
               type="date"
-              value={
-                formData.driving_license_history
-                  ? new Date(formData.driving_license_history)
-                      .toISOString()
-                      .split("T")[0]
-                  : ""
-              }
+              value={formatDate(formData.driving_license_history)}
               onChange={(v) => handleChange("driving_license_history", v)}
             />
             <InputField
@@ -309,13 +310,7 @@ const FormOperateur: React.FC = () => {
             <InputField
               label="تاريخ بداية نشاط الخط"
               type="date"
-              value={
-                formData.line_activity_start_date
-                  ? new Date(formData.line_activity_start_date)
-                      .toISOString()
-                      .split("T")[0]
-                  : ""
-              }
+              value={formatDate(formData.line_activity_start_date)}
               onChange={(v) => handleChange("line_activity_start_date", v)}
             />
             <InputField
@@ -345,13 +340,7 @@ const FormOperateur: React.FC = () => {
             <InputField
               label="تاريخ بداية نشاط المركبة"
               type="date"
-              value={
-                formData.Vehicle_activity_start_date
-                  ? new Date(formData.Vehicle_activity_start_date)
-                      .toISOString()
-                      .split("T")[0]
-                  : ""
-              }
+              value={formatDate(formData.Vehicle_activity_start_date)}
               onChange={(val) =>
                 handleChange("Vehicle_activity_start_date", val)
               }
@@ -361,22 +350,22 @@ const FormOperateur: React.FC = () => {
           {/* Row 13 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField
-  label="رمز الخط"
-  type="text"
-  value={formData.font_symbol ?? ""}
-  onChange={(v) => handleChange("font_symbol", v)}
-  onBlur={handleFontSymbolBlur} 
-  status={fontSymbolStatus}
-  message={
-    fontSymbolStatus === "loading"
-      ? "جاري البحث..."
-      : fontSymbolStatus === "error"
-      ? fontSymbolError
-      : fontSymbolStatus === "success"
-      ? "رمز الخط موجود"
-      : ""
-  }
-/>
+              label="رمز الخط"
+              type="text"
+              value={formData.font_symbol ?? ""}
+              onChange={(v) => handleChange("font_symbol", v)}
+              onBlur={handleFontSymbolBlur}
+              status={fontSymbolStatus}
+              message={
+                fontSymbolStatus === "loading"
+                  ? "جاري البحث..."
+                  : fontSymbolStatus === "error"
+                    ? (fontSymbolError ?? undefined)
+                    : fontSymbolStatus === "success"
+                      ? "رمز الخط موجود"
+                      : ""
+              }
+            />
             <SelectField
               label="colonne 4"
               value={formData.colonne4 ?? ""}
@@ -547,13 +536,7 @@ const FormOperateur: React.FC = () => {
             <InputField
               label="تاريخ التوقيف"
               type="date"
-              value={
-                formData.hestoire_parked
-                  ? new Date(formData.hestoire_parked)
-                      .toISOString()
-                      .split("T")[0]
-                  : ""
-              }
+              value={formatDate(formData.hestoire_parked)}
               onChange={(v) => handleChange("hestoire_parked", v)}
               disabled={formData.vihicile_parked === "لا"}
             />
@@ -561,13 +544,7 @@ const FormOperateur: React.FC = () => {
             <InputField
               label="تاريخ نهاية التوقيف المؤقت"
               type="date"
-              value={
-                formData.hestoire_parked_end
-                  ? new Date(formData.hestoire_parked_end)
-                      .toISOString()
-                      .split("T")[0]
-                  : ""
-              }
+              value={formatDate(formData.hestoire_parked_end)}
               onChange={(v) => handleChange("hestoire_parked_end", v)}
               disabled={
                 formData.vihicile_parked === "لا" ||
@@ -625,10 +602,10 @@ const FormOperateur: React.FC = () => {
             <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
               <div className="bg-red-50 border border-red-300 text-red-700 p-6 rounded-xl shadow-xl max-w-md w-full text-center animate-fadeIn">
                 <h3 className="font-bold text-xl mb-3">
-                   <p>{errorDetails.message  || "حدث خطأ غير متوقع"}</p>
+                  <p>{errorDetails.message || "حدث خطأ غير متوقع"}</p>
                 </h3>
                 <p className="text-black font-semibold">معلومات عن المركبة المسجلة</p>
-                
+
                 {errorDetails && (
                   <ul className="list-disc text-right pr-6 mt-3 text-sm text-red-600">
                     <li className="text-xl font-semibold">الاسم الكامل : {errorDetails?.data?.fullName_arabe}</li>
@@ -658,7 +635,7 @@ const InputField = ({
   type,
   value,
   onChange,
-  onBlur, 
+  onBlur,
   disabled = false,
   status,
   message,
@@ -687,17 +664,17 @@ const InputField = ({
     status === "error"
       ? "border-red-500 focus-visible:ring-red-500"
       : status === "success"
-      ? "border-green-500 focus-visible:ring-green-500"
-      : status === "loading"
-      ? "border-gray-400"
-      : "";
+        ? "border-green-500 focus-visible:ring-green-500"
+        : status === "loading"
+          ? "border-gray-400"
+          : "";
 
   const messageColor =
     status === "error"
       ? "text-red-600"
       : status === "success"
-      ? "text-green-600"
-      : "text-gray-500";
+        ? "text-green-600"
+        : "text-gray-500";
 
   return (
     <div className="flex flex-col gap-2">
@@ -710,7 +687,7 @@ const InputField = ({
         value={displayValue}
         disabled={disabled}
         className={`transition-all ${borderClass}`}
-        onBlur={onBlur} 
+        onBlur={onBlur}
         onChange={(e) => {
           const inputVal = e.target.value;
 

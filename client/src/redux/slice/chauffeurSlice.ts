@@ -89,7 +89,7 @@ export const downloadRegistrationStats = createAsyncThunk<
     { startDate: string; endDate: string },
     { rejectValue: string }
 >(
-    'operateur/downloadRegistrationStats',
+    'chauffeur/downloadRegistrationStats',
     async ({ startDate, endDate }, { rejectWithValue }) => {
         try {
             const response = await fetch(
@@ -175,7 +175,7 @@ export const exportChauffeurs = createAsyncThunk<
 
 
 export const deleteChauffeurs = createAsyncThunk(
-    "operateur/deleteChauffeurs",
+    "chauffeur/deleteChauffeurs",
     async (id: string, { rejectWithValue }) => {
         try {
             const response = await axios.delete(`${API_URL}/api/v1/chauffeurs/${id}`, { withCredentials: true });
@@ -195,7 +195,7 @@ export const updateChauffeurs = createAsyncThunk(
     async ({ id, data }: { id: string; data: Partial<Chauffeur> }, { rejectWithValue }) => {
         try {
             const response = await axios.patch(`${API_URL}/api/v1/chauffeurs/update/${id}`, data, { withCredentials: true });
-            return response.data;
+            return response.data.data;
         } catch (error: unknown) {
             if (typeof error === "object" && error !== null && "response" in error) {
                 const err = error as { response?: { data?: { message?: string } } };
@@ -214,9 +214,9 @@ export const createChauffeurs = createAsyncThunk<
     'chauffeurs/createChauffeurs',
     async (data, { rejectWithValue }) => {
         try {
-            const response = await axios.post<Chauffeur>(`${API_URL}/api/v1/chauffeurs/create`, data, { withCredentials: true });
+            const response = await axios.post<any>(`${API_URL}/api/v1/chauffeurs/create`, data, { withCredentials: true });
             toast.success("تم تسجيل المركبة بنجاح")
-            return response.data;
+            return response.data.data; // 👈 Fix: extract data field from ResponseBuilder
         } catch (error: unknown) {
             console.log(error);
 
@@ -245,7 +245,7 @@ export const createChauffeurs = createAsyncThunk<
 
 // Create Slice
 const operateurSlice = createSlice({
-    name: "operateur",
+    name: "chauffeur",
     initialState,
     reducers: {
         setMessage: (state, action) => {
@@ -354,10 +354,10 @@ const operateurSlice = createSlice({
                 state.error = null;
                 state.successMessage = null;
             })
-            .addCase(createChauffeurs.fulfilled, (state) => {
+            .addCase(createChauffeurs.fulfilled, (state, action) => {
                 state.loading = false;
-                //state.successMessage = action.payload
-                //state.message = action.payload.message
+                state.chauffeurs.push(action.payload as Chauffeur);
+                state.message = "تم تسجيل السائق بنجاح";
             })
             .addCase(createChauffeurs.rejected, (state, action) => {
                 state.loading = false;

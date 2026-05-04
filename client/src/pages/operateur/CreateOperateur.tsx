@@ -46,6 +46,34 @@ const FormOperateur: React.FC = () => {
   // Submit function
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const requiredFields: (keyof Operateur)[] = [
+      "num_wilaya", "num_docier_client", "fullName_arabe", "fullName_francais",
+      "date_expiration", "date_prévue", "num_dhoraire", "num_cate_enregistement",
+      "activite", "nature_activite", "status_activite", "type_client",
+      "num_dacte_naissance", "num_didentification_national_NIN", "Tax_identification_number_NIF",
+      "date_naissance", "lieu_naissance_arabe", "lieu_naissance_francais",
+      "nom_pere_arabe", "nom_pere_francais", "communes_naissance_arabe",
+      "communes_naissance_francais", "address_arabe", "address_francais",
+      "address_municipalité_arabe", "address_municipalité_francais",
+      "num_registre_commerce", "num_registre_commerce_n5",
+      "hestoire_registre_commerce", "modifier_hestoire_registre_commerce",
+      "date_debut_activite"
+    ];
+
+    const missingFields = requiredFields.filter(field => !operateur[field]);
+
+    if (missingFields.length > 0 || !mereLastNameAr || !mereFirstNameAr || !mereLastNameFr || !mereFirstNameFr) {
+      toast.error("يرجى ملء جميع الحقول المطلوبة!");
+      return;
+    }
+
+    const nin = String(operateur.num_didentification_national_NIN || "");
+    if (nin.length !== 18) {
+      toast.error("رقم التعريف الوطني يجب أن يتكون من 18 رقماً بالضبط!");
+      return;
+    }
+
     const payload = {
       ...operateur,
 
@@ -57,9 +85,10 @@ const FormOperateur: React.FC = () => {
     };
     try {
       await dispatch(createOperateur(payload)).unwrap();
-      navigate("/operateur"); // ✅ 100% reliable
-    } catch (err) {
-      toast.error(err[0]);
+      toast.success("تم تسجيل المتعامل بنجاح!");
+      navigate("/operateur"); 
+    } catch (err: any) {
+      toast.error(err || "حدث خطأ أثناء التسجيل");
     }
   };
 
@@ -103,10 +132,11 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-sm text-end font-medium text-gray-700">
-                رقم ملف المتعامل
+                رقم ملف المتعامل <span className="text-red-500">*</span>
               </label>
               <Input
                 type="number"
+                required
                 value={operateur.num_docier_client ?? ""}
                 onChange={(e) =>
                   handleChange("num_docier_client", Number(e.target.value))
@@ -116,10 +146,11 @@ const FormOperateur: React.FC = () => {
 
             <div className="flex flex-col gap-2">
               <label className="text-sm text-end font-medium text-gray-700">
-                رقم الولاية
+                رقم الولاية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="number"
+                required
                 value={operateur.num_wilaya ?? ""}
                 onChange={(e) =>
                   handleChange("num_wilaya", Number(e.target.value))
@@ -132,10 +163,11 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium text-end text-gray-700">
-                تاريخ انتهاء الصلاحية
+                تاريخ انتهاء الصلاحية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="date"
+                required
                 value={operateur.date_expiration ?? ""}
                 onChange={(e) =>
                   handleChange("date_expiration", e.target.value)
@@ -144,20 +176,22 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="text-sm font-medium text-end text-gray-700">
-                الاسم و لقب المتعامل بالعربية
+                الاسم و لقب المتعامل بالعربية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
+                required
                 value={operateur.fullName_arabe ?? ""}
                 onChange={(e) => handleChange("fullName_arabe", e.target.value)}
               />
             </div>
             <div>
               <label className="text-sm font-medium text-end text-gray-700">
-                الاسم و لقب المتعامل بالفرنسية
+                الاسم و لقب المتعامل بالفرنسية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
+                required
                 value={operateur.fullName_francais ?? ""}
                 onChange={(e) =>
                   handleChange("fullName_francais", e.target.value)
@@ -170,7 +204,7 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-end text-gray-700">
-                النشاط
+                النشاط <span className="text-red-500">*</span>
               </label>
               <Select
                 value={operateur.activite ?? ""}
@@ -187,7 +221,7 @@ const FormOperateur: React.FC = () => {
 
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-end text-gray-700">
-                حالة النشاط
+                حالة النشاط <span className="text-red-500">*</span>
               </label>
               <Select
                 value={operateur.status_activite ?? ""}
@@ -208,10 +242,11 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                رقم بطاقة القيد
+                رقم بطاقة القيد <span className="text-red-500">*</span>
               </label>
               <Input
                 type="number"
+                required
                 value={operateur.num_cate_enregistement ?? ""}
                 onChange={(e) =>
                   handleChange(
@@ -224,10 +259,11 @@ const FormOperateur: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                رقم مقررة
+                رقم مقررة <span className="text-red-500">*</span>
               </label>
               <Input
                 type="number"
+                required
                 value={operateur.num_dhoraire ?? ""}
                 onChange={(e) =>
                   handleChange(
@@ -240,10 +276,11 @@ const FormOperateur: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                تاريخ المقررة
+                تاريخ المقررة <span className="text-red-500">*</span>
               </label>
               <Input
                 type="date"
+                required
                 value={operateur.date_prévue ?? ""}
                 onChange={(e) => handleChange("date_prévue", e.target.value)}
               />
@@ -274,7 +311,7 @@ const FormOperateur: React.FC = () => {
 
             <div className="flex flex-col gap-1">
               <label className="block text-sm font-medium text-end text-gray-700">
-                النشاط
+                النشاط <span className="text-red-500">*</span>
               </label>
               <Select
                 value={operateur.activite ?? ""}
@@ -314,7 +351,7 @@ const FormOperateur: React.FC = () => {
             {/* طبيعة النشاط */}
             <div className="flex flex-col gap-1">
               <label className="block text-sm font-medium text-end text-gray-700">
-                طبيعة النشاط
+                طبيعة النشاط <span className="text-red-500">*</span>
               </label>
               <Select
                 value={operateur.nature_activite ?? ""}
@@ -357,7 +394,7 @@ const FormOperateur: React.FC = () => {
             {/* حالة النشاط */}
             <div className="flex flex-col gap-1">
               <label className="block text-sm font-medium text-end text-gray-700">
-                حالة النشاط
+                حالة النشاط <span className="text-red-500">*</span>
               </label>
               <Select
                 value={operateur.status_activite ?? ""}
@@ -400,7 +437,7 @@ const FormOperateur: React.FC = () => {
             {/* نوع المتعامل */}
             <div className="flex flex-col gap-1">
               <label className="block text-sm font-medium text-end text-gray-700">
-                نوع المتعامل
+                نوع المتعامل <span className="text-red-500">*</span>
               </label>
               <Select
                 value={operateur.type_client ?? ""}
@@ -463,10 +500,11 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                رقم شهادة الميلاد
+                رقم شهادة الميلاد <span className="text-red-500">*</span>
               </label>
               <Input
                 type="number"
+                required
                 value={operateur.num_dacte_naissance ?? ""}
                 onChange={(e) =>
                   handleChange("num_dacte_naissance", Number(e.target.value))
@@ -476,10 +514,11 @@ const FormOperateur: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                رقم التعريف الوطني NIN
+                رقم التعريف الوطني NIN <span className="text-red-500">*</span>
               </label>
               <Input
                 type="number"
+                required
                 maxLength={19}
                 value={operateur.num_didentification_national_NIN ?? ""}
                 onChange={(e) => handleNinChange(e.target.value)}
@@ -504,7 +543,7 @@ const FormOperateur: React.FC = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-end text-gray-700">
-              رقم التعريف الجبائي NIF
+              رقم التعريف الجبائي NIF <span className="text-red-500">*</span>
             </label>
 
              <Input
@@ -524,10 +563,11 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                مكان الميلاد بالفرنسية
+                مكان الميلاد بالفرنسية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
+                required
                 value={operateur.lieu_naissance_francais ?? ""}
                 onChange={(e) =>
                   handleChange("lieu_naissance_francais", e.target.value)
@@ -536,10 +576,11 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                مكان الميلاد بالعربية
+                مكان الميلاد بالعربية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
+                required
                 value={operateur.lieu_naissance_arabe ?? ""}
                 onChange={(e) =>
                   handleChange("lieu_naissance_arabe", e.target.value)
@@ -548,10 +589,11 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                تاريخ الميلاد
+                تاريخ الميلاد <span className="text-red-500">*</span>
               </label>
               <Input
                 type="date"
+                required
                 value={operateur.date_naissance ?? ""}
                 onChange={(e) => handleChange("date_naissance", e.target.value)}
               />
@@ -562,11 +604,12 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                اسم و لقب الام بالعربية
+                اسم و لقب الام بالعربية <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <Input
                   type="text"
+                  required
                   placeholder="لقب الأم"
                   value={mereLastNameAr}
                   onChange={(e) => setMereLastNameAr(e.target.value)}
@@ -574,6 +617,7 @@ const FormOperateur: React.FC = () => {
 
                 <Input
                   type="text"
+                  required
                   placeholder="اسم الأم"
                   value={mereFirstNameAr}
                   onChange={(e) => setMereFirstNameAr(e.target.value)}
@@ -582,10 +626,11 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                اسم الاب بالفرنسية
+                اسم الاب بالفرنسية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
+                required
                 value={operateur.nom_pere_francais ?? ""}
                 onChange={(e) =>
                   handleChange("nom_pere_francais", e.target.value)
@@ -594,10 +639,11 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                اسم الاب بالعربي
+                اسم الاب بالعربي <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
+                required
                 value={operateur.nom_pere_arabe ?? ""}
                 onChange={(e) => handleChange("nom_pere_arabe", e.target.value)}
               />
@@ -608,10 +654,11 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                بلدية الميلاد بالفرنسية
+                بلدية الميلاد بالفرنسية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
+                required
                 value={operateur.communes_naissance_francais ?? ""}
                 onChange={(e) =>
                   handleChange("communes_naissance_francais", e.target.value)
@@ -620,10 +667,11 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                بلدية الميلاد بالعربية
+                بلدية الميلاد بالعربية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
+                required
                 value={operateur.communes_naissance_arabe ?? ""}
                 onChange={(e) =>
                   handleChange("communes_naissance_arabe", e.target.value)
@@ -632,11 +680,12 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                اسم و لقب الام بالفرنسية
+                اسم و لقب الام بالفرنسية <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
   <Input
     type="text"
+    required
     placeholder="Nom de famille mère"
     value={mereLastNameFr}
     onChange={(e) => setMereLastNameFr(e.target.value)}
@@ -644,6 +693,7 @@ const FormOperateur: React.FC = () => {
 
   <Input
     type="text"
+    required
     placeholder="Prénom mère"
     value={mereFirstNameFr}
     onChange={(e) => setMereFirstNameFr(e.target.value)}
@@ -656,10 +706,11 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                بلدية العنوان بالعربية
+                بلدية العنوان بالعربية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
+                required
                 value={operateur.address_municipalité_arabe ?? ""}
                 onChange={(e) =>
                   handleChange("address_municipalité_arabe", e.target.value)
@@ -668,10 +719,11 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                العنوان بالفرنسية
+                العنوان بالفرنسية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
+                required
                 value={operateur.address_francais ?? ""}
                 onChange={(e) =>
                   handleChange("address_francais", e.target.value)
@@ -680,10 +732,11 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                العنوان بالعربية
+                العنوان بالعربية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
+                required
                 value={operateur.address_arabe ?? ""}
                 onChange={(e) => handleChange("address_arabe", e.target.value)}
               />
@@ -694,10 +747,11 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                رقم التسجيل التجاري 5
+                رقم التسجيل التجاري 5 <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
+                required
                 value={operateur.num_registre_commerce_n5 ?? ""}
                 onChange={(e) =>
                   handleChange("num_registre_commerce_n5", e.target.value)
@@ -706,10 +760,11 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                رقم التسجيل التجاري
+                رقم التسجيل التجاري <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
+                required
                 value={operateur.num_registre_commerce ?? ""}
                 onChange={(e) =>
                   handleChange("num_registre_commerce", e.target.value)
@@ -718,10 +773,11 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                بلدية العنوان بالفرنسية
+                بلدية العنوان بالفرنسية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
+                required
                 value={operateur.address_municipalité_francais ?? ""}
                 onChange={(e) =>
                   handleChange("address_municipalité_francais", e.target.value)
@@ -734,10 +790,11 @@ const FormOperateur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                تاريخ بداية النشاط
+                تاريخ بداية النشاط <span className="text-red-500">*</span>
               </label>
               <Input
                 type="date"
+                required
                 value={operateur.date_debut_activite ?? ""}
                 onChange={(e) =>
                   handleChange("date_debut_activite", e.target.value)
@@ -746,10 +803,11 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                تاريخ تعديل السجل التجاري
+                تاريخ تعديل السجل التجاري <span className="text-red-500">*</span>
               </label>
               <Input
                 type="date"
+                required
                 value={operateur.modifier_hestoire_registre_commerce ?? ""}
                 onChange={(e) =>
                   handleChange(
@@ -761,10 +819,11 @@ const FormOperateur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                تاريخ السجل التجاري
+                تاريخ السجل التجاري <span className="text-red-500">*</span>
               </label>
               <Input
                 type="date"
+                required
                 value={operateur.hestoire_registre_commerce ?? ""}
                 onChange={(e) =>
                   handleChange("hestoire_registre_commerce", e.target.value)

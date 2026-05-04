@@ -17,6 +17,7 @@ import { Loader } from "lucide-react";
 import { createChauffeurs } from "@/redux/slice/chauffeurSlice";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const FormChauffeur: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -58,6 +59,13 @@ const FormChauffeur: React.FC = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value, type } = e.target;
+    
+    if (name === "num_didentification_national_NIN") {
+      const onlyNumbers = value.replace(/\D/g, "").slice(0, 18);
+      setFormData((prev) => ({ ...prev, [name]: onlyNumbers === "" ? undefined : Number(onlyNumbers) }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]:
@@ -72,8 +80,37 @@ const FormChauffeur: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await dispatch(createChauffeurs(formData as Chauffeur)).unwrap();
-    navigate("/chauffeur");
+
+    const requiredFields: (keyof Chauffeur)[] = [
+      "num_chauffeur", "num_demende", "hestoire_demende", "num_enregistrement_du_transporteur",
+      "operateur", "ligne_exploitée", "nature_ligne", "num_vehicule",
+      "nature_utilisateur", "nom_prenom_chauffeur", "num_didentification_national_NIN",
+      "num_permis_conduire", "date_sortie", "date_expiration_article",
+      "municipalite_emettrice", "date_naissance", "lieu_naissance", "address",
+      "Num_certificat_compétence_professionnelle", "date_obtention_certificat_aptitude_professionnelle",
+      "wilaya", "num_serie", "num_membre_fonds_national", "vihicile_parked", "type_parked"
+    ];
+
+    const missingFields = requiredFields.filter(field => !formData[field]);
+
+    if (missingFields.length > 0) {
+      toast.error("يرجى ملء جميع الحقول المطلوبة!");
+      return;
+    }
+
+    const nin = String(formData.num_didentification_national_NIN || "");
+    if (nin.length !== 18) {
+      toast.error("رقم التعريف الوطني يجب أن يتكون من 18 رقماً بالضبط!");
+      return;
+    }
+
+    try {
+      await dispatch(createChauffeurs(formData as Chauffeur)).unwrap();
+      toast.success("تم تسجيل السائق بنجاح!");
+      navigate("/chauffeur");
+    } catch (error: any) {
+      toast.error(error || "حدث خطأ أثناء التسجيل");
+    }
   };
 
 
@@ -99,22 +136,24 @@ const FormChauffeur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-sm text-end font-medium text-gray-700">
-                رقم المستخدم
+                رقم المستخدم <span className="text-red-500">*</span>
               </label>
               <Input
                 name="num_chauffeur"
                 type="number"
+                required
                 value={formData.num_chauffeur ?? ""}
                 onChange={handleChange}
               />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-sm text-end font-medium text-gray-700">
-                رقم الطلب
+                رقم الطلب <span className="text-red-500">*</span>
               </label>
               <Input
                 name="num_demende"
                 type="number"
+                required
                 value={formData.num_demende ?? ""}
                 onChange={handleChange}
               />
@@ -125,22 +164,24 @@ const FormChauffeur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-sm text-end font-medium text-gray-700">
-                رقم القيد للناقل
+                رقم القيد للناقل <span className="text-red-500">*</span>
               </label>
               <Input
                 name="num_enregistrement_du_transporteur"
                 type="number"
+                required
                 value={formData.num_enregistrement_du_transporteur ?? ""}
                 onChange={handleChange}
               />
             </div>
             <div>
               <label className="text-sm font-medium text-end text-gray-700">
-                تاريخ الطلب
+                تاريخ الطلب <span className="text-red-500">*</span>
               </label>
               <Input
                 name="hestoire_demende"
                 type="date"
+                required
                 value={formData.hestoire_demende || ""}
                 onChange={handleChange}
               />
@@ -151,20 +192,22 @@ const FormChauffeur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-end text-gray-700">
-                المتعامل
+                المتعامل <span className="text-red-500">*</span>
               </label>
               <Input
                 name="operateur"
+                required
                 value={formData.operateur || ""}
                 onChange={handleChange}
               />
             </div>
             <div>
               <label className="text-sm font-medium text-end text-gray-700">
-                الخط المستغل
+                الخط المستغل <span className="text-red-500">*</span>
               </label>
               <Input
                 name="ligne_exploitée"
+                required
                 value={formData.ligne_exploitée || ""}
                 onChange={handleChange}
               />
@@ -175,7 +218,7 @@ const FormChauffeur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-end text-gray-700">
-                طبيعى الخط
+                طبيعة الخط <span className="text-red-500">*</span>
               </label>
               <Select
                 onValueChange={(value) =>
@@ -197,11 +240,12 @@ const FormChauffeur: React.FC = () => {
             </div>
             <div>
               <label className="text-sm font-medium text-end text-gray-700">
-                ترقيم المركبة
+                ترقيم المركبة <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
                 name="num_vehicule"
+                required
                 value={formData.num_vehicule || ""}
                 onChange={handleChange}
               />
@@ -212,11 +256,12 @@ const FormChauffeur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex flex-col gap-2">
               <label className="block text-sm text-end font-medium text-gray-700">
-                رقم التعريف الوطني NIN
+                رقم التعريف الوطني NIN <span className="text-red-500">*</span>
               </label>
               <Input
                 type="number"
                 name="num_didentification_national_NIN"
+                required
                 value={formData.num_didentification_national_NIN ?? ""}
                 onChange={handleChange}
               />
@@ -224,11 +269,12 @@ const FormChauffeur: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                طبيعة المستخدم
+                طبيعة المستخدم <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
                 name="nature_utilisateur"
+                required
                 value={formData.nature_utilisateur || ""}
                 onChange={handleChange}
               />
@@ -236,11 +282,12 @@ const FormChauffeur: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                اسم و لقب السائق
+                اسم و لقب السائق <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
                 name="nom_prenom_chauffeur"
+                required
                 value={formData.nom_prenom_chauffeur || ""}
                 onChange={handleChange}
               />
@@ -251,11 +298,12 @@ const FormChauffeur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                تاريخ الاصدار
+                تاريخ الاصدار <span className="text-red-500">*</span>
               </label>
               <Input
                 type="date"
                 name="date_sortie"
+                required
                 value={formData.date_sortie || ""}
                 onChange={handleChange}
               />
@@ -263,11 +311,12 @@ const FormChauffeur: React.FC = () => {
 
             <div className="flex flex-col gap-2">
               <label className="block text-sm text-end font-medium text-gray-700">
-                رقم رخصة السياقة
+                رقم رخصة السياقة <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
                 name="num_permis_conduire"
+                required
                 value={formData.num_permis_conduire || ""}
                 onChange={handleChange}
               />
@@ -278,22 +327,24 @@ const FormChauffeur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                نهاية صلاحية الصنف
+                نهاية صلاحية الصنف <span className="text-red-500">*</span>
               </label>
               <Input
                 type="date"
                 name="date_expiration_article"
+                required
                 value={formData.date_expiration_article || ""}
                 onChange={handleChange}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                بلدية الاصدار
+                بلدية الاصدار <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
                 name="municipalite_emettrice"
+                required
                 value={formData.municipalite_emettrice || ""}
                 onChange={handleChange}
               />
@@ -304,11 +355,12 @@ const FormChauffeur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                العنوان
+                العنوان <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
                 name="address"
+                required
                 value={formData.address || ""}
                 onChange={handleChange}
               />
@@ -316,11 +368,12 @@ const FormChauffeur: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                مكان الميلاد
+                مكان الميلاد <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
                 name="lieu_naissance"
+                required
                 value={formData.lieu_naissance || ""}
                 onChange={handleChange}
               />
@@ -328,11 +381,12 @@ const FormChauffeur: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                تاريخ الميلاد
+                تاريخ الميلاد <span className="text-red-500">*</span>
               </label>
               <Input
                 type="date"
                 name="date_naissance"
+                required
                 value={formData.date_naissance || ""}
                 onChange={handleChange}
               />
@@ -343,11 +397,12 @@ const FormChauffeur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                تاريخ الحصول على شهادة الكفاءة
+                تاريخ الحصول على شهادة الكفاءة <span className="text-red-500">*</span>
               </label>
               <Input
                 type="date"
                 name="date_obtention_certificat_aptitude_professionnelle"
+                required
                 value={
                   formData.date_obtention_certificat_aptitude_professionnelle ||
                   ""
@@ -357,11 +412,12 @@ const FormChauffeur: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                رقم شهادة الكفاءة المهنية
+                رقم شهادة الكفاءة المهنية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="number"
                 name="Num_certificat_compétence_professionnelle"
+                required
                 value={formData.Num_certificat_compétence_professionnelle ?? ""}
                 onChange={handleChange}
               />
@@ -372,11 +428,12 @@ const FormChauffeur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                رقم الانتساب إلى الصندوق الوطني
+                رقم الانتساب إلى الصندوق الوطني <span className="text-red-500">*</span>
               </label>
               <Input
                 type="number"
                 name="num_membre_fonds_national"
+                required
                 value={formData.num_membre_fonds_national ?? ""}
                 onChange={handleChange}
               />
@@ -384,11 +441,12 @@ const FormChauffeur: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                الرقم التسلسلي
+                الرقم التسلسلي <span className="text-red-500">*</span>
               </label>
               <Input
                 type="number"
                 name="num_serie"
+                required
                 value={formData.num_serie ?? ""}
                 onChange={handleChange}
               />
@@ -396,11 +454,12 @@ const FormChauffeur: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                الولاية
+                الولاية <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
                 name="wilaya"
+                required
                 value={formData.wilaya || ""}
                 onChange={handleChange}
               />
@@ -411,7 +470,7 @@ const FormChauffeur: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <label className="block text-sm font-medium text-end text-gray-700">
-                نوع التوقف
+                نوع التوقف <span className="text-red-500">*</span>
               </label>
               <Select
                 onValueChange={(value) =>
@@ -431,7 +490,7 @@ const FormChauffeur: React.FC = () => {
 
             <div className="flex flex-col gap-1">
               <label className="block text-sm font-medium text-end text-gray-700">
-                المركبة موقفة أو لا
+                المركبة موقفة أو لا <span className="text-red-500">*</span>
               </label>
               <Select
                 onValueChange={(value) =>

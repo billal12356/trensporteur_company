@@ -4,7 +4,7 @@ import { StringDecoder } from 'string_decoder';
 
 export type ChauffeurDocument = HydratedDocument<Chauffeur>;
 
-@Schema({timestamps:true})
+@Schema({ timestamps: true })
 export class Chauffeur {
   @Prop({
     type: Number,
@@ -55,7 +55,7 @@ export class Chauffeur {
   })
   nature_utilisateur: string;
 
-  @Prop({ type: Number})
+  @Prop({ type: Number })
   num_didentification_national_NIN: number;
 
   @Prop({
@@ -63,7 +63,7 @@ export class Chauffeur {
   })
   num_permis_conduire: string;
 
-  @Prop({ type: Date})
+  @Prop({ type: Date })
   date_sortie: Date;
 
 
@@ -75,7 +75,7 @@ export class Chauffeur {
   })
   municipalite_emettrice: string;
 
-  @Prop({ type: Date})
+  @Prop({ type: Date })
   date_naissance: Date;
 
   @Prop({
@@ -111,7 +111,7 @@ export class Chauffeur {
   })
   num_membre_fonds_national: number;
 
-  @Prop({ type: String})
+  @Prop({ type: String })
   vihicile_parked: string;
 
   @Prop({ type: String })
