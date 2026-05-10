@@ -16,6 +16,18 @@ import { Helmet } from "react-helmet-async";
 import { ListTable, useTableColumns, useTableActions } from "@/components";
 import { formatters } from "@/lib/formatters";
 import { clearError } from "@/redux/slice/operateurSlice";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import axios from "axios";
+import { API_URL } from "@/redux/contants";
+import { toast } from "sonner";
 
 export default function OperateurDetails() {
   const { operateur, vihicules, chauffeurs, loading, error } = useSelector(
@@ -230,6 +242,80 @@ export default function OperateurDetails() {
               مقررة
             </Button>
           )}
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="h-12 bg-purple-600 hover:bg-purple-700 text-white transition">
+                إضافة معلومات
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]" dir="rtl">
+              <DialogHeader>
+                <DialogTitle className="text-right">إضافة معلومات إضافية</DialogTitle>
+              </DialogHeader>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const data = Object.fromEntries(formData.entries());
+                  
+                  try {
+                    const response = await axios.post(
+                      `${API_URL}/api/v1/operateur-dtw/add-info/${id}`,
+                      data,
+                      { withCredentials: true }
+                    );
+                    toast.success(response.data.message || "تم إرسال البيانات بنجاح");
+                    console.log("Success:", response.data);
+                  } catch (error) {
+                    toast.error("حدث خطأ أثناء الإرسال");
+                    console.error("Error:", error);
+                  }
+                }}
+              >
+                <div className="grid gap-4 py-4">
+                  {/* The operateur ID is kept here to be sent */}
+                  <input type="hidden" name="operateurId" value={id} />
+
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="request_date" className="text-right col-span-1">
+                      تاريخ الطلب
+                    </Label>
+                    <Input id="request_date" name="تاريخ الطلب" type="date" className="col-span-3" required />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="path" className="text-right col-span-1">
+                      المسار
+                    </Label>
+                    <Input id="path" name="المسار" className="col-span-3" required />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="benefit" className="text-right col-span-1">
+                      لفائدة
+                    </Label>
+                    <Input id="benefit" name="لفائدة" className="col-span-3" required />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="departure_date" className="text-right col-span-1">
+                      تاريخ الذهاب
+                    </Label>
+                    <Input id="departure_date" name="تاريخ الذهاب" type="date" className="col-span-3" required />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="return_date" className="text-right col-span-1">
+                      تاريخ الاياب
+                    </Label>
+                    <Input id="return_date" name="تاريخ الاياب" type="date" className="col-span-3" required />
+                  </div>
+                </div>
+                <div className="flex justify-end mt-4">
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+                    حفظ وإرسال
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
         <Card className="shadow-lg">
           <CardContent className="space-y-6">
