@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { CreateOperateurDto } from './dto/create-operateur-dtw.dto';
 import { UpdateOperateurDtwDto } from './dto/update-operateur-dtw.dto';
+import { GeneratePermitPdfDto } from './dto/generate-permit-pdf.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Operateur } from './operateur-dtw.schema';
 import { Model, Types } from 'mongoose';
@@ -18,7 +19,13 @@ import { VehiclesService } from 'src/vehicles/vehicles.service';
 import { ChauffeursService } from 'src/chauffeurs/chauffeurs.service';
 import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from 'pdf-lib';
 const fontkit = require('@pdf-lib/fontkit');
-import { getVisualString } from 'bidi-js';
+const bidiFactory = require('bidi-js');
+const bidi = bidiFactory();
+const getVisualString = (text: string) => {
+  if (!text) return '';
+  const levels = bidi.getEmbeddingLevels(text, 'rtl');
+  return bidi.getReorderedString(text, levels);
+};
 import * as fs from 'fs';
 import * as path from 'path';
 import * as XLSX from 'xlsx';
@@ -1556,6 +1563,236 @@ export class OperateurDtwService {
     // ---------------------------
 
     return outputPath;
+  }
+
+  /**
+   * Generate the "رخصة استغلال خدمة ظرفية لنقل الأشخاص" PDF
+   * Official occasional transport permit for passengers
+   */
+  async generatePermitPdf(
+    res: Response,
+    dto: GeneratePermitPdfDto,
+  ) {
+    // 1. Fetch data from DB
+    const operateur = await this.OperateurModel.findById(dto.operateurId).lean();
+    if (!operateur) {
+      throw new NotFoundException('لم يتم العثور على المتعامل');
+    }
+
+    const num_docier_client = operateur.num_docier_client;
+    const vihicules = await this.vihiculeService.findVihiculeByOperateur(num_docier_client);
+    const vehicleData = vihicules && vihicules.length > 0 ? vihicules[0] : null;
+
+    const fullName_arabe = operateur.fullName_arabe;
+    const chauffeurs = await this.chauffeursService.findChauffeurByOperateur(fullName_arabe);
+    const chauffeur1 = chauffeurs && chauffeurs.length > 0 ? chauffeurs[0] : null;
+    const chauffeur2 = chauffeurs && chauffeurs.length > 1 ? chauffeurs[1] : null;
+
+    // 2. Create PDF
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
+
+    // Load Arabic fonts
+    const cairoBoldPath = path.join(__dirname, '..', 'assets', 'fonts', 'Cairo-Bold.ttf');
+    const cairoSemiBoldPath = path.join(__dirname, '..', 'assets', 'fonts', 'Cairo-SemiBold.ttf');
+
+    const cairoBoldFont = await pdfDoc.embedFont(fs.readFileSync(cairoBoldPath));
+    const cairoSemiBoldFont = await pdfDoc.embedFont(fs.readFileSync(cairoSemiBoldPath));
+
+    const page = pdfDoc.addPage([595, 842]);
+    const { width, height } = page.getSize();
+
+    // Color Palette
+    const black = rgb(0, 0, 0);
+    const blue = rgb(0, 0.2, 0.5);
+    const darkBlue = rgb(0, 0.1, 0.4);
+    const dynamicColor = rgb(0, 0.3, 0.7); // Professional blue for dynamic data
+
+    // Helper functions
+    const drawArabicTextInCol = (txt: string, x: number, y: number, font: any, size: number, color = black) => {
+      page.drawText(getVisualString(txt), {
+        x: x - font.widthOfTextAtSize(getVisualString(txt), size),
+        y,
+        font,
+        size,
+        color,
+      });
+    };
+
+    const drawCenteredArabicText = (txt: string, y: number, font: any, size: number, color = black, limitX1?: number, limitX2?: number) => {
+      const visual = getVisualString(txt);
+      const textWidth = font.widthOfTextAtSize(visual, size);
+      let xPos;
+      if (limitX1 !== undefined && limitX2 !== undefined) {
+        xPos = limitX1 + (limitX2 - limitX1 - textWidth) / 2;
+      } else {
+        xPos = (width - textWidth) / 2;
+      }
+      page.drawText(visual, { x: xPos, y, font, size, color });
+    };
+
+    const wrapText = (text: string, font: any, fontSize: number, maxWidth: number): string[] => {
+      const words = text.split(' ');
+      const lines: string[] = [];
+      let currentLine = words[0] || '';
+
+      for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const visual = getVisualString(currentLine + ' ' + word);
+        const textWidth = font.widthOfTextAtSize(visual, fontSize);
+        if (textWidth < maxWidth) {
+          currentLine += ' ' + word;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      return lines;
+    };
+
+    // Current date formatted
+    const now = new Date();
+    const currentDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+
+    // ===== HEADER SECTION =====
+    drawCenteredArabicText('الجمهورية الجزائرية الديمقراطية الشعبية', height - 40, cairoBoldFont, 14, blue);
+    drawCenteredArabicText('وزارة الداخلية والجماعات المحلية والنقل', height - 65, cairoBoldFont, 12, blue);
+    drawCenteredArabicText('مديرية النقل لولاية عين الدفلى', height - 90, cairoBoldFont, 11, blue);
+
+    const refY = height - 120;
+    drawArabicTextInCol('رقم: ...................................................../م ن/2026 .', width - 40, refY, cairoSemiBoldFont, 10, black);
+
+    const decreeY = height - 160;
+    const decreePrefix = 'مقرر مؤرخ في: ';
+    const decreeVisual = getVisualString(decreePrefix);
+    const decreeWidth = cairoBoldFont.widthOfTextAtSize(decreeVisual, 11);
+    const centerDecreeX = (width / 2) - (decreeWidth / 2);
+    page.drawText(decreeVisual, { x: centerDecreeX, y: decreeY, font: cairoBoldFont, size: 11 });
+    page.drawText('.....................................................', { x: centerDecreeX + decreeWidth + 5, y: decreeY, font: cairoSemiBoldFont, size: 11 });
+
+    const titleY = height - 190;
+    drawCenteredArabicText('يتضمن رخصة استغلال خدمة ظرفية لنقل الأشخاص عبر الطرقات', titleY, cairoBoldFont, 13, darkBlue);
+
+    // ===== COLUMN SEPARATOR =====
+    const colSplitX = 290;
+    const startColsY = titleY - 20;
+    const endColsY = 150;
+    page.drawLine({
+      start: { x: colSplitX, y: startColsY },
+      end: { x: colSplitX, y: endColsY },
+      thickness: 1,
+      color: black,
+    });
+
+    // ===== RIGHT COLUMN CONTENT (Legal Refs & Decision Part 1) =====
+    let rightY = startColsY - 20;
+    const rightColEdge = width - 30;
+
+    drawArabicTextInCol('أن مدير النقل،', rightColEdge, rightY, cairoBoldFont, 11);
+    rightY -= 20;
+
+    const legalRefs = [
+      'بمقتضى القانون رقم 01/13 المؤرخ في 07 أوت 2001، المتضمن توجيه وتنظيم النقل البري المعدل والمتمم.',
+      'بمقتضى المرسوم التنفيذي رقم 381-90 المؤرخ في 24 نوفمبر 1990م والمتعلق بتنظيم مديريات النقل في الولايات وعملها.',
+      'بمقتضى المرسوم التنفيذي رقم 415-04 المؤرخ في 20 ديسمبر سنة 2004م الذي يحدد شروط تسليم رخص ممارسة نشاطات نقل والبضائع عبر الطرقات.',
+      'بمقتضى القرار المؤرخ في 22 يوليو سنة 2006 الذي يحدد نماذج الوثائق المتعلقـة بممارسة نشاطات نقل الأشخاص والبضائع عبر الطرقات،',
+      'بمقتضى المرسوم التنفيذي المؤرخ في 19 يونيو سنة 2022، المتضمن تعيين السيد/ سليم فرحات مديرا للنقل في ولاية عين الدفلى.',
+      'بمقتضى القرار المؤرخ في 22 يوليو سنة 2006 الذي يحدد نماذج الوثائق المتعلقـة بممارسة نشاطات نقل الأشخاص والبضائع عبر الطرقات،',
+      'بناءا على التعليمة الوزارية رقم328المؤرخة في 01/02/2017',
+      `و بناءا على طلب المعني المؤرخ في : ${dto.dateConcerned} .`
+    ];
+
+    legalRefs.forEach(ref => {
+      // Small wrap logic or simple line
+      const lines = wrapText(ref, cairoSemiBoldFont, 8, width - colSplitX - 50);
+      lines.forEach(line => {
+        drawArabicTextInCol(`- ${line}`, rightColEdge, rightY, cairoSemiBoldFont, 8);
+        rightY -= 12;
+      });
+      rightY -= 3;
+    });
+
+    rightY -= 10;
+    drawCenteredArabicText('يقـــــرر مـا يـلــــي :', rightY, cairoBoldFont, 12, darkBlue, colSplitX, width);
+    rightY -= 25;
+
+    // Article 1 Right
+    drawArabicTextInCol('المادة الأولى : يرخص للسيد (ة) أو الشركة', rightColEdge, rightY, cairoBoldFont, 10);
+    drawArabicTextInCol(operateur.fullName_arabe || '................................', colSplitX + 175, rightY, cairoBoldFont, 10, dynamicColor);
+    rightY -= 20;
+    drawArabicTextInCol('رقم القيد :', rightColEdge, rightY, cairoBoldFont, 10);
+    drawArabicTextInCol(String(operateur.num_cate_enregistement || '................'), colSplitX + 225, rightY, cairoBoldFont, 10, dynamicColor);
+    rightY -= 20;
+    drawArabicTextInCol('العنوان أو المقر الاجتماعي :', rightColEdge, rightY, cairoBoldFont, 10);
+    rightY -= 15;
+    drawArabicTextInCol(operateur.address_arabe || '................................................', rightColEdge - 20, rightY, cairoBoldFont, 10, dynamicColor);
+
+    // ===== LEFT COLUMN CONTENT (Permit Details) =====
+    let leftY = startColsY - 20;
+    const leftColEdge = colSplitX - 15;
+
+    const linesLeft = wrapText('لاستغلال خدمة أو عدة خدمات منتظمة للنقل العمومي للأشخاص عبر الطرقات على المسار الآتي :', cairoSemiBoldFont, 9, colSplitX - 40);
+    linesLeft.forEach(line => {
+      drawArabicTextInCol(line, leftColEdge, leftY, cairoSemiBoldFont, 9);
+      leftY -= 13;
+    });
+
+    leftY -= 10;
+    const route = dto.path;
+    drawCenteredArabicText(route, leftY, cairoBoldFont, 12, dynamicColor, 30, colSplitX);
+    leftY -= 22;
+
+    drawArabicTextInCol(`لفائــــــــــدة : ${dto.benifit} .`, leftColEdge, leftY, cairoSemiBoldFont, 10);
+    leftY -= 22;
+
+    drawArabicTextInCol('بواسطة العربة الآتية :', leftColEdge, leftY, cairoBoldFont, 10);
+    leftY -= 18;
+
+    drawArabicTextInCol(`– رقــــم التسجيــــــــل : ${vehicleData?.num_bus_registration || '................'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 10, dynamicColor);
+    leftY -= 16;
+    drawArabicTextInCol(`- الصنـــــف : ${vehicleData?.category || '................'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 10, dynamicColor);
+    leftY -= 16;
+    drawArabicTextInCol(`- النـــــــــوع: ${vehicleData?.type || '................'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 10, dynamicColor);
+    leftY -= 16;
+    drawArabicTextInCol(`- عدد مقاعد الجـــلوس : ${vehicleData?.Number_of_seats || '....'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 10, dynamicColor);
+    leftY -= 22;
+
+    drawArabicTextInCol(`- السائق (ون) : 1 – ${chauffeur1?.nom_prenom_chauffeur || '................'}`, leftColEdge, leftY, cairoSemiBoldFont, 10, dynamicColor);
+    leftY -= 16;
+    drawArabicTextInCol(`2 - ${chauffeur2?.nom_prenom_chauffeur || '/'}`, leftColEdge + 60, leftY, cairoSemiBoldFont, 10, dynamicColor);
+    leftY -= 25;
+
+    drawArabicTextInCol('المادة 2 : لا يرخص للناقلين في إطار استغلال خدمته، القيام بالتقاط المسافرين غير الذين صعدوا في نقطة الذهاب .', leftColEdge, leftY, cairoSemiBoldFont, 8);
+    leftY -= 20;
+
+    drawArabicTextInCol('المادة 3: هذا المقــــرر صالح للأيـــــام :', leftColEdge, leftY, cairoBoldFont, 10);
+    leftY -= 18;
+    drawArabicTextInCol(`تاريـخ الذهــــاب : ${dto.dep_date}`, leftColEdge - 20, leftY, cairoSemiBoldFont, 10, dynamicColor);
+    leftY -= 16;
+    drawArabicTextInCol(`تاريـخ الإيـــــاب : ${dto.return_date}`, leftColEdge - 20, leftY, cairoSemiBoldFont, 10, dynamicColor);
+    leftY -= 20;
+
+    drawArabicTextInCol('المادة 4: يجب أن تكون هذه الرخصة موجودة على متن العربة ويجب استظهارها عند كل طلب الاعوان المؤهلين .', leftColEdge, leftY, cairoSemiBoldFont, 8);
+
+    // ===== BOTTOM SECTION =====
+    const footerY = 130;
+    drawCenteredArabicText(`حرر بــعين الدفلى في : ${currentDate}`, footerY, cairoSemiBoldFont, 11);
+
+    const signY = 100;
+    drawArabicTextInCol('مديـــــر النقـــــل', colSplitX - 80, signY, cairoBoldFont, 12, blue);
+
+    const noteY = 70;
+    drawArabicTextInCol('ملاحظـــــــة : - عدم الوقوف والتوقف بمحطة نقل المسافرين .', width - 40, noteY, cairoSemiBoldFont, 9);
+    drawArabicTextInCol('- قائمة المسافرين مرفقة على ظهر هذه الرخصة .', width - 110, noteY - 14, cairoSemiBoldFont, 9);
+
+    // 3. Save and send PDF
+    const pdfBytes = await pdfDoc.save();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename=Permit_Transport.pdf');
+    res.send(Buffer.from(pdfBytes));
   }
 
   async convertAndSave(file: Express.Multer.File) {

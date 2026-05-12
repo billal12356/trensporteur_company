@@ -15,6 +15,7 @@ import {
 import { OperateurDtwService } from './operateur-dtw.service';
 import { CreateOperateurDto } from './dto/create-operateur-dtw.dto';
 import { UpdateOperateurDtwDto } from './dto/update-operateur-dtw.dto';
+import { GeneratePermitPdfDto } from './dto/generate-permit-pdf.dto';
 import { AuthGuard } from 'src/common/gaurds/auth.guard';
 import * as fs from 'fs';
 import { Response } from 'express';
@@ -151,6 +152,20 @@ export class OperateurDtwController {
   //   const filePath = await this.operateurDtwService.generatePDFCreated();
   //   res.download(filePath, 'Operateur-Static.pdf');
   // }
+
+  // server/src/operateur-dtw/operateur-dtw.controller.ts
+
+  @Post('generate-permit-pdf')
+  async generatePermitPdf(
+    @Body() dto: GeneratePermitPdfDto,
+    @Res() res: Response,
+  ) {
+    return this.operateurDtwService.generatePermitPdf(
+      res,
+      dto,
+    );
+  }
+
 
   @Post('upload')
   @UseInterceptors(

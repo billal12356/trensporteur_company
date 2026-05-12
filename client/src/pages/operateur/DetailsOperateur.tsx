@@ -261,14 +261,28 @@ export default function OperateurDetails() {
                   
                   try {
                     const response = await axios.post(
-                      `${API_URL}/api/v1/operateur-dtw/add-info/${id}`,
+                      `${API_URL}/api/v1/operateur-dtw/generate-permit-pdf`,
                       data,
-                      { withCredentials: true }
+                      { 
+                        withCredentials: true,
+                        responseType: 'blob',
+                        headers: { Accept: "application/pdf" }
+                      }
                     );
-                    toast.success(response.data.message || "تم إرسال البيانات بنجاح");
-                    console.log("Success:", response.data);
+                    
+                    const blob = new Blob([response.data], { type: "application/pdf" });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.setAttribute("download", "Permit_Transport.pdf");
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    window.URL.revokeObjectURL(url);
+
+                    toast.success("تم إنشاء وتنزيل الملف بنجاح");
                   } catch (error) {
-                    toast.error("حدث خطأ أثناء الإرسال");
+                    toast.error("حدث خطأ أثناء الإنشاء");
                     console.error("Error:", error);
                   }
                 }}
@@ -281,31 +295,31 @@ export default function OperateurDetails() {
                     <Label htmlFor="request_date" className="text-right col-span-1">
                       تاريخ الطلب
                     </Label>
-                    <Input id="request_date" name="تاريخ الطلب" type="date" className="col-span-3" required />
+                    <Input id="request_date" name="dateConcerned" type="date" className="col-span-3" required />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="path" className="text-right col-span-1">
                       المسار
                     </Label>
-                    <Input id="path" name="المسار" className="col-span-3" required />
+                    <Input id="path" name="path" className="col-span-3" required />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="benefit" className="text-right col-span-1">
                       لفائدة
                     </Label>
-                    <Input id="benefit" name="لفائدة" className="col-span-3" required />
+                    <Input id="benefit" name="benifit" className="col-span-3" required />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="departure_date" className="text-right col-span-1">
                       تاريخ الذهاب
                     </Label>
-                    <Input id="departure_date" name="تاريخ الذهاب" type="date" className="col-span-3" required />
+                    <Input id="departure_date" name="dep_date" type="date" className="col-span-3" required />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="return_date" className="text-right col-span-1">
                       تاريخ الاياب
                     </Label>
-                    <Input id="return_date" name="تاريخ الاياب" type="date" className="col-span-3" required />
+                    <Input id="return_date" name="return_date" type="date" className="col-span-3" required />
                   </div>
                 </div>
                 <div className="flex justify-end mt-4">
