@@ -1318,13 +1318,6 @@ export class StateService {
         };
       }
 
-      if (startDate && endDate) {
-        dateFilter.createdAt = {
-          $gte: startDate,
-          $lt: endDate,
-        };
-      }
-
       const vehicles = await this.vehiculeModel.find(dateFilter);
       console.log('📊 Total vehicles found:', vehicles.length);
 
@@ -1471,7 +1464,7 @@ export class StateService {
       };
 
       /** ------------ 2. Vehicle (عدد المركبات) ------------- **/
-      const tpvVichecle = vehicles.filter((v) =>
+      const tpvVichecle = vehiclesWithOperators.filter((v) =>
         ['بين البلديات', 'بين الولايات', 'حضري أو شبه حضري', 'ريفي', 'ريـفي'].includes(v.font_type),
       );
 
@@ -1483,7 +1476,7 @@ export class StateService {
         (v) => v.status_activite === 'PRIVE',
       ).length;
 
-      const tpcVichecle = vehicles.filter((v) =>
+      const tpcVichecle = vehiclesWithOperators.filter((v) =>
         ['نقل مدرسي', 'نقل العمال'].includes(v.font_type),
       );
 
@@ -1512,7 +1505,7 @@ export class StateService {
       };
 
       /** ------------ 3. CAPACITÉ (مجموع المقاعد) ------------- **/
-      const tpvNP = vehicles.filter((v) =>
+      const tpvNP = vehiclesWithOperators.filter((v) =>
         ['بين البلديات', 'بين الولايات', 'حضري أو شبه حضري', 'ريفي', 'ريـفي'].includes(v.font_type),
       );
 
@@ -1524,7 +1517,7 @@ export class StateService {
         .filter((v) => v.status_activite === 'PRIVE' && v.Number_of_seats)
         .reduce((sum, v) => sum + (Number(v.Number_of_seats) || 0), 0);
 
-      const tpcNP = vehicles.filter((v) =>
+      const tpcNP = vehiclesWithOperators.filter((v) =>
         ['نقل مدرسي', 'نقل العمال'].includes(v.font_type),
       );
 
@@ -2077,6 +2070,23 @@ export class StateService {
       }
     };
 
+    // Apply fill/font/alignment ONLY to cells within maxCol, clear cells beyond
+    const applyRowStyle = (row: any, maxCol: number, style: { font?: any; fill?: any; alignment?: any }) => {
+      for (let i = 1; i <= maxCol; i++) {
+        const cell = row.getCell(i);
+        if (style.font) cell.font = style.font;
+        if (style.fill) cell.fill = style.fill;
+        if (style.alignment) cell.alignment = style.alignment;
+      }
+      // Clear cells beyond the table width
+      for (let i = maxCol + 1; i <= 15; i++) {
+        const cell = row.getCell(i);
+        cell.fill = undefined;
+        cell.font = {};
+        cell.value = null;
+      }
+    };
+
     // Titre
     sheet.mergeCells('A1:O1');
     const tc = sheet.getCell('A1');
@@ -2095,9 +2105,11 @@ export class StateService {
 
     const hr = sheet.addRow(cols);
     hr.height = 25;
-    hr.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } };
-    hr.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
-    hr.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    applyRowStyle(hr, 15, {
+      font: { bold: true, size: 9, color: { argb: 'FFFFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } },
+      alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
+    });
     applyBorders(hr, 15);
 
     sheet.getColumn(1).width = 28; // Labels
@@ -2112,22 +2124,32 @@ export class StateService {
     const addRow = (label: string, bd: any, opts: any = {}) => {
       const r = sheet.addRow([label, bd.autocar, bd.minicar, bd.autobus, bd.minibus, bd.autresVehicules, bd.camionAmenage, bd.total, bd.placesOffertes, bd.nombreOperateurs, bd.pourcentage, bd.nombreChauffeurs, bd.voyageursJour, bd.voyageursMois, bd.nombreOperateursReel]);
       if (opts.isTotal) {
-        r.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-        r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } };
+        applyRowStyle(r, 15, {
+          font: { bold: true, color: { argb: 'FFFFFFFF' } },
+          fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } },
+          alignment: { horizontal: 'center', vertical: 'middle' },
+        });
+      } else if (opts.isSubtotal) {
+        applyRowStyle(r, 15, {
+          font: { bold: true },
+          fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F7FF' } },
+          alignment: { horizontal: 'center', vertical: 'middle' },
+        });
+      } else {
+        applyRowStyle(r, 15, {
+          alignment: { horizontal: 'center', vertical: 'middle' },
+        });
       }
-      else if (opts.isSubtotal) {
-        r.font = { bold: true };
-        r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F7FF' } };
-      }
-      r.alignment = { horizontal: 'center', vertical: 'middle' };
       applyBorders(r, 15);
     };
 
     const renderSec = (sec: any, label: string) => {
       const sh = sheet.addRow([label]);
       sheet.mergeCells(`A${sh.number}:O${sh.number}`);
-      sh.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      sh.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
+      applyRowStyle(sh, 15, {
+        font: { bold: true, color: { argb: 'FFFFFFFF' } },
+        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } },
+      });
       applyBorders(sh, 15);
       addRow('  Inter-wilaya', sec.transportPublicVoyageurs.interWilaya);
       addRow('  Inter-communale', sec.transportPublicVoyageurs.interCommunale);
@@ -2155,17 +2177,21 @@ export class StateService {
 
     const ageTitle = sheet.addRow(['Répartition du « Parc véhicules de transport de voyageurs » par tranches d\'âges :']);
     sheet.mergeCells(`A${ageTitle.number}:M${ageTitle.number}`);
-    ageTitle.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
-    ageTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
-    ageTitle.alignment = { horizontal: 'center', vertical: 'middle' };
+    applyRowStyle(ageTitle, 13, {
+      font: { bold: true, size: 12, color: { argb: 'FFFFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } },
+      alignment: { horizontal: 'center', vertical: 'middle' },
+    });
     applyBorders(ageTitle, 13);
 
     const ageCols = ['Tranches d\'âges (ans)', 'Moins de 05 ans', '[5,10[', '[10,15[', '[15,20[', '[20,25[', '[25,30[', '30 ans et plus', 'TOTAL', 'Âge moyen (ans)', '%', 'Parc Véh. (réel)', 'Places off.'];
     const ahr = sheet.addRow(ageCols);
     ahr.height = 22;
-    ahr.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } };
-    ahr.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
-    ahr.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    applyRowStyle(ahr, 13, {
+      font: { bold: true, size: 9, color: { argb: 'FFFFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } },
+      alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
+    });
     applyBorders(ahr, 13);
 
     // Adjusting column widths for Age Table (overlaps with first table columns)
@@ -2176,22 +2202,32 @@ export class StateService {
     const addAgeRow = (label: string, bd: any, opts: any = {}) => {
       const r = sheet.addRow([label, bd.moins5, bd.de5a10, bd.de10a15, bd.de15a20, bd.de20a25, bd.de25a30, bd.plus30, bd.total, bd.ageMoyen, bd.pourcentage, bd.parcVehiculesReel, bd.placesOffertes]);
       if (opts.isTotal) {
-        r.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-        r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } };
+        applyRowStyle(r, 13, {
+          font: { bold: true, color: { argb: 'FFFFFFFF' } },
+          fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } },
+          alignment: { horizontal: 'center', vertical: 'middle' },
+        });
+      } else if (opts.isSubtotal) {
+        applyRowStyle(r, 13, {
+          font: { bold: true },
+          fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F7FF' } },
+          alignment: { horizontal: 'center', vertical: 'middle' },
+        });
+      } else {
+        applyRowStyle(r, 13, {
+          alignment: { horizontal: 'center', vertical: 'middle' },
+        });
       }
-      else if (opts.isSubtotal) {
-        r.font = { bold: true };
-        r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F7FF' } };
-      }
-      r.alignment = { horizontal: 'center', vertical: 'middle' };
       applyBorders(r, 13);
     };
 
     const renderAgeSec = (sec: any, label: string) => {
       const sh = sheet.addRow([label]);
       sheet.mergeCells(`A${sh.number}:M${sh.number}`);
-      sh.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      sh.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
+      applyRowStyle(sh, 13, {
+        font: { bold: true, color: { argb: 'FFFFFFFF' } },
+        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } },
+      });
       applyBorders(sh, 13);
       addAgeRow('  Inter-wilaya', sec.transportPublicVoyageurs.interWilaya);
       addAgeRow('  Inter-communale', sec.transportPublicVoyageurs.interCommunale);
@@ -2219,38 +2255,52 @@ export class StateService {
 
     const moyensTitle = sheet.addRow(['LES MOYENS']);
     sheet.mergeCells(`A${moyensTitle.number}:K${moyensTitle.number}`);
-    moyensTitle.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
-    moyensTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
-    moyensTitle.alignment = { horizontal: 'center', vertical: 'middle' };
+    applyRowStyle(moyensTitle, 11, {
+      font: { bold: true, size: 12, color: { argb: 'FFFFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } },
+      alignment: { horizontal: 'center', vertical: 'middle' },
+    });
     applyBorders(moyensTitle, 11);
 
     const moyensCols = ['Tranches d\'âges (ans)', 'Moins de 05 ans', '[5,10[', '[10,15[', '[15,20[', '[20,25[', '[25,30[', '30 ans et plus', 'TOTAL', 'Âge moyen (ans)', '%'];
     const mhr = sheet.addRow(moyensCols);
     mhr.height = 22;
-    mhr.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } };
-    mhr.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
-    mhr.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    applyRowStyle(mhr, 11, {
+      font: { bold: true, size: 9, color: { argb: 'FFFFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } },
+      alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
+    });
     applyBorders(mhr, 11);
 
     const addMoyensRow = (label: string, bd: any, opts: any = {}) => {
       const r = sheet.addRow([label, bd.moins5, bd.de5a10, bd.de10a15, bd.de15a20, bd.de20a25, bd.de25a30, bd.plus30, bd.total, bd.ageMoyen, bd.pourcentage]);
       if (opts.isTotal) {
-        r.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-        r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } };
+        applyRowStyle(r, 11, {
+          font: { bold: true, color: { argb: 'FFFFFFFF' } },
+          fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } },
+          alignment: { horizontal: 'center', vertical: 'middle' },
+        });
+      } else if (opts.isSubtotal) {
+        applyRowStyle(r, 11, {
+          font: { bold: true },
+          fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F7FF' } },
+          alignment: { horizontal: 'center', vertical: 'middle' },
+        });
+      } else {
+        applyRowStyle(r, 11, {
+          alignment: { horizontal: 'center', vertical: 'middle' },
+        });
       }
-      else if (opts.isSubtotal) {
-        r.font = { bold: true };
-        r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F7FF' } };
-      }
-      r.alignment = { horizontal: 'center', vertical: 'middle' };
       applyBorders(r, 11);
     };
 
     const renderMoyensSec = (sec: any, label: string) => {
       const sh = sheet.addRow([label]);
       sheet.mergeCells(`A${sh.number}:K${sh.number}`);
-      sh.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      sh.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
+      applyRowStyle(sh, 11, {
+        font: { bold: true, color: { argb: 'FFFFFFFF' } },
+        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } },
+      });
       applyBorders(sh, 11);
       addMoyensRow('  Autocar (35+)', sec.autocar);
       addMoyensRow('  Minicar (24-34)', sec.minicar);

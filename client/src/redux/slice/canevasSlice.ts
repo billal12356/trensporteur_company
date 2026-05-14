@@ -43,7 +43,7 @@ export const fetchCanevasData = createAsyncThunk(
     } catch (err: any) {
       return rejectWithValue(
         err.response?.data?.message ||
-          "Échec du chargement des données du canevas"
+        "Échec du chargement des données du canevas"
       );
     }
   }
@@ -73,7 +73,7 @@ export const exportCanevasExcel = createAsyncThunk<
     link.href = url;
     link.setAttribute(
       "download",
-      `Canevas_01_Transport_${params.startDate || "all"}_${params.endDate || "all"}.xlsx`
+      `statistique DTRL final.xlsx`
     );
     document.body.appendChild(link);
     link.click();

@@ -246,30 +246,36 @@ export default function OperateurDetails() {
           <Dialog>
             <DialogTrigger asChild>
               <Button className="h-12 bg-purple-600 hover:bg-purple-700 text-white transition">
-                إضافة معلومات
+                إضافة رخص ظرفية
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]" dir="rtl">
               <DialogHeader>
-                <DialogTitle className="text-right">إضافة معلومات إضافية</DialogTitle>
+                <DialogTitle className="text-right">إضافة رخص ظرفية</DialogTitle>
               </DialogHeader>
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();
                   const formData = new FormData(e.currentTarget);
                   const data = Object.fromEntries(formData.entries());
-                  
+                  if (selectedVehicles.length === 0) {
+                    toast.error("الرجاء اختيار مركبة");
+                    return;
+                  }
                   try {
                     const response = await axios.post(
                       `${API_URL}/api/v1/operateur-dtw/generate-permit-pdf`,
-                      data,
-                      { 
+                      {
+                        ...data,
+                        vehicleIds: selectedVehicles
+                      },
+                      {
                         withCredentials: true,
                         responseType: 'blob',
                         headers: { Accept: "application/pdf" }
                       }
                     );
-                    
+
                     const blob = new Blob([response.data], { type: "application/pdf" });
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement("a");
@@ -576,10 +582,10 @@ export default function OperateurDetails() {
                         {vehicle.point_depart} - {vehicle.point_arrive}
                       </td>
                       <td className="border px-3 py-2">
-                        
+
                       </td>
                       <td className="border px-3 py-2">
-                        
+
                       </td>
                       <td className="border px-3 py-2">
                         {vehicle.num_bus_registration}

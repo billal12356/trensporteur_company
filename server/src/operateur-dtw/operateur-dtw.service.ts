@@ -22,9 +22,10 @@ const fontkit = require('@pdf-lib/fontkit');
 const bidiFactory = require('bidi-js');
 const bidi = bidiFactory();
 const getVisualString = (text: string) => {
-  if (!text) return '';
-  const levels = bidi.getEmbeddingLevels(text, 'rtl');
-  return bidi.getReorderedString(text, levels);
+  const txt = text.split("").reverse().join("");
+  if (!txt) return '';
+  const levels = bidi.getEmbeddingLevels(txt, 'rtl');
+  return bidi.getReorderedString(txt, levels);
 };
 import * as fs from 'fs';
 import * as path from 'path';
@@ -1579,9 +1580,11 @@ export class OperateurDtwService {
       throw new NotFoundException('لم يتم العثور على المتعامل');
     }
 
-    const num_docier_client = operateur.num_docier_client;
-    const vihicules = await this.vihiculeService.findVihiculeByOperateur(num_docier_client);
-    const vehicleData = vihicules && vihicules.length > 0 ? vihicules[0] : null;
+    let vehicleData = null;
+    if (dto.vehicleIds && dto.vehicleIds.length > 0) {
+      const vehicleId = dto.vehicleIds[0];
+      vehicleData = await this.vihiculeService.findVehicleById(vehicleId);
+    }
 
     const fullName_arabe = operateur.fullName_arabe;
     const chauffeurs = await this.chauffeursService.findChauffeurByOperateur(fullName_arabe);
@@ -1606,17 +1609,21 @@ export class OperateurDtwService {
     const black = rgb(0, 0, 0);
     const blue = rgb(0, 0.2, 0.5);
     const darkBlue = rgb(0, 0.1, 0.4);
-    const dynamicColor = rgb(0, 0.3, 0.7); // Professional blue for dynamic data
+    const dynamicColor = rgb(0.1, 0.1, 0.1);
+
 
     // Helper functions
-    const drawArabicTextInCol = (txt: string, x: number, y: number, font: any, size: number, color = black) => {
-      page.drawText(getVisualString(txt), {
-        x: x - font.widthOfTextAtSize(getVisualString(txt), size),
-        y,
-        font,
-        size,
-        color,
-      });
+    const drawArabicTextInCol = (txt: string, x: number, y: number, font: any, size: number, color = black, bold = false) => {
+      const visual = getVisualString(txt);
+      const xPos = x - font.widthOfTextAtSize(visual, size);
+
+      page.drawText(visual, { x: xPos, y, font, size, color });
+
+      // Simulate bold by drawing the text twice with a slight offset
+      if (bold) {
+        page.drawText(visual, { x: xPos + 0.4, y, font, size, color });
+        page.drawText(visual, { x: xPos, y: y + 0.4, font, size, color });
+      }
     };
 
     const drawCenteredArabicText = (txt: string, y: number, font: any, size: number, color = black, limitX1?: number, limitX2?: number) => {
@@ -1638,10 +1645,11 @@ export class OperateurDtwService {
 
       for (let i = 1; i < words.length; i++) {
         const word = words[i];
-        const visual = getVisualString(currentLine + ' ' + word);
+        const testLine = currentLine + ' ' + word;
+        const visual = getVisualString(testLine);
         const textWidth = font.widthOfTextAtSize(visual, fontSize);
         if (textWidth < maxWidth) {
-          currentLine += ' ' + word;
+          currentLine = testLine;
         } else {
           lines.push(currentLine);
           currentLine = word;
@@ -1658,23 +1666,23 @@ export class OperateurDtwService {
     const currentDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
 
     // ===== HEADER SECTION =====
-    drawCenteredArabicText('الجمهورية الجزائرية الديمقراطية الشعبية', height - 40, cairoBoldFont, 14, blue);
-    drawCenteredArabicText('وزارة الداخلية والجماعات المحلية والنقل', height - 65, cairoBoldFont, 12, blue);
-    drawCenteredArabicText('مديرية النقل لولاية عين الدفلى', height - 90, cairoBoldFont, 11, blue);
+    drawCenteredArabicText('الجمهورية الجزائرية الديمقراطية الشعبية', height - 40, cairoBoldFont, 16, black);
+    drawCenteredArabicText('وزارة الداخلية والجماعات المحلية والنقل', height - 65, cairoBoldFont, 14, black);
+    drawCenteredArabicText('مديرية النقل لولاية عين الدفلى', height - 90, cairoBoldFont, 13, black);
 
     const refY = height - 120;
-    drawArabicTextInCol('رقم: ...................................................../م ن/2026 .', width - 40, refY, cairoSemiBoldFont, 10, black);
+    drawArabicTextInCol('رقم: ...................................................../م ن/2026 .', width - 40, refY, cairoSemiBoldFont, 11, black);
 
     const decreeY = height - 160;
     const decreePrefix = 'مقرر مؤرخ في: ';
     const decreeVisual = getVisualString(decreePrefix);
-    const decreeWidth = cairoBoldFont.widthOfTextAtSize(decreeVisual, 11);
+    const decreeWidth = cairoBoldFont.widthOfTextAtSize(decreeVisual, 12);
     const centerDecreeX = (width / 2) - (decreeWidth / 2);
-    page.drawText(decreeVisual, { x: centerDecreeX, y: decreeY, font: cairoBoldFont, size: 11 });
-    page.drawText('.....................................................', { x: centerDecreeX + decreeWidth + 5, y: decreeY, font: cairoSemiBoldFont, size: 11 });
+    page.drawText(decreeVisual, { x: centerDecreeX, y: decreeY, font: cairoBoldFont, size: 12 });
+    page.drawText('.....................................................', { x: centerDecreeX + decreeWidth + 5, y: decreeY, font: cairoSemiBoldFont, size: 12 });
 
     const titleY = height - 190;
-    drawCenteredArabicText('يتضمن رخصة استغلال خدمة ظرفية لنقل الأشخاص عبر الطرقات', titleY, cairoBoldFont, 13, darkBlue);
+    drawCenteredArabicText('يتضمن رخصة استغلال خدمة ظرفية لنقل الأشخاص عبر الطرقات', titleY, cairoBoldFont, 15, darkBlue);
 
     // ===== COLUMN SEPARATOR =====
     const colSplitX = 290;
@@ -1687,12 +1695,12 @@ export class OperateurDtwService {
       color: black,
     });
 
-    // ===== RIGHT COLUMN CONTENT (Legal Refs & Decision Part 1) =====
+    // ===== RIGHT COLUMN CONTENT =====
     let rightY = startColsY - 20;
     const rightColEdge = width - 30;
 
-    drawArabicTextInCol('أن مدير النقل،', rightColEdge, rightY, cairoBoldFont, 11);
-    rightY -= 20;
+    drawArabicTextInCol('أن مدير النقل،', rightColEdge, rightY, cairoBoldFont, 12);
+    rightY -= 22;
 
     const legalRefs = [
       'بمقتضى القانون رقم 01/13 المؤرخ في 07 أوت 2001، المتضمن توجيه وتنظيم النقل البري المعدل والمتمم.',
@@ -1705,88 +1713,98 @@ export class OperateurDtwService {
       `و بناءا على طلب المعني المؤرخ في : ${dto.dateConcerned} .`
     ];
 
+    const rightColWidth = rightColEdge - colSplitX - 15;
+
     legalRefs.forEach(ref => {
-      // Small wrap logic or simple line
-      const lines = wrapText(ref, cairoSemiBoldFont, 8, width - colSplitX - 50);
+      const lines = wrapText(ref, cairoSemiBoldFont, 9, rightColWidth);
       lines.forEach(line => {
-        drawArabicTextInCol(`- ${line}`, rightColEdge, rightY, cairoSemiBoldFont, 8);
-        rightY -= 12;
+        drawArabicTextInCol(`- ${line}`, rightColEdge, rightY, cairoSemiBoldFont, 9);
+        rightY -= 13;
       });
-      rightY -= 3;
+      rightY -= 4;
     });
 
     rightY -= 10;
-    drawCenteredArabicText('يقـــــرر مـا يـلــــي :', rightY, cairoBoldFont, 12, darkBlue, colSplitX, width);
-    rightY -= 25;
+    drawCenteredArabicText('يقـــــرر مـا يـلــــي :', rightY, cairoBoldFont, 13, darkBlue, colSplitX, width);
+    rightY -= 28;
 
     // Article 1 Right
-    drawArabicTextInCol('المادة الأولى : يرخص للسيد (ة) أو الشركة', rightColEdge, rightY, cairoBoldFont, 10);
-    drawArabicTextInCol(operateur.fullName_arabe || '................................', colSplitX + 175, rightY, cairoBoldFont, 10, dynamicColor);
-    rightY -= 20;
-    drawArabicTextInCol('رقم القيد :', rightColEdge, rightY, cairoBoldFont, 10);
-    drawArabicTextInCol(String(operateur.num_cate_enregistement || '................'), colSplitX + 225, rightY, cairoBoldFont, 10, dynamicColor);
-    rightY -= 20;
-    drawArabicTextInCol('العنوان أو المقر الاجتماعي :', rightColEdge, rightY, cairoBoldFont, 10);
-    rightY -= 15;
-    drawArabicTextInCol(operateur.address_arabe || '................................................', rightColEdge - 20, rightY, cairoBoldFont, 10, dynamicColor);
+    drawArabicTextInCol('المادة الأولى : يرخص للسيد (ة) أو الشركة', rightColEdge, rightY, cairoBoldFont, 11);
+    drawArabicTextInCol(operateur.fullName_arabe || '/', colSplitX + 70, rightY, cairoBoldFont, 11, dynamicColor, true);
+    rightY -= 22;
+    drawArabicTextInCol('رقم القيد :', rightColEdge, rightY, cairoBoldFont, 11);
+    drawArabicTextInCol(String(operateur.num_cate_enregistement || '/'), colSplitX + 225, rightY, cairoBoldFont, 11, dynamicColor, true);
+    rightY -= 22;
+    drawArabicTextInCol('العنوان أو المقر الاجتماعي :', rightColEdge, rightY, cairoBoldFont, 11);
+    rightY -= 18;
+    drawArabicTextInCol(operateur.address_arabe || '/', rightColEdge - 25, rightY, cairoBoldFont, 11, dynamicColor, true);
+    rightY -= 28;
+    drawArabicTextInCol('ملاحظـــــــة : - عدم الوقوف والتوقف بمحطة نقل المسافرين .', rightColEdge, rightY, cairoBoldFont, 10);
+    rightY -= 16;
+    drawArabicTextInCol('- قائمة المسافرين مرفقة على ظهر هذه الرخصة .', rightColEdge, rightY, cairoSemiBoldFont, 10);
 
-    // ===== LEFT COLUMN CONTENT (Permit Details) =====
+    // ===== LEFT COLUMN CONTENT =====
     let leftY = startColsY - 20;
     const leftColEdge = colSplitX - 15;
 
-    const linesLeft = wrapText('لاستغلال خدمة أو عدة خدمات منتظمة للنقل العمومي للأشخاص عبر الطرقات على المسار الآتي :', cairoSemiBoldFont, 9, colSplitX - 40);
+    const linesLeft = wrapText('لاستغلال خدمة أو عدة خدمات منتظمة للنقل العمومي للأشخاص عبر الطرقات على المسار الآتي :', cairoSemiBoldFont, 10, colSplitX - 40);
     linesLeft.forEach(line => {
-      drawArabicTextInCol(line, leftColEdge, leftY, cairoSemiBoldFont, 9);
-      leftY -= 13;
+      drawArabicTextInCol(line, leftColEdge, leftY, cairoSemiBoldFont, 10);
+      leftY -= 14;
     });
 
     leftY -= 10;
     const route = dto.path;
-    drawCenteredArabicText(route, leftY, cairoBoldFont, 12, dynamicColor, 30, colSplitX);
-    leftY -= 22;
+    drawCenteredArabicText(route, leftY, cairoBoldFont, 13, dynamicColor, 30, colSplitX);
+    leftY -= 24;
 
-    drawArabicTextInCol(`لفائــــــــــدة : ${dto.benifit} .`, leftColEdge, leftY, cairoSemiBoldFont, 10);
-    leftY -= 22;
+    drawArabicTextInCol(`لفائــــــــــدة : ${dto.benifit} .`, leftColEdge, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+    leftY -= 24;
 
-    drawArabicTextInCol('بواسطة العربة الآتية :', leftColEdge, leftY, cairoBoldFont, 10);
+    drawArabicTextInCol('بواسطة العربة الآتية :', leftColEdge, leftY, cairoBoldFont, 11);
+    leftY -= 20;
+
+    drawArabicTextInCol(`– رقــــم التسجيــــــــل : ${vehicleData?.num_bus_registration?.split('/').reverse().join('/') || '/'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+    leftY -= 17;
+    drawArabicTextInCol(`- الصنـــــف : ${vehicleData?.category || '/'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+    leftY -= 17;
+    drawArabicTextInCol(`- النـــــــــوع: ${vehicleData?.type || '/'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+    leftY -= 17;
+    drawArabicTextInCol(`- عدد مقاعد الجـــلوس : ${vehicleData?.Number_of_seats || '/'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+    leftY -= 24;
+
+    drawArabicTextInCol(`- السائق (ون) : 1 – ${chauffeur1?.nom_prenom_chauffeur || '/'}`, leftColEdge, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+    leftY -= 17;
+    drawArabicTextInCol(`2 - ${chauffeur2?.nom_prenom_chauffeur || '/'}`, leftColEdge - 68, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+    leftY -= 26;
+
+    const leftColWidth = leftColEdge - 20;
+    const article2Lines = wrapText('المادة 2 : لا يرخص للناقلين في إطار استغلال خدمته، القيام بالتقاط المسافرين غير الذين صعدوا في نقطة الذهاب .', cairoSemiBoldFont, 9, leftColWidth);
+    article2Lines.forEach(line => {
+      drawArabicTextInCol(line, leftColEdge, leftY, cairoSemiBoldFont, 9);
+      leftY -= 13;
+    });
+    leftY -= 10;
+
+    drawArabicTextInCol('المادة 3: هذا المقــــرر صالح للأيـــــام :', leftColEdge, leftY, cairoBoldFont, 11);
+    leftY -= 20;
+    drawArabicTextInCol(`تاريـخ الذهــــاب : ${dto.dep_date}`, leftColEdge - 20, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
     leftY -= 18;
-
-    drawArabicTextInCol(`– رقــــم التسجيــــــــل : ${vehicleData?.num_bus_registration || '................'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 10, dynamicColor);
-    leftY -= 16;
-    drawArabicTextInCol(`- الصنـــــف : ${vehicleData?.category || '................'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 10, dynamicColor);
-    leftY -= 16;
-    drawArabicTextInCol(`- النـــــــــوع: ${vehicleData?.type || '................'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 10, dynamicColor);
-    leftY -= 16;
-    drawArabicTextInCol(`- عدد مقاعد الجـــلوس : ${vehicleData?.Number_of_seats || '....'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 10, dynamicColor);
+    drawArabicTextInCol(`تاريـخ الإيـــــاب : ${dto.return_date}`, leftColEdge - 20, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
     leftY -= 22;
 
-    drawArabicTextInCol(`- السائق (ون) : 1 – ${chauffeur1?.nom_prenom_chauffeur || '................'}`, leftColEdge, leftY, cairoSemiBoldFont, 10, dynamicColor);
-    leftY -= 16;
-    drawArabicTextInCol(`2 - ${chauffeur2?.nom_prenom_chauffeur || '/'}`, leftColEdge + 60, leftY, cairoSemiBoldFont, 10, dynamicColor);
+    const article4Lines = wrapText('المادة 4: يجب أن تكون هذه الرخصة موجودة على متن العربة ويجب استظهارها عند كل طلب الاعوان المؤهلين .', cairoSemiBoldFont, 9, leftColWidth);
+    article4Lines.forEach(line => {
+      drawArabicTextInCol(line, leftColEdge, leftY, cairoSemiBoldFont, 9);
+      leftY -= 13;
+    });
+
     leftY -= 25;
+    const footerY = 90;
+    drawArabicTextInCol(`حرر بــعين الدفلى في : ${currentDate}`, leftColEdge, leftY, cairoSemiBoldFont, 12);
 
-    drawArabicTextInCol('المادة 2 : لا يرخص للناقلين في إطار استغلال خدمته، القيام بالتقاط المسافرين غير الذين صعدوا في نقطة الذهاب .', leftColEdge, leftY, cairoSemiBoldFont, 8);
-    leftY -= 20;
-
-    drawArabicTextInCol('المادة 3: هذا المقــــرر صالح للأيـــــام :', leftColEdge, leftY, cairoBoldFont, 10);
-    leftY -= 18;
-    drawArabicTextInCol(`تاريـخ الذهــــاب : ${dto.dep_date}`, leftColEdge - 20, leftY, cairoSemiBoldFont, 10, dynamicColor);
-    leftY -= 16;
-    drawArabicTextInCol(`تاريـخ الإيـــــاب : ${dto.return_date}`, leftColEdge - 20, leftY, cairoSemiBoldFont, 10, dynamicColor);
-    leftY -= 20;
-
-    drawArabicTextInCol('المادة 4: يجب أن تكون هذه الرخصة موجودة على متن العربة ويجب استظهارها عند كل طلب الاعوان المؤهلين .', leftColEdge, leftY, cairoSemiBoldFont, 8);
-
-    // ===== BOTTOM SECTION =====
-    const footerY = 130;
-    drawCenteredArabicText(`حرر بــعين الدفلى في : ${currentDate}`, footerY, cairoSemiBoldFont, 11);
-
-    const signY = 100;
-    drawArabicTextInCol('مديـــــر النقـــــل', colSplitX - 80, signY, cairoBoldFont, 12, blue);
-
-    const noteY = 70;
-    drawArabicTextInCol('ملاحظـــــــة : - عدم الوقوف والتوقف بمحطة نقل المسافرين .', width - 40, noteY, cairoSemiBoldFont, 9);
-    drawArabicTextInCol('- قائمة المسافرين مرفقة على ظهر هذه الرخصة .', width - 110, noteY - 14, cairoSemiBoldFont, 9);
+    const signY = 170;
+    drawArabicTextInCol('مديـــــر النقـــــل', colSplitX - 80, signY, cairoBoldFont, 13, black);
 
     // 3. Save and send PDF
     const pdfBytes = await pdfDoc.save();

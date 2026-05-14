@@ -109,6 +109,15 @@ export class VehiclesService {
       );
     }
 
+    // 🔹 Auto-fill fields from operator
+    createVehicleDto.num_wilaya = operateurNum.num_wilaya;
+    createVehicleDto.activite = operateurNum.activite;
+    createVehicleDto.colonne1 = operateurNum.colonne1;
+    createVehicleDto.nature_activite = operateurNum.nature_activite;
+    createVehicleDto.colonne2 = operateurNum.colonne2;
+    createVehicleDto.status_activite = operateurNum.status_activite;
+    createVehicleDto.colonne3 = operateurNum.colonne3;
+
     // 🔹 Create new vehicle
     const vehicle = await this.VihicileModel.create(createVehicleDto);
 
@@ -121,50 +130,50 @@ export class VehiclesService {
 
 
   async findAll(params: any) {
-  const page = Number(params.page) || 1;
-  const limit = Number(params.limit) || 10;
+    const page = Number(params.page) || 1;
+    const limit = Number(params.limit) || 10;
 
-  const queryBuilder = new VihiclesQueryBuilder()
-    .setLimit(limit)
-    .setSkip(page)
-    .setSort(params.sort || 'asc')
-    .setSearch(params.search);
+    const queryBuilder = new VihiclesQueryBuilder()
+      .setLimit(limit)
+      .setSkip(page)
+      .setSort(params.sort || 'asc')
+      .setSearch(params.search);
 
-  const { query, limit: finalLimit, skip, sort } = queryBuilder.build();
+    const { query, limit: finalLimit, skip, sort } = queryBuilder.build();
 
-  // ✅ دمج شروط البحث مع شروط الإيقاف
-  const finalQuery: any = {
-    $and: [
-      // شرط 1: المركبة غير موقوفة أو موقوفة مؤقتاً
-      {
-        $or: [
-          { vihicile_parked: "لا" },
-          { vihicile_parked: "نعم", type_parked: "مؤقت" }
-        ]
-      }
-    ]
-  };
+    // ✅ دمج شروط البحث مع شروط الإيقاف
+    const finalQuery: any = {
+      $and: [
+        // شرط 1: المركبة غير موقوفة أو موقوفة مؤقتاً
+        {
+          $or: [
+            { vihicile_parked: "لا" },
+            { vihicile_parked: "نعم", type_parked: "مؤقت" }
+          ]
+        }
+      ]
+    };
 
-  // شرط 2: إذا كان هناك بحث، أضفه
-  if (query.$or && query.$or.length > 0) {
-    finalQuery.$and.push({ $or: query.$or });
+    // شرط 2: إذا كان هناك بحث، أضفه
+    if (query.$or && query.$or.length > 0) {
+      finalQuery.$and.push({ $or: query.$or });
+    }
+
+    const data = await this.VihicileModel.find(finalQuery)
+      .limit(finalLimit)
+      .skip(skip)
+      .sort(sort)
+      .exec();
+
+    const total = await this.VihicileModel.countDocuments(finalQuery).exec();
+
+    return {
+      total,
+      limit: finalLimit,
+      page,
+      data,
+    };
   }
-
-  const data = await this.VihicileModel.find(finalQuery)
-    .limit(finalLimit)
-    .skip(skip)
-    .sort(sort)
-    .exec();
-
-  const total = await this.VihicileModel.countDocuments(finalQuery).exec();
-
-  return {
-    total,
-    limit: finalLimit,
-    page,
-    data,
-  };
-}
 
   async findOne(id: string) {
     if (!Types.ObjectId.isValid(id)) {
@@ -208,6 +217,80 @@ export class VehiclesService {
         delete updateVehicleDto[key];
       }
     });
+
+    /** 🔹 If num_docier_client changed, validate operator and auto-fill */
+    const clientIdChanged = updateVehicleDto.num_docier_client !== undefined
+      && updateVehicleDto.num_docier_client !== vehicle.num_docier_client;
+    const targetClientId = updateVehicleDto.num_docier_client ?? vehicle.num_docier_client;
+
+    if (clientIdChanged) {
+      const operateurNum = await this.operateurService.findByVihicilesandChauffer({
+        num_docier_client: targetClientId,
+      });
+
+      if (!operateurNum) {
+        throw new NotFoundException(
+          new ResponseBuilder()
+            .setStatus(404)
+            .setMessage(`لم يتم العثور على ملف المتعامل بهذا الرقم ${targetClientId}`)
+            .setErrors({ _id: 'Operator not found' })
+            .build(),
+        );
+      }
+
+      // Validate names if provided
+      if (updateVehicleDto.fullName_arabe && operateurNum.fullName_arabe !== updateVehicleDto.fullName_arabe) {
+        throw new NotFoundException(
+          new ResponseBuilder()
+            .setStatus(404)
+            .setMessage(`اسم المتعامل بالعربية غير مطابق: ${updateVehicleDto.fullName_arabe}`)
+            .setErrors({ name: 'Arabic name mismatch' })
+            .build(),
+        );
+      }
+
+      if (updateVehicleDto.fullName_francais && operateurNum.fullName_francais !== updateVehicleDto.fullName_francais) {
+        throw new NotFoundException(
+          new ResponseBuilder()
+            .setStatus(404)
+            .setMessage(`اسم المتعامل بالفرنسية غير مطابق: ${updateVehicleDto.fullName_francais}`)
+            .setErrors({ name: 'French name mismatch' })
+            .build(),
+        );
+      }
+
+      // Auto-fill operator fields
+      updateVehicleDto.num_wilaya = operateurNum.num_wilaya;
+      updateVehicleDto.fullName_arabe = operateurNum.fullName_arabe;
+      updateVehicleDto.fullName_francais = operateurNum.fullName_francais;
+      updateVehicleDto.activite = operateurNum.activite;
+      updateVehicleDto.colonne1 = operateurNum.colonne1;
+      updateVehicleDto.nature_activite = operateurNum.nature_activite;
+      updateVehicleDto.colonne2 = operateurNum.colonne2;
+      updateVehicleDto.status_activite = operateurNum.status_activite;
+      updateVehicleDto.colonne3 = operateurNum.colonne3;
+    }
+
+    /** 🔹 Check for duplicate num_bus_registration */
+    if (updateVehicleDto.num_bus_registration && updateVehicleDto.num_bus_registration !== vehicle.num_bus_registration) {
+      const existingVehicle = await this.VihicileModel.findOne({
+        num_bus_registration: updateVehicleDto.num_bus_registration,
+        _id: { $ne: vehicle._id },
+      });
+      if (existingVehicle) {
+        throw new NotFoundException(
+          new ResponseBuilder()
+            .setStatus(409)
+            .setMessage('رقم تسجيل المركبة مسجل من قبل')
+            .setErrors('رقم تسجيل المركبة مسجل من قبل')
+            .setData({
+              fullName_arabe: existingVehicle.fullName_arabe,
+              matricule: existingVehicle.num_bus_registration,
+            })
+            .build(),
+        );
+      }
+    }
 
     /** 🔹 Check if font_type changed */
     const shouldIncrementNumUp =
@@ -872,21 +955,21 @@ export class VehiclesService {
     }).lean();
 
     const committeeData = [
-      { font_symbol: "443001", oldVehicles: 5, committeeOpinion: "المؤسسة العمومية" },
-      { font_symbol: "443002", oldVehicles: 5, committeeOpinion: "المؤسسة العمومية" },
-      { font_symbol: "443003", oldVehicles: 1, committeeOpinion: "المؤسسة العمومية" },
-      { font_symbol: "443004", oldVehicles: 1, committeeOpinion: "المؤسسة العمومية" },
-      { font_symbol: "443011", oldVehicles: 2, committeeOpinion: "المؤسسة العمومية" },
-      { font_symbol: "443015", oldVehicles: 1, committeeOpinion: "المؤسسة العمومية" },
-      { font_symbol: "443016", oldVehicles: 0, committeeOpinion: "المؤسسة العمومية" },
-      { font_symbol: "443005", oldVehicles: 1, committeeOpinion: "المؤسسة العمومية" },
-      { font_symbol: "443006", oldVehicles: 2, committeeOpinion: "المؤسسة العمومية" },
-      { font_symbol: "443007", oldVehicles: 6, committeeOpinion: "المؤسسة العمومية" },
-      { font_symbol: "443012", oldVehicles: 1, committeeOpinion: "المؤسسة العمومية" },
-      { font_symbol: "443013", oldVehicles: 0, committeeOpinion: "المؤسسة العمومية" },
-      { font_symbol: "443008", oldVehicles: 1, committeeOpinion: "المؤسسة العمومية" },
-      { font_symbol: "443009", oldVehicles: 1, committeeOpinion: "المؤسسة العمومية" },
-      { font_symbol: "443010", oldVehicles: 1, committeeOpinion: "المؤسسة العمومية" },
+      { font_symbol: "443001", oldVehicles: 5, committeeOpinion: "0" },
+      { font_symbol: "443002", oldVehicles: 5, committeeOpinion: "3" },
+      { font_symbol: "443003", oldVehicles: 1, committeeOpinion: "0" },
+      { font_symbol: "443004", oldVehicles: 1, committeeOpinion: "0" },
+      { font_symbol: "443011", oldVehicles: 2, committeeOpinion: "6" },
+      { font_symbol: "443015", oldVehicles: 1, committeeOpinion: "0" },
+      { font_symbol: "443016", oldVehicles: 0, committeeOpinion: "3" },
+      { font_symbol: "443005", oldVehicles: 1, committeeOpinion: "1" },
+      { font_symbol: "443006", oldVehicles: 2, committeeOpinion: "1" },
+      { font_symbol: "443007", oldVehicles: 6, committeeOpinion: "0" },
+      { font_symbol: "443012", oldVehicles: 1, committeeOpinion: "3" },
+      { font_symbol: "443013", oldVehicles: 0, committeeOpinion: "*" },
+      { font_symbol: "443008", oldVehicles: 1, committeeOpinion: "2" },
+      { font_symbol: "443009", oldVehicles: 1, committeeOpinion: "2" },
+      { font_symbol: "443010", oldVehicles: 1, committeeOpinion: "0" },
     ];
 
     const committeeMap = new Map<string, any>();
@@ -1000,8 +1083,8 @@ export class VehiclesService {
       const row = worksheet.addRow([
         '',
         '',
+        '',
         committee?.committeeOpinion ?? '',
-        '', // عدد الرخص التي تم تعويضها (يمكنك ربطها لاحقاً)
         groupData.parkedDates.length > 0
           ? groupData.parkedDates.join(' - ')
           : '',
@@ -1248,8 +1331,8 @@ export class VehiclesService {
         const rowData = [
           '',
           '',
-          committee?.committeeOpinion ?? '',
           '',
+          committee?.committeeOpinion ?? '',
           vehicle.parkedDates && vehicle.parkedDates.length > 0
             ? vehicle.parkedDates.join(' - ')
             : '',
@@ -1529,8 +1612,8 @@ export class VehiclesService {
       const row = worksheet.addRow([
         '',
         '',
-        committee?.committeeOpinion ?? '',
         '',
+        committee?.committeeOpinion ?? '',
         groupData.parkedDates.length > 0
           ? groupData.parkedDates.join(' - ')
           : '',
@@ -1685,8 +1768,8 @@ export class VehiclesService {
       const row = worksheet.addRow([
         '',
         '',
-        committee?.committeeOpinion ?? '',
         '',
+        committee?.committeeOpinion ?? '',
         groupData.parkedDates.length > 0
           ? groupData.parkedDates.join(' - ')
           : '',
@@ -1973,22 +2056,36 @@ export class VehiclesService {
   }
 
   async findByFontSymbol(fontSymbol: string) {
-    console.log("fontSymbol",fontSymbol)
-  const vehicle = await this.VihicileModel.findOne({
-    font_symbol: fontSymbol,
-  });
-  console.log("vehicle",vehicle)
+    console.log("fontSymbol", fontSymbol)
+    const vehicle = await this.VihicileModel.findOne({
+      font_symbol: fontSymbol,
+    });
+    console.log("vehicle", vehicle)
 
-  if (!vehicle) {
-    throw new NotFoundException('رمز الخط خاطئ');
+    if (!vehicle) {
+      throw new NotFoundException('رمز الخط خاطئ');
+    }
+
+    return {
+      point_depart: vehicle.point_depart,
+      point_arrive: vehicle.point_arrive,
+      font_symbol: vehicle.font_symbol,
+    };
   }
 
-  return {
-    point_depart: vehicle.point_depart,
-    point_arrive: vehicle.point_arrive,
-    font_symbol: vehicle.font_symbol,
-  };
-}
+  async findVehicleById(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('معرف غير صالح');
+    }
+
+    const vehicle = await this.VihicileModel.findById(id);
+
+    if (!vehicle) {
+      throw new NotFoundException('المركبة غير موجودة');
+    }
+
+    return vehicle;
+  }
 
 }
 function formatDate(date?: Date | string | null): string {
