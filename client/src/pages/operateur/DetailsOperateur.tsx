@@ -30,12 +30,24 @@ import { API_URL } from "@/redux/contants";
 import { toast } from "sonner";
 
 export default function OperateurDetails() {
-  const { operateur, vihicules, chauffeurs, loading, error } = useSelector(
+  const { operateur, vihicules, chauffeurs: rawChauffeurs, loading, error } = useSelector(
     (state: RootState) => state.operateur
   );
 
+  // Deduplicate chauffeurs by name to avoid repeated entries
+  const chauffeurs = useMemo(() => {
+    const seen = new Set<string>();
+    return rawChauffeurs.filter((c: any) => {
+      const key = c.nom_prenom_chauffeur?.trim();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [rawChauffeurs]);
+
 
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
+  const [permitDialogOpen, setPermitDialogOpen] = useState(false);
   const [activeTable, setActiveTable] = useState<"vehicles" | "historique">(
     "vehicles"
   );
@@ -243,7 +255,7 @@ export default function OperateurDetails() {
             </Button>
           )}
 
-          <Dialog>
+          <Dialog open={permitDialogOpen} onOpenChange={setPermitDialogOpen}>
             <DialogTrigger asChild>
               <Button className="h-12 bg-purple-600 hover:bg-purple-700 text-white transition">
                 إضافة رخص ظرفية
@@ -289,6 +301,7 @@ export default function OperateurDetails() {
                     window.URL.revokeObjectURL(url);
 
                     toast.success("تم إنشاء وتنزيل الملف بنجاح");
+                    setPermitDialogOpen(false);
                   } catch (error) {
                     toast.error("حدث خطأ أثناء الإنشاء");
                     console.error("Error:", error);

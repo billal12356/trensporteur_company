@@ -363,9 +363,12 @@ export class ChauffeursService {
       .trim()
       .replace(/\s+/g, ' ');
 
+    // Use exact match (with anchors) to avoid returning chauffeurs
+    // that belong to a different operateur with a similar name
     return this.ChauffeurModel.find({
       operateur: {
-        $regex: cleanedName,
+        $regex: `^${cleanedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+        $options: 'i',
       },
     }).exec();
   }

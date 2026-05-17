@@ -1588,15 +1588,13 @@ export class OperateurDtwService {
 
     const fullName_arabe = operateur.fullName_arabe;
     const chauffeurs = await this.chauffeursService.findChauffeurByOperateur(fullName_arabe);
-    
+
     let selectedChauffeurs = chauffeurs;
     if (dto.chauffeurIds && dto.chauffeurIds.length > 0) {
       selectedChauffeurs = chauffeurs.filter(c => dto.chauffeurIds.includes(c._id.toString()));
     }
 
-    const chauffeur1 = selectedChauffeurs && selectedChauffeurs.length > 0 ? selectedChauffeurs[0] : null;
-    const chauffeur2 = selectedChauffeurs && selectedChauffeurs.length > 1 ? selectedChauffeurs[1] : null;
-
+    console.log("selectedChauffeurs", selectedChauffeurs);
     // 2. Create PDF
     const pdfDoc = await PDFDocument.create();
     pdfDoc.registerFontkit(fontkit);
@@ -1779,10 +1777,22 @@ export class OperateurDtwService {
     drawArabicTextInCol(`- عدد مقاعد الجـــلوس : ${vehicleData?.Number_of_seats || '/'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
     leftY -= 24;
 
-    drawArabicTextInCol(`- السائق (ون) : 1 – ${chauffeur1?.nom_prenom_chauffeur || '/'}`, leftColEdge, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
-    leftY -= 17;
-    drawArabicTextInCol(`2 - ${chauffeur2?.nom_prenom_chauffeur || '/'}`, leftColEdge - 68, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
-    leftY -= 26;
+    // Dynamically render all selected chauffeurs
+    if (selectedChauffeurs && selectedChauffeurs.length > 0) {
+      for (let i = 0; i < selectedChauffeurs.length; i++) {
+        const name = selectedChauffeurs[i].nom_prenom_chauffeur || '/';
+        if (i === 0) {
+          drawArabicTextInCol(`- السائق (ون) : 1 – ${name}`, leftColEdge, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+        } else {
+          drawArabicTextInCol(`${i + 1} - ${name}`, leftColEdge - 68, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+        }
+        leftY -= 17;
+      }
+    } else {
+      drawArabicTextInCol('- السائق (ون) : /', leftColEdge, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+      leftY -= 17;
+    }
+    leftY -= 9;
 
     const leftColWidth = leftColEdge - 20;
     const article2Lines = wrapText('المادة 2 : لا يرخص للناقلين في إطار استغلال خدمته، القيام بالتقاط المسافرين غير الذين صعدوا في نقطة الذهاب .', cairoSemiBoldFont, 9, leftColWidth);
