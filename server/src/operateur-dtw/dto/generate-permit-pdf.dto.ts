@@ -1,4 +1,4 @@
-import { IsArray, IsString } from 'class-validator';
+import { IsArray, IsOptional, IsString } from 'class-validator';
 
 export class GeneratePermitPdfDto {
   @IsString()
@@ -18,4 +18,9 @@ export class GeneratePermitPdfDto {
   @IsArray()
   @IsString({ each: true })
   vehicleIds: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  chauffeurIds?: string[];
 }

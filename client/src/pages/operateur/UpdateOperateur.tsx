@@ -22,7 +22,7 @@ import { Loader } from "lucide-react";
 import MainContainer from "@/components/MainContainer";
 import { Helmet } from "react-helmet-async";
 import { isEqual } from "lodash";
-
+import { toast } from "sonner";
 const EditOperateur = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch<AppDispatch>();
@@ -38,6 +38,8 @@ const EditOperateur = () => {
 
   const [formData, setFormData] = useState<Operateur>({} as Operateur);
   const [hasChanges, setHasChanges] = useState(false);
+  const [ninError, setNinError] = useState("");
+  const [ninStatus, setNinStatus] = useState<"warning" | "error" | "success" | "">("");
 
   // ✅ Fetch operator by ID
   useEffect(() => {
@@ -86,9 +88,33 @@ const EditOperateur = () => {
     }));
   };
 
+  const handleNinChange = (value: string) => {
+    const onlyNumbers = value.replace(/\D/g, "");
+
+    handleChange("num_didentification_national_NIN", onlyNumbers);
+
+    if (onlyNumbers.length < 18) {
+      setNinError("رقم التعريف الوطني يجب ان يكون 18 ليس اقل");
+      setNinStatus("warning");
+    } else if (onlyNumbers.length > 18) {
+      setNinError("رقم التعريف الوطني يجب ان يكون 18 ليس اكثر");
+      setNinStatus("error");
+    } else {
+      setNinError("");
+      setNinStatus("success");
+    }
+  };
+
   // ✅ Submit Function
   const handleSubmitForm = () => {
     if (!id) return;
+    if (formData?.num_didentification_national_NIN) {
+      const nin = String(formData.num_didentification_national_NIN);
+      if (nin.length !== 18) {
+        toast.error("رقم التعريف الوطني يجب أن يتكون من 18 رقماً بالضبط!");
+        return;
+      }
+    }
     dispatch(updateOperateur({ id, data: formData }));
   };
 
@@ -495,18 +521,30 @@ const EditOperateur = () => {
 
             <div>
               <label className="block text-sm font-medium text-end text-gray-700">
-                رقم التعريف الوطني NIN
+                رقم التعريف الوطني NIN <span className="text-red-500">*</span>
               </label>
               <Input
                 type="number"
-                defaultValue={operateur.num_didentification_national_NIN ?? ""}
-                onChange={(e) =>
-                  handleChange(
-                    "num_didentification_national_NIN",
-                    Number(e.target.value)
-                  )
-                }
+                maxLength={19}
+                value={operateur.num_didentification_national_NIN ?? ""}
+                onChange={(e) => handleNinChange(e.target.value)}
+                className={`
+                  ${ninStatus === "warning" ? "bg-yellow-100 border-yellow-500" : ""}
+                  ${ninStatus === "error" ? "bg-red-100 border-red-500" : ""}
+                  ${ninStatus === "success" ? "bg-green-100 border-green-500" : ""}
+                `}
               />
+              {ninError && (
+                <p
+                  className={`
+                  text-sm text-end mt-1
+                  ${ninStatus === "warning" ? "text-yellow-600" : ""}
+                  ${ninStatus === "error" ? "text-red-600" : ""}
+                  `}
+                >
+                  {ninError}
+                </p>
+              )}
             </div>
           </div>
 

@@ -1588,8 +1588,14 @@ export class OperateurDtwService {
 
     const fullName_arabe = operateur.fullName_arabe;
     const chauffeurs = await this.chauffeursService.findChauffeurByOperateur(fullName_arabe);
-    const chauffeur1 = chauffeurs && chauffeurs.length > 0 ? chauffeurs[0] : null;
-    const chauffeur2 = chauffeurs && chauffeurs.length > 1 ? chauffeurs[1] : null;
+    
+    let selectedChauffeurs = chauffeurs;
+    if (dto.chauffeurIds && dto.chauffeurIds.length > 0) {
+      selectedChauffeurs = chauffeurs.filter(c => dto.chauffeurIds.includes(c._id.toString()));
+    }
+
+    const chauffeur1 = selectedChauffeurs && selectedChauffeurs.length > 0 ? selectedChauffeurs[0] : null;
+    const chauffeur2 = selectedChauffeurs && selectedChauffeurs.length > 1 ? selectedChauffeurs[1] : null;
 
     // 2. Create PDF
     const pdfDoc = await PDFDocument.create();

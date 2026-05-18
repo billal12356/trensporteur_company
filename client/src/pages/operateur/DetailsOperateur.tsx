@@ -258,6 +258,7 @@ export default function OperateurDetails() {
                   e.preventDefault();
                   const formData = new FormData(e.currentTarget);
                   const data = Object.fromEntries(formData.entries());
+                  const chauffeurIds = formData.getAll("chauffeurIds");
                   if (selectedVehicles.length === 0) {
                     toast.error("الرجاء اختيار مركبة");
                     return;
@@ -267,6 +268,7 @@ export default function OperateurDetails() {
                       `${API_URL}/api/v1/operateur-dtw/generate-permit-pdf`,
                       {
                         ...data,
+                        chauffeurIds,
                         vehicleIds: selectedVehicles
                       },
                       {
@@ -326,6 +328,32 @@ export default function OperateurDetails() {
                       تاريخ الاياب
                     </Label>
                     <Input id="return_date" name="return_date" type="date" className="col-span-3" required />
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-start gap-4">
+                    <Label className="text-right col-span-1 pt-2">
+                      السائقين
+                    </Label>
+                    <div className="col-span-3 flex flex-col gap-2 bg-gray-50 p-2 rounded border max-h-40 overflow-y-auto">
+                      {chauffeurs.length > 0 ? (
+                        chauffeurs.map((chauffeur: any) => (
+                          <div key={chauffeur._id} className="flex items-center justify-end gap-2">
+                            <Label htmlFor={`chauffeur-${chauffeur._id}`} className="cursor-pointer text-sm font-medium">
+                              {chauffeur.nom_prenom_chauffeur}
+                            </Label>
+                            <input
+                              type="checkbox"
+                              id={`chauffeur-${chauffeur._id}`}
+                              name="chauffeurIds"
+                              value={chauffeur._id}
+                              className="w-4 h-4 cursor-pointer"
+                            />
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-sm text-gray-500 text-right">لا يوجد سائقين</div>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex justify-end mt-4">

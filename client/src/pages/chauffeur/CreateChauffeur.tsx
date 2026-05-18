@@ -59,7 +59,7 @@ const FormChauffeur: React.FC = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value, type } = e.target;
-    
+
     if (name === "num_didentification_national_NIN") {
       const onlyNumbers = value.replace(/\D/g, "").slice(0, 18);
       setFormData((prev) => ({ ...prev, [name]: onlyNumbers === "" ? undefined : Number(onlyNumbers) }));
@@ -88,7 +88,7 @@ const FormChauffeur: React.FC = () => {
       "num_permis_conduire", "date_sortie", "date_expiration_article",
       "municipalite_emettrice", "date_naissance", "lieu_naissance", "address",
       "Num_certificat_compétence_professionnelle", "date_obtention_certificat_aptitude_professionnelle",
-      "wilaya", "num_serie", "num_membre_fonds_national", "vihicile_parked", "type_parked"
+      "wilaya", "num_serie", "num_membre_fonds_national", "vihicile_parked"
     ];
 
     const missingFields = requiredFields.filter(field => !formData[field]);
