@@ -793,7 +793,7 @@ export class VehiclesService {
 
     worksheet.mergeCells('G5:H5');
     const cellG5 = worksheet.getCell('G5');
-    cellG5.value = `عين الدفلى في:${formatDate(Date.now(), true)}`;
+    cellG5.value = `عين الدفلى في:${formatDate(Date.now(), false)}`;
     cellG5.alignment = headerAlignment;
 
     worksheet.mergeCells('A3:C3');

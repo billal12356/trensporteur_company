@@ -342,7 +342,7 @@ export default function OperateurDetails() {
                     </Label>
                     <Input id="return_date" name="return_date" type="date" className="col-span-3" required />
                   </div>
-                  
+
                   <div className="grid grid-cols-4 items-start gap-4">
                     <Label className="text-right col-span-1 pt-2">
                       السائقين

@@ -1733,8 +1733,9 @@ export class OperateurDtwService {
     rightY -= 28;
 
     // Article 1 Right
-    drawArabicTextInCol('المادة الأولى : يرخص للسيد (ة) أو الشركة', rightColEdge, rightY, cairoBoldFont, 11);
-    drawArabicTextInCol(operateur.fullName_arabe || '/', colSplitX + 70, rightY, cairoBoldFont, 11, dynamicColor, true);
+    drawArabicTextInCol('المادة الأولى : يرخص للسيد (ة) أو الشركة :', rightColEdge, rightY, cairoBoldFont, 11);
+    rightY -= 25;
+    drawArabicTextInCol(operateur.fullName_arabe || '/', rightColEdge, rightY, cairoBoldFont, 11, dynamicColor, true);
     rightY -= 22;
     drawArabicTextInCol('رقم القيد :', rightColEdge, rightY, cairoBoldFont, 11);
     drawArabicTextInCol(String(operateur.num_cate_enregistement || '/'), colSplitX + 225, rightY, cairoBoldFont, 11, dynamicColor, true);
@@ -1815,12 +1816,23 @@ export class OperateurDtwService {
       leftY -= 13;
     });
 
-    leftY -= 25;
-    const footerY = 90;
-    drawArabicTextInCol(`حرر بــعين الدفلى في : ${currentDate}`, leftColEdge, leftY, cairoSemiBoldFont, 12);
 
-    const signY = 170;
-    drawArabicTextInCol('مديـــــر النقـــــل', colSplitX - 80, signY, cairoBoldFont, 13, black);
+    if (selectedChauffeurs.length > 4) {
+      leftY -= 25;
+      const footerY = 90;
+      drawArabicTextInCol(`حرر بــعين الدفلى في : ${currentDate}`, leftColEdge, leftY, cairoSemiBoldFont, 12);
+
+      const signY = 120;
+      drawArabicTextInCol('مديـــــر النقـــــل', colSplitX - 80, signY, cairoBoldFont, 13, black);
+    } else {
+      leftY -= 25;
+      const footerY = 90;
+      drawArabicTextInCol(`حرر بــعين الدفلى في : ${currentDate}`, leftColEdge, leftY, cairoSemiBoldFont, 12);
+
+      const signY = 160;
+      drawArabicTextInCol('مديـــــر النقـــــل', colSplitX - 80, signY, cairoBoldFont, 13, black);
+    }
+
 
     // 3. Save and send PDF
     const pdfBytes = await pdfDoc.save();
