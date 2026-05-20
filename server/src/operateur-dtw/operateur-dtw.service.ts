@@ -1672,18 +1672,13 @@ export class OperateurDtwService {
     // ===== HEADER SECTION =====
     drawCenteredArabicText('الجمهورية الجزائرية الديمقراطية الشعبية', height - 40, cairoBoldFont, 16, black);
     drawCenteredArabicText('وزارة الداخلية والجماعات المحلية والنقل', height - 65, cairoBoldFont, 14, black);
-    drawCenteredArabicText('مديرية النقل لولاية عين الدفلى', height - 90, cairoBoldFont, 13, black);
+    drawArabicTextInCol('مديرية النقل لولاية عين الدفلى', width - 40, height - 90, cairoBoldFont, 13, black);
 
     const refY = height - 120;
     drawArabicTextInCol('رقم: ...................................................../م ن/2026 .', width - 40, refY, cairoSemiBoldFont, 11, black);
 
     const decreeY = height - 160;
-    const decreePrefix = 'مقرر مؤرخ في: ';
-    const decreeVisual = getVisualString(decreePrefix);
-    const decreeWidth = cairoBoldFont.widthOfTextAtSize(decreeVisual, 12);
-    const centerDecreeX = (width / 2) - (decreeWidth / 2);
-    page.drawText(decreeVisual, { x: centerDecreeX, y: decreeY, font: cairoBoldFont, size: 12 });
-    page.drawText('.....................................................', { x: centerDecreeX + decreeWidth + 5, y: decreeY, font: cairoSemiBoldFont, size: 12 });
+    drawCenteredArabicText('مقرر مؤرخ في: .....................................................', decreeY, cairoBoldFont, 12, black);
 
     const titleY = height - 190;
     drawCenteredArabicText('يتضمن رخصة استغلال خدمة ظرفية لنقل الأشخاص عبر الطرقات', titleY, cairoBoldFont, 15, darkBlue);
@@ -1702,6 +1697,29 @@ export class OperateurDtwService {
     // ===== RIGHT COLUMN CONTENT =====
     let rightY = startColsY - 20;
     const rightColEdge = width - 30;
+
+    // Helper to draw label and value on same line or wrap to next line centered
+    const drawField = (label: string, value: string, font: any, size: number, boldValue = true) => {
+      const labelVisual = getVisualString(label);
+      const valVisual = getVisualString(value);
+
+      const labelWidth = font.widthOfTextAtSize(labelVisual, size);
+      const valWidth = font.widthOfTextAtSize(valVisual, size);
+      const colWidth = rightColEdge - colSplitX;
+
+      const fitsOnSameLine = (labelWidth + valWidth + 15) < colWidth;
+
+      if (fitsOnSameLine) {
+        drawArabicTextInCol(label, rightColEdge, rightY, font, size);
+        drawArabicTextInCol(value, rightColEdge - labelWidth - 10, rightY, font, size, dynamicColor, boldValue);
+        rightY -= 24;
+      } else {
+        drawArabicTextInCol(label, rightColEdge, rightY, font, size);
+        rightY -= 18;
+        drawCenteredArabicText(value, rightY, font, size, dynamicColor, colSplitX, rightColEdge);
+        rightY -= 24;
+      }
+    };
 
     drawArabicTextInCol('أن مدير النقل،', rightColEdge, rightY, cairoBoldFont, 12);
     rightY -= 22;
@@ -1733,17 +1751,11 @@ export class OperateurDtwService {
     rightY -= 28;
 
     // Article 1 Right
-    drawArabicTextInCol('المادة الأولى : يرخص للسيد (ة) أو الشركة :', rightColEdge, rightY, cairoBoldFont, 11);
-    rightY -= 25;
-    drawArabicTextInCol(operateur.fullName_arabe || '/', rightColEdge, rightY, cairoBoldFont, 11, dynamicColor, true);
-    rightY -= 22;
-    drawArabicTextInCol('رقم القيد :', rightColEdge, rightY, cairoBoldFont, 11);
-    drawArabicTextInCol(String(operateur.num_cate_enregistement || '/'), colSplitX + 225, rightY, cairoBoldFont, 11, dynamicColor, true);
-    rightY -= 22;
-    drawArabicTextInCol('العنوان أو المقر الاجتماعي :', rightColEdge, rightY, cairoBoldFont, 11);
-    rightY -= 18;
-    drawArabicTextInCol(operateur.address_arabe || '/', rightColEdge - 25, rightY, cairoBoldFont, 11, dynamicColor, true);
-    rightY -= 28;
+    drawField('المادة الأولى : يرخص للسيد (ة) أو الشركة :', operateur.fullName_arabe || '/', cairoBoldFont, 11, true);
+
+    drawField('رقم القيد :', String(operateur.num_cate_enregistement || '/'), cairoBoldFont, 11, true);
+
+    drawField('العنوان أو المقر الاجتماعي :', operateur.address_arabe || '/', cairoBoldFont, 11, true);
     drawArabicTextInCol('ملاحظـــــــة : - عدم الوقوف والتوقف بمحطة نقل المسافرين .', rightColEdge, rightY, cairoBoldFont, 10);
     rightY -= 16;
     drawArabicTextInCol('- قائمة المسافرين مرفقة على ظهر هذه الرخصة .', rightColEdge, rightY, cairoSemiBoldFont, 10);
@@ -1817,21 +1829,13 @@ export class OperateurDtwService {
     });
 
 
-    if (selectedChauffeurs.length > 4) {
-      leftY -= 25;
-      const footerY = 90;
-      drawArabicTextInCol(`حرر بــعين الدفلى في : ${currentDate}`, leftColEdge, leftY, cairoSemiBoldFont, 12);
+    leftY -= 25;
+    const chauffeurCount = selectedChauffeurs?.length || 0;
+    const shift = Math.max(0, chauffeurCount - 4) * 17;
+    const signY = Math.max(90, 160 - shift);
 
-      const signY = 120;
-      drawArabicTextInCol('مديـــــر النقـــــل', colSplitX - 80, signY, cairoBoldFont, 13, black);
-    } else {
-      leftY -= 25;
-      const footerY = 90;
-      drawArabicTextInCol(`حرر بــعين الدفلى في : ${currentDate}`, leftColEdge, leftY, cairoSemiBoldFont, 12);
-
-      const signY = 160;
-      drawArabicTextInCol('مديـــــر النقـــــل', colSplitX - 80, signY, cairoBoldFont, 13, black);
-    }
+    drawArabicTextInCol(`حرر بــعين الدفلى في :`, leftColEdge, leftY, cairoSemiBoldFont, 12);
+    drawArabicTextInCol('مديـــــر النقـــــل', colSplitX - 80, signY, cairoBoldFont, 13, black);
 
 
     // 3. Save and send PDF

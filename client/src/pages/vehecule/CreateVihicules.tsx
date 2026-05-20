@@ -260,8 +260,8 @@ const FormOperateur: React.FC = () => {
                 { label: "MINI CAR", value: "miniCar" },
                 { label: "MINI BUS", value: "miniBus" },
                 { label: "AUTO BUS", value: "autoBus" },
-                { label: "CAMION AMENAGE", value: "camionAmenage" },
-                { label: "AUTRE", value: "autre" },
+                { label: "VEHICULE AMENAGE", value: "vehiculeAmenage" },
+                { label: "AUTRE VEHICULE", value: "autreVehicule" },
               ]}
             />
           </div>
@@ -335,6 +335,7 @@ const FormOperateur: React.FC = () => {
                 { label: "مركبة احتياطية", value: "مركبة احتياطية" },
                 { label: "نقل العمال", value: "نقل العمال" },
                 { label: "نقل مدرسي", value: "نقل مدرسي" },
+                { label: "نقل الجامعي", value: "نقل الجامعي" },
               ]}
             />
             <InputField
@@ -372,6 +373,7 @@ const FormOperateur: React.FC = () => {
               onChange={(v) => handleChange("colonne4", v)}
               options={[
                 { label: "inter - communale", value: "inter - communale" },
+                { label: "inter - willaya", value: "inter - willaya" },
                 { label: "Transport personnel", value: "Transport personnel" },
                 { label: "Transport scolairel", value: "Transport scolairel" },
                 {

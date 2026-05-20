@@ -246,10 +246,12 @@ const EditOperateur = () => {
               value={formData.type ?? ""}
               onChange={(v) => handleChange("type", v)}
               options={[
-                { label: "حافلة", value: "حافلة" },
-                { label: "حافلة صغيرة", value: "حافلة صغيرة" },
-                { label: "MINI CAR", value: "MINI CAR" },
-                { label: "مجهزة سيارة", value: "مجهزة سيارة" },
+                { label: "AUTO CAR", value: "autoCar" },
+                { label: "MINI CAR", value: "miniCar" },
+                { label: "MINI BUS", value: "miniBus" },
+                { label: "AUTO BUS", value: "autoBus" },
+                { label: "VEHICULE AMENAGE", value: "vehiculeAmenage" },
+                { label: "AUTRE VEHICULE", value: "autreVehicule" },
               ]}
             />
           </div>
@@ -355,6 +357,7 @@ const EditOperateur = () => {
                 { label: "مركبة احتياطية", value: "مركبة احتياطية" },
                 { label: "نقل العمال", value: "نقل العمال" },
                 { label: "نقل مدرسي", value: "نقل مدرسي" },
+                { label: "نقل الجامعي", value: "نقل الجامعي" },
               ]}
             />
             <InputField
