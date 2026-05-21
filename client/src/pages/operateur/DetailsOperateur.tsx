@@ -30,7 +30,7 @@ import { API_URL } from "@/redux/contants";
 import { toast } from "sonner";
 
 export default function OperateurDetails() {
-  const { operateur, vihicules, chauffeurs: rawChauffeurs, loading, error } = useSelector(
+  const { operateur, vihicules, historiqueOperateur, chauffeurs: rawChauffeurs, loading, error } = useSelector(
     (state: RootState) => state.operateur
   );
 
@@ -48,7 +48,7 @@ export default function OperateurDetails() {
 
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [permitDialogOpen, setPermitDialogOpen] = useState(false);
-  const [activeTable, setActiveTable] = useState<"vehicles" | "historique">(
+  const [activeTable, setActiveTable] = useState<"vehicles" | "historique" | "historique_operateur">(
     "vehicles"
   );
   const dispatch = useDispatch<AppDispatch>();
@@ -67,10 +67,8 @@ export default function OperateurDetails() {
   };
 
   const historiqueVehicles = useMemo(() => {
-    return vihicules.filter(
-      (v: any) => v.is_permanently_parked === true
-    );
-  }, [vihicules]);
+    return historiqueOperateur || [];
+  }, [historiqueOperateur]);
 
 
 
@@ -230,6 +228,7 @@ export default function OperateurDetails() {
               )
             }
             className=" h-12"
+            disabled={vihicules.length === 0}
           >
             بطاقة المسارات و التوقيت
           </Button>
@@ -249,6 +248,7 @@ export default function OperateurDetails() {
           ) : (
             <Button
               onClick={handleClickPfds}
+              disabled={vihicules.length === 0}
               className="bg-green-600 text-white px-4 h-12 py-2 rounded-md hover:bg-blue-700 transition"
             >
               مقررة
@@ -416,22 +416,22 @@ export default function OperateurDetails() {
               [
                 {
                   label: "تاريخ بداية النشاط",
-                  value: formatters.dateFrench(operateur.date_debut_activite),
+                  value: formatters.dateFrench(operateur.date_debut_activite) || "/",
                 },
                 {
                   label: "رقم القيد سجل في الناقلين ",
-                  value: chauffeurs[index]?.num_enregistrement_du_transporteur,
+                  value: chauffeurs[index]?.num_enregistrement_du_transporteur || "/",
                 },
               ],
               // Section 2
               [
                 {
                   label: "تاريخ اصدار الرخصة",
-                  value: formatters.dateFrench(chauffeurs[index]?.date_sortie),
+                  value: formatters.dateFrench(chauffeurs[index]?.date_sortie) || "/",
                 },
                 {
                   label: "رقم التسلسلي للرخصة",
-                  value: chauffeurs[index]?.num_serie,
+                  value: chauffeurs[index]?.num_serie || "/",
                 },
               ],
               // Section 3
@@ -442,7 +442,7 @@ export default function OperateurDetails() {
                 },
                 {
                   label: "اسم و لقب الناقل",
-                  value: chauffeurs[index]?.nom_prenom_chauffeur,
+                  value: chauffeurs[index]?.nom_prenom_chauffeur || "/",
                 },
               ],
               // Section 4
@@ -453,33 +453,33 @@ export default function OperateurDetails() {
                 },
                 {
                   label: "مكان الميلاد",
-                  value: operateur.lieu_naissance_francais,
+                  value: operateur.lieu_naissance_francais || "/",
                 },
                 {
                   label: "تاريخ الميلاد",
-                  value: formatters.dateFrench(operateur.date_naissance),
+                  value: formatters.dateFrench(operateur.date_naissance) || "/",
                 },
               ],
               // Section 5
               [
                 {
                   label: "اسم و لقب الام بالفرنسية",
-                  value: operateur.fullName_mere_francais,
+                  value: operateur.fullName_mere_francais || "/",
                 },
                 {
                   label: "اسم و لقب الام بالعربية",
-                  value: operateur.fullName_mere_arabe,
+                  value: operateur.fullName_mere_arabe || "/",
                 },
                 {
                   label: "اسم الاب",
-                  value: operateur.nom_pere_arabe,
+                  value: operateur.nom_pere_arabe || "/",
                 },
               ],
               // Section 6
               [
                 {
                   label: "العنوان او المقر الاجتماعي",
-                  value: operateur.address_arabe,
+                  value: operateur.address_arabe || "/",
                 },
               ],
               // Section 7
@@ -498,7 +498,7 @@ export default function OperateurDetails() {
                 },
                 {
                   label: "الهاتف",
-                  value: operateur.num_telephone_client,
+                  value: operateur.num_telephone_client || "/",
                 },
               ],
               // Section 8
@@ -509,15 +509,15 @@ export default function OperateurDetails() {
                 },
                 {
                   label: "تاريخ بداية النشاط",
-                  value: formatters.dateFrench(operateur.date_debut_activite),
+                  value: formatters.dateFrench(operateur.date_debut_activite) || "/",
                 },
                 {
                   label: "رقم السجل التجاري",
-                  value: operateur.num_registre_commerce,
+                  value: operateur.num_registre_commerce || "/",
                 },
                 {
                   label: "رقم التعريف الوطني NIN",
-                  value: operateur.num_didentification_national_NIN,
+                  value: operateur.num_didentification_national_NIN || "/",
                 },
               ],
             ].map((section, idx) => (
@@ -556,6 +556,13 @@ export default function OperateurDetails() {
             onClick={() => setActiveTable("historique")}
           >
             سجل التوقيف
+          </Button>
+
+          <Button
+            variant={activeTable === "historique_operateur" ? "default" : "outline"}
+            onClick={() => setActiveTable("historique_operateur")}
+          >
+            سجل توقيف المتعامل
           </Button>
         </div>
 
@@ -645,6 +652,89 @@ export default function OperateurDetails() {
                       </td>
                     </tr>
                   ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ===============================
+            HISTORIQUE OPERATEUR TABLE
+        =============================== */}
+        {activeTable === "historique_operateur" && (
+          <div className="overflow-x-auto border rounded-md shadow-sm">
+            <table className="min-w-full border-collapse text-sm text-right">
+              <thead className="bg-gray-200 font-bold text-gray-800">
+                <tr>
+                  <th className="border px-3 py-2">رقم الملف</th>
+                  <th className="border px-3 py-2">اسم ولقب المتعامل (بالعربية)</th>
+                  <th className="border px-3 py-2">اسم ولقب المتعامل (بالفرنسية)</th>
+                  <th className="border px-3 py-2">رقم الجدول الزمني</th>
+                  <th className="border px-3 py-2">رقم التعريف الوطني NIN</th>
+                  <th className="border px-3 py-2">إيقاف النشاط</th>
+                  <th className="border px-3 py-2">نوع التوقيف</th>
+                  <th className="border px-3 py-2">تاريخ التوقيف المؤقت</th>
+                  <th className="border px-3 py-2">تاريخ التوقيف النهائي</th>
+                  <th className="border px-3 py-2">ملاحظات رئيس المصلحة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Show operator suspension row only when operator has exactly 1 vehicle and it's permanently parked */}
+                {!(vihicules.length === 0 && historiqueVehicles.length === 1) ? (
+                  <tr>
+                    <td colSpan={10} className="text-center py-4 text-gray-500">
+                      لا توجد بيانات - المتعامل لم يتم توقيفه
+                    </td>
+                  </tr>
+                ) : (
+                  <tr className="hover:bg-gray-50 transition">
+                    <td className="border px-3 py-2 font-semibold text-blue-600">
+                      {operateur.num_docier_client}
+                    </td>
+                    <td className="border px-3 py-2 font-semibold">
+                      {operateur.fullName_arabe}
+                    </td>
+                    <td className="border px-3 py-2">
+                      {operateur.fullName_francais}
+                    </td>
+                    <td className="border px-3 py-2">
+                      {operateur.num_dhoraire || "-"}
+                    </td>
+                    <td className="border px-3 py-2">
+                      {operateur.num_didentification_national_NIN || "-"}
+                    </td>
+                    <td className="border px-3 py-2">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${operateur.depend_activite === "نعم"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-green-100 text-green-800"
+                        }`}>
+                        {operateur.depend_activite || "لا"}
+                      </span>
+                    </td>
+                    <td className="border px-3 py-2">
+                      {operateur.type_depend ? (
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${operateur.type_depend === "نهائي"
+                            ? "bg-red-200 text-red-900"
+                            : "bg-yellow-100 text-yellow-800"
+                          }`}>
+                          {operateur.type_depend}
+                        </span>
+                      ) : "-"}
+                    </td>
+                    <td className="border px-3 py-2">
+                      {operateur.date_arret_activite_temporaire
+                        ? formatters.dateFrench(operateur.date_arret_activite_temporaire)
+                        : "-"}
+                    </td>
+                    <td className="border px-3 py-2">
+                      {operateur.date_arret_activite_permanent
+                        ? formatters.dateFrench(operateur.date_arret_activite_permanent)
+                        : "-"}
+                    </td>
+                    <td className="border px-3 py-2" title={operateur.note_chef_departement}>
+                      {operateur.note_chef_departement || "-"}
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>

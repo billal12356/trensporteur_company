@@ -61,6 +61,7 @@ interface OperateurState {
   operateurs: Operateur[];
   operateur: Operateur;
   vihicules: Vihicles[];
+  historiqueOperateur: Vihicles[];
   chauffeurs: Chauffeur[];
   total: number;
   limit: number;
@@ -84,6 +85,7 @@ const initialState: OperateurState = {
   operateurs: [],
   operateur: {} as Operateur,
   vihicules: [],
+  historiqueOperateur: [],
   chauffeurs: [],
   total: 0,
   limit: 10,
@@ -302,6 +304,7 @@ export const createOperateur = createAsyncThunk<
 >(
   "operateurs/createOperateur",
   async (data, { rejectWithValue }) => {
+    console.log("data", data)
     try {
       const res = await axios.post(
         `${API_URL}/api/v1/operateur-dtw/create`,
@@ -309,7 +312,7 @@ export const createOperateur = createAsyncThunk<
         { withCredentials: true }
       );
 
-      console.log("res", res.data)
+      console.log("res", res)
       return {
         message: res.data.message || "تم التسجيل بنجاح",
         operateur: res.data.data, // 👈 Fix: server returns it in 'data'
@@ -454,6 +457,7 @@ const operateurSlice = createSlice({
         state.loading = false;
         state.operateur = action.payload.operateur;
         state.vihicules = action.payload.vihicules;
+        state.historiqueOperateur = action.payload.historiqueOperateur || [];
         state.chauffeurs = action.payload.chauffeurs;
       })
       .addCase(FindOneOperateur.rejected, (state, action) => {
@@ -494,15 +498,15 @@ const operateurSlice = createSlice({
         state.loading = false;
         state.operateurs.push(action.payload.operateur);
         state.successMessage = action.payload.message; // ✅ success
+        toast.success(action.payload.message || "تم تسجيل المتعامل بنجاح!");
       })
 
       .addCase(createOperateur.rejected, (state, action) => {
         state.loading = false;
         state.successMessage = null; // ✅ مهم
-        state.error =
-          action.payload ||
-          action.error.message ||
-          "يرجى ملء البيانات الناقصة";
+        const errMsg = (action.payload as string) || action.error?.message || "يرجى ملء البيانات الناقصة";
+        state.error = errMsg;
+        toast.error(errMsg);
       });
 
 

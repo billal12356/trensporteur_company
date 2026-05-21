@@ -79,11 +79,13 @@ export class OperateurDtwService {
       //   }
       // });
 
-      return new ResponseBuilder()
+      const result = new ResponseBuilder()
         .setStatus(201)
         .setMessage('تم تسجيل المتعامل بنجاح')
         .setData(operateur)
         .build();
+      console.log("result", result)
+      return res.status(201).json(result);
     } catch (error) {
       console.error('❌ Validation or Server Error:', error);
 
@@ -132,23 +134,31 @@ export class OperateurDtwService {
 
   async findOne(id: string) {
     const operateur = await this.OperateurModel.findById(id);
-    const vihicules = [];
+    const allVehicles = [];
     const chauffeurs = [];
     const num_docier_client = operateur?.num_docier_client;
     const fullName_arabe = operateur?.fullName_arabe;
     console.log("fullName_arabe", fullName_arabe)
     const vihicle =
       await this.vihiculeService.findVihiculeByOperateur(num_docier_client);
-    vihicules.push(...vihicle);
+    allVehicles.push(...vihicle);
     const chauffeur =
       await this.chauffeursService.findChauffeurByOperateur(fullName_arabe);
     console.log("chauffeur", chauffeur)
     chauffeurs.push(...chauffeur);
     console.log(chauffeurs);
 
+    const activeVihicules = allVehicles.filter(
+      (v) => !(v.vihicile_parked === 'نعم' && v.type_parked === 'نهائي')
+    );
+    const historiqueOperateur = allVehicles.filter(
+      (v) => v.vihicile_parked === 'نعم' && v.type_parked === 'نهائي'
+    );
+
     return {
       operateur,
-      vihicules,
+      vihicules: activeVihicules,
+      historiqueOperateur,
       chauffeurs,
     };
   }
