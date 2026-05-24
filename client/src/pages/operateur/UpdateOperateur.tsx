@@ -40,6 +40,7 @@ const EditOperateur = () => {
   const [hasChanges, setHasChanges] = useState(false);
   const [ninError, setNinError] = useState("");
   const [ninStatus, setNinStatus] = useState<"warning" | "error" | "success" | "">("");
+  const [ninTouched, setNinTouched] = useState(false);
 
   // ✅ Fetch operator by ID
   useEffect(() => {
@@ -53,12 +54,7 @@ const EditOperateur = () => {
     }
   }, [dispatch, id]);
 
-  // ✅ When operateur is fetched, fill state
-  useEffect(() => {
-    if (operateur) {
-      setFormData(operateur);
-    }
-  }, [operateur]);
+
 
   // ✅ Redirect after update (only when messageUpdate changes from empty to filled)
   useEffect(() => {
@@ -70,6 +66,16 @@ const EditOperateur = () => {
       return () => clearTimeout(timer);
     }
   }, [messageUpdate, id, navigate]);
+
+  useEffect(() => {
+    if (operateur) {
+      setFormData(operateur);
+      // ✅ Don't validate NIN on load — reset everything
+      setNinError("");
+      setNinStatus("");
+      setNinTouched(false); // reset touched state when switching operateur
+    }
+  }, [operateur]);
 
   // ✅ Detect if formData changed from original
   useEffect(() => {
@@ -90,6 +96,7 @@ const EditOperateur = () => {
 
   const handleNinChange = (value: string) => {
     const onlyNumbers = value.replace(/\D/g, "");
+    setNinTouched(true); // ✅ Mark as touched on first user interaction
 
     handleChange("num_didentification_national_NIN", onlyNumbers);
 
@@ -108,14 +115,26 @@ const EditOperateur = () => {
   // ✅ Submit Function
   const handleSubmitForm = () => {
     if (!id) return;
-    if (formData?.num_didentification_national_NIN) {
-      const nin = String(formData.num_didentification_national_NIN);
-      if (nin.length !== 18) {
+
+    // If NIN was touched, validate it before sending
+    if (ninTouched) {
+      const nin = String(formData.num_didentification_national_NIN || "");
+      if (nin && nin.length !== 18) {
         toast.error("رقم التعريف الوطني يجب أن يتكون من 18 رقماً بالضبط!");
         return;
       }
     }
-    dispatch(updateOperateur({ id, data: formData }));
+
+    // Build payload: omit NIN if not touched to avoid backend @IsString validation
+    const dataToSend: Partial<Operateur> = { ...formData };
+    if (!ninTouched) {
+      delete dataToSend.num_didentification_national_NIN;
+    } else {
+      // Ensure NIN is sent as string for backend validation
+      dataToSend.num_didentification_national_NIN = String(dataToSend.num_didentification_national_NIN || "") as any;
+    }
+
+    dispatch(updateOperateur({ id, data: dataToSend }));
   };
 
   const depnd = formData.depend_activite;
@@ -524,9 +543,9 @@ const EditOperateur = () => {
                 رقم التعريف الوطني NIN <span className="text-red-500">*</span>
               </label>
               <Input
-                type="number"
-                maxLength={19}
-                value={operateur.num_didentification_national_NIN ?? ""}
+                type="text"
+                maxLength={18}
+                value={formData.num_didentification_national_NIN ?? ""}
                 onChange={(e) => handleNinChange(e.target.value)}
                 className={`
                   ${ninStatus === "warning" ? "bg-yellow-100 border-yellow-500" : ""}

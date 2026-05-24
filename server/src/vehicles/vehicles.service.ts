@@ -1032,10 +1032,10 @@ export class VehiclesService {
       'ملاحظة',
       'ترخيص وزاري',
       'اقتراح اللجنة',
-      'عدد الرخص التي تم تعويضها',       // ✅ جديد
-      'تاريخ التوقف اوالالغاء',         // ✅ جديد
-      'اسم و لقب المتعامل الموقف',      // ✅ جديد
-      'توقيعات النهائية',                // ✅ جديد
+      'عدد الرخص التي تم تعويضها',
+      'تاريخ التوقف اوالالغاء',
+      'اسم و لقب المتعامل الموقف',
+      'توقيعات النهائية',
       'الحد الاقصى للخط',
       'عدد المركبات حاليا',
       'عدد المتعاملين حاليا',
@@ -1200,7 +1200,7 @@ export class VehiclesService {
             totalVehicles: 0,
             parkedFinalCount: 0,
             parkedNames: [],
-            parkedDates: [],   // ✅ جديد
+            parkedDates: [],
           });
         }
 
@@ -1327,12 +1327,15 @@ export class VehiclesService {
 
       for (const vehicle of sortedVehicles) {
         const committee = committeeMap.get(vehicle.fontSymbol);
+        const number_allocated_compensation = vehicle.totalVehicles - committee?.committeeOpinion;
+        console.log(number_allocated_compensation)
+
 
         const rowData = [
           '',
           '',
           '',
-          committee?.committeeOpinion ?? '',
+          Math.abs(number_allocated_compensation) ?? '',
           vehicle.parkedDates && vehicle.parkedDates.length > 0
             ? vehicle.parkedDates.join(' - ')
             : '',
@@ -1340,7 +1343,7 @@ export class VehiclesService {
             ? vehicle.parkedNames.join(' - ')
             : '',
           vehicle.parkedFinalCount,
-          committee?.maxLimit ?? '',
+          Math.abs(number_allocated_compensation) ?? '',
           committee?.committeeOpinion ?? '',
           committee?.oldVehicles ?? '',
           vehicle.totalVehicles,
@@ -1716,13 +1719,13 @@ export class VehiclesService {
     const headerRow = worksheet.addRow([
       'ملاحظة',
       'راي المدير',
+      'ملاحظات رئيس المصلحة',
       'راي اللجنة',
       'عدد الرخص التي تم تعويضها',
-      'تاريخ التوقف اوالالغاء',        // ✅ جديد
-      'اسم و لقب المتعامل الموقف',     // ✅ جديد
-      'توقيعات النهائية',               // ✅ جديد
+      'تاريخ التوقف اوالالغاء',
+      'اسم و لقب المتعامل الموقف',
+      'توقيعات النهائية',
       'العدد المتفق عليه باخر محضر',
-      'ملاحظات رئيس المصلحة',
       'العدد الاقصى حسب محضر الاجتماع',
       'عدد المركبات قديما',
       'عدد المركبات حاليا',
@@ -1768,6 +1771,7 @@ export class VehiclesService {
       const row = worksheet.addRow([
         '',
         '',
+        first?.note_chef_departement ?? '',
         '',
         committee?.committeeOpinion ?? '',
         groupData.parkedDates.length > 0
@@ -1778,7 +1782,6 @@ export class VehiclesService {
           : '',
         groupData.parkedFinalCount,
         '',
-        first?.note_chef_departement ?? '',
         '',
         committee?.oldVehicles ?? '',
         list.length,
