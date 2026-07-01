@@ -19,6 +19,8 @@ import {
   X,
   Home,
   ChevronDown,
+  Sun,
+  Moon,
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
@@ -30,6 +32,7 @@ import ChangePassword from "./pages/ChangePassword"
 import { EditProfile } from "./pages/EditProfile"
 import { CreateAdmin } from "./pages/CreateAdmin"
 import { useUser } from "@/hooks/context/userContext/UserProvider"
+import { useTheme } from "@/hooks/context/ThemeContext"
 import { Helmet } from "react-helmet-async"
 
 const createTab = (label: string, component: string) => ({
@@ -101,6 +104,7 @@ const layoutConfig: IJsonModel = {
 
 const FlexDashboardLayout = () => {
   const { userData } = useUser()
+  const { theme, toggleTheme } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
   const [model, setModel] = useState(() => Model.fromJson(layoutConfig))
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -156,7 +160,7 @@ const FlexDashboardLayout = () => {
   }
 
   return (
-    <div className="w-full h-screen flex flex-col bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+    <div className="w-full h-screen flex flex-col bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <Helmet>
         <title>مديرية النقل - لوحة التحكم</title>
         <meta name="description" content="نظام إدارة النقل المتطور" />
@@ -168,7 +172,7 @@ const FlexDashboardLayout = () => {
       </Helmet>
 
       {/* Enhanced Navbar */}
-      <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-lg sticky top-0 z-50">
+      <nav className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-slate-800 shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo and Title */}
@@ -208,6 +212,14 @@ const FlexDashboardLayout = () => {
 
             {/* Right Side Actions */}
             <div className="flex items-center gap-3">
+              {/* Theme Toggle Button */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-slate-800 transition-colors"
+                aria-label="Toggle Theme"
+              >
+                {theme === "dark" ? <Sun className="w-4 h-4 text-yellow-500" /> : <Moon className="w-4 h-4 text-gray-700" />}
+              </button>
               {/* Home Link */}
               <Link
                 to="/"

@@ -15,6 +15,8 @@ import {
   User,
   Settings,
   BarChart4,
+  Sun,
+  Moon,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Link } from "react-router-dom"
@@ -33,6 +35,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 
 import { useUser } from "@/hooks/context/userContext/UserProvider"
+import { useTheme } from "@/hooks/context/ThemeContext"
 
 interface NavItem {
   label: string
@@ -144,6 +147,7 @@ const navigationItems: NavItem[] = [
 
 const EnhancedNavbar = () => {
   const { userData, logout } = useUser()
+  const { theme, toggleTheme } = useTheme()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [scrolled, setScrolled] = useState(false)
@@ -174,8 +178,8 @@ const EnhancedNavbar = () => {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       className={`sticky top-0 z-50 transition-all duration-300 ${scrolled
-        ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200"
-        : "bg-white shadow-sm border-b border-gray-100"
+        ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-lg border-b border-gray-200 dark:border-slate-800"
+        : "bg-white dark:bg-slate-900 shadow-sm border-b border-gray-100 dark:border-slate-800"
         }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -280,6 +284,16 @@ const EnhancedNavbar = () => {
 
           {/* Right Section */}
           <div className="flex items-center gap-3">
+            {/* Theme Toggle Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleTheme}
+              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+              aria-label="Toggle Theme"
+            >
+              {theme === "dark" ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-gray-700" />}
+            </motion.button>
             {/* User Menu */}
             {userData ? (
               <DropdownMenu>

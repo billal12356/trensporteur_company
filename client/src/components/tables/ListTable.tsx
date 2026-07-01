@@ -249,7 +249,7 @@ export const ListTable = React.forwardRef<HTMLDivElement, ListTableProps<any>>(
         {pagination && (
           <div className="px-6 py-4 border-t bg-gray-50 flex items-center justify-between">
             <div className="text-sm text-gray-600 text-right">
-              عرض {Math.min(pagination.limit, sortedData.length)} من {pagination.total}
+              عرض {pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} من {pagination.total}
             </div>
 
             <div className="flex gap-2">

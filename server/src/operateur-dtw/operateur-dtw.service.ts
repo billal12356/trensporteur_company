@@ -120,6 +120,7 @@ export class OperateurDtwService {
       .limit(finalLimit)
       .skip(skip)
       .sort(sort)
+      .lean()
       .exec();
 
     const total = await this.OperateurModel.countDocuments(query).exec();
@@ -133,7 +134,7 @@ export class OperateurDtwService {
   }
 
   async findOne(id: string) {
-    const operateur = await this.OperateurModel.findById(id);
+    const operateur = await this.OperateurModel.findById(id).lean().exec();
     const allVehicles = [];
     const chauffeurs = [];
     const num_docier_client = operateur?.num_docier_client;
@@ -169,7 +170,7 @@ export class OperateurDtwService {
   }
 
   async generatePDF(id: string, vehicleIds?: string[]): Promise<string> {
-    const operateur = await this.OperateurModel.findById(id);
+    const operateur = await this.OperateurModel.findById(id).lean().exec();
     const num_docier_client = operateur?.num_docier_client;
     const fullName_francais = operateur?.fullName_francais;
 
@@ -738,7 +739,7 @@ export class OperateurDtwService {
   async findByVihicilesandChauffer(query: Record<string, any>) {
     console.log(query);
 
-    const find = await this.OperateurModel.findOne(query);
+    const find = await this.OperateurModel.findOne(query).lean().exec();
     console.log(find);
 
     return find;

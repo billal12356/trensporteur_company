@@ -22,11 +22,13 @@ export class Chauffeur {
 
   @Prop({
     type: Number,
+    index: true,
   })
   num_enregistrement_du_transporteur: number;
 
   @Prop({
     type: String,
+    index: true,
   })
   operateur: string;
 
@@ -37,6 +39,7 @@ export class Chauffeur {
 
   @Prop({
     type: String,
+    index: true,
   })
   num_vehicule: string;
 

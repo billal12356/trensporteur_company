@@ -14,6 +14,8 @@ export class Users {
   @Prop({
     type: String,
     required: true,
+    unique: true,
+    index: true,
   })
   email: string;
 
@@ -38,6 +40,9 @@ export class Users {
 
   @Prop()
   verificationCodeExpiresAt: Date;
+
+  @Prop()
+  refreshToken: string;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Operateur' })
   operateur: mongoose.Types.ObjectId;

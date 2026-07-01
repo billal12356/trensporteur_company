@@ -6,14 +6,15 @@ import { Toaster } from 'sonner';
 import { useUser } from './hooks/context/userContext/UserProvider';
 
 
-import { State } from './pages/statistique/State';
-import FlexDashboardLayout from './dashboards/Layout';
-import ResetPasswordForm from './pages/auth/Resset Password/ResetPasswordForm';
-import VerifyCodeForm from './pages/auth/Resset Password/VerifyCodeForm';
-import ChangePasswordForm from './pages/auth/Resset Password/ChangePasswordForm';
-import TransportTable from './pages/statique_2025';
-import PageExcelVihecles from './pages/excel-vehicles';
-import StatistiqueCompt from './pages/statistique_compt';
+const State = lazy(() => import('./pages/statistique/State').then(module => ({ default: module.State })));
+const FlexDashboardLayout = lazy(() => import('./dashboards/Layout'));
+const ResetPasswordForm = lazy(() => import('./pages/auth/Resset Password/ResetPasswordForm'));
+const VerifyCodeForm = lazy(() => import('./pages/auth/Resset Password/VerifyCodeForm'));
+const ChangePasswordForm = lazy(() => import('./pages/auth/Resset Password/ChangePasswordForm'));
+const TransportTable = lazy(() => import('./pages/statique_2025'));
+const PageExcelVihecles = lazy(() => import('./pages/excel-vehicles'));
+const StatistiqueCompt = lazy(() => import('./pages/statistique_compt'));
+
 const CanevasTransport = lazy(() => import("./pages/canevas_transport"));
 const Home = lazy(() => import("./pages/home/Page"));
 const Login = lazy(() => import("./pages/auth/SignIn"));

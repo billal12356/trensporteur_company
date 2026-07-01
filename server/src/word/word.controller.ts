@@ -1,9 +1,11 @@
 // src/ocr/word.controller.ts
-import { Controller, Post, Res } from '@nestjs/common';
+import { Controller, Post, Res, UseGuards } from '@nestjs/common';
+import { AuthGuard } from 'src/common/gaurds/auth.guard';
 import { WordService } from './word.service';
 import { join } from 'path';
 import { Response } from 'express';
 
+@UseGuards(AuthGuard)
 @Controller('word')
 export class WordController {
   constructor(private readonly wordService: WordService) {}

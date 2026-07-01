@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Inject } from '@nestjs/common';
 import { CreateStateDto } from './dto/create-state.dto';
 import { UpdateStateDto } from './dto/update-state.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -6,6 +6,7 @@ import { Model } from 'mongoose';
 import { Operateur } from 'src/operateur-dtw/operateur-dtw.schema';
 import { Chauffeur } from 'src/chauffeurs/chauffeurs.schema';
 import { Vihicles } from 'src/vehicles/vihicles.schema';
+import { ICacheManager } from 'src/common/providers/cache.provider';
 
 @Injectable()
 export class StateService {
@@ -13,8 +14,15 @@ export class StateService {
     @InjectModel(Operateur.name) private operateurModel: Model<Operateur>,
     @InjectModel(Chauffeur.name) private chauffeurModel: Model<Chauffeur>,
     @InjectModel(Vihicles.name) private vehiculeModel: Model<Vihicles>,
+    @Inject('CACHE_MANAGER') private cacheManager: ICacheManager,
   ) { }
   async getAllStats() {
+    const cacheKey = 'all_stats';
+    const cachedData = this.cacheManager.get<any>(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
     const now = new Date();
     const startOfDay = new Date(
       now.getFullYear(),
@@ -40,7 +48,9 @@ export class StateService {
       getCounts(this.vehiculeModel),
     ]);
 
-    return { operateurs, chauffeurs, vehicules };
+    const result = { operateurs, chauffeurs, vehicules };
+    this.cacheManager.set(cacheKey, result, 30000); // Cache for 30 seconds
+    return result;
   }
 
   //inter communal

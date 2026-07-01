@@ -5,7 +5,9 @@ import {
   UseInterceptors,
   HttpException,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from 'src/common/gaurds/auth.guard';
 import { ImportOperateurService } from './import-operateur.service';
 import { CreateImportOperateurDto } from './dto/create-import-operateur.dto';
 import { UpdateImportOperateurDto } from './dto/update-import-operateur.dto';
@@ -14,6 +16,7 @@ import * as path from 'path';
 import * as operateurs from '../seed/data/operateur.json';
 import { FileInterceptor } from '@nestjs/platform-express';
 
+@UseGuards(AuthGuard)
 @Controller('import-operateur')
 export class ImportOperateurController {
   constructor(private readonly importOperateurService: ImportOperateurService) { }

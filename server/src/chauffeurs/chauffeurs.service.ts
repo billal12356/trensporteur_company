@@ -75,6 +75,7 @@ export class ChauffeursService {
       .limit(finalLimit)
       .skip(skip)
       .sort(sort)
+      .lean()
       .exec();
 
     const total = await this.ChauffeurModel.countDocuments(query).exec();
@@ -98,7 +99,7 @@ export class ChauffeursService {
       );
     }
 
-    const vihicile = await this.ChauffeurModel.findOne({ _id: id });
+    const vihicile = await this.ChauffeurModel.findOne({ _id: id }).lean().exec();
 
     if (!vihicile) {
       throw new NotFoundException(
@@ -370,7 +371,7 @@ export class ChauffeursService {
         $regex: `^${cleanedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
         $options: 'i',
       },
-    }).exec();
+    }).lean().exec();
   }
 
 

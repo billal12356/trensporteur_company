@@ -163,6 +163,7 @@ export class VehiclesService {
       .limit(finalLimit)
       .skip(skip)
       .sort(sort)
+      .lean()
       .exec();
 
     const total = await this.VihicileModel.countDocuments(finalQuery).exec();
@@ -186,7 +187,7 @@ export class VehiclesService {
       );
     }
 
-    const vihicile = await this.VihicileModel.findOne({ _id: id });
+    const vihicile = await this.VihicileModel.findOne({ _id: id }).lean().exec();
 
     if (!vihicile) {
       throw new NotFoundException(
@@ -611,7 +612,7 @@ export class VehiclesService {
   async findVihiculeByOperateur(num_docier_client: number) {
     const vihicule = await this.VihicileModel.find({
       num_docier_client,
-    }).exec();
+    }).lean().exec();
     return vihicule;
   }
 
@@ -621,7 +622,7 @@ export class VehiclesService {
 
     const find = await this.VihicileModel.findOne({
       num_bus_registration: query.num_vehicule,
-    });
+    }).lean().exec();
     console.log(find);
 
     return find;
@@ -725,7 +726,7 @@ export class VehiclesService {
   async searchByLineCode(lineCode: string) {
     const lines = await this.VihicileModel.find({
       font_symbol: lineCode,
-    }).exec();
+    }).lean().exec();
     if (!lines || lines.length === 0) {
       throw new NotFoundException(
         `Transport line with code ${lineCode} not found`,

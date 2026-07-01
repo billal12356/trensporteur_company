@@ -12,22 +12,22 @@ import {
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
+import { AuthGuard } from 'src/common/gaurds/auth.guard';
 import { OperateurDtwService } from './operateur-dtw.service';
 import { CreateOperateurDto } from './dto/create-operateur-dtw.dto';
 import { UpdateOperateurDtwDto } from './dto/update-operateur-dtw.dto';
 import { GeneratePermitPdfDto } from './dto/generate-permit-pdf.dto';
-import { AuthGuard } from 'src/common/gaurds/auth.guard';
 import * as fs from 'fs';
 import { Response } from 'express';
 import * as ExcelJS from 'exceljs';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+@UseGuards(AuthGuard)
 @Controller('operateur-dtw')
 export class OperateurDtwController {
   constructor(private readonly operateurDtwService: OperateurDtwService) { }
 
-  @UseGuards(AuthGuard)
   @Post('create')
   async create(
     @Body() createOperateurDtwDto: CreateOperateurDto,
@@ -40,13 +40,11 @@ export class OperateurDtwController {
     return operateur;
   }
 
-  @UseGuards(AuthGuard)
   @Get('find-all')
   findAll(@Query() query) {
     return this.operateurDtwService.findAll(query);
   }
 
-  @UseGuards(AuthGuard)
   @Get('find/:id')
   findOne(@Param('id') id: string) {
     return this.operateurDtwService.findOne(id);
@@ -73,7 +71,6 @@ export class OperateurDtwController {
     res.download(filePath);
   }
 
-  @UseGuards(AuthGuard)
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -86,7 +83,6 @@ export class OperateurDtwController {
     return await this.operateurDtwService.removeAll();
   }
 
-  @UseGuards(AuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.operateurDtwService.remove(id);

@@ -8,7 +8,7 @@ export class Vihicles {
   @Prop({ type: Number })
   num_wilaya: number;
 
-  @Prop({ type: Number })
+  @Prop({ type: Number, index: true })
   num_docier_client: number;
 
   @Prop({ type: String })
@@ -35,7 +35,7 @@ export class Vihicles {
   @Prop({ type: String })
   colonne3: string;
 
-  @Prop({ type: String })
+  @Prop({ type: String, index: true })
   num_bus_registration: string;
 
   @Prop({ type: String })
@@ -95,7 +95,7 @@ export class Vihicles {
   @Prop({ type: String })
   colonne4: string;
 
-  @Prop({ type: String })
+  @Prop({ type: String, index: true })
   font_symbol: string;
 
   @Prop({ type: String })

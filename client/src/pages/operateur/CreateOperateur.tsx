@@ -85,10 +85,9 @@ const FormOperateur: React.FC = () => {
     };
     try {
       await dispatch(createOperateur(payload)).unwrap();
-      toast.success("تم تسجيل المتعامل بنجاح!");
       navigate("/operateur"); 
     } catch (err: any) {
-      toast.error(err || "حدث خطأ أثناء التسجيل");
+      // toast is already displayed in the slice
     }
   };
 
@@ -517,9 +516,9 @@ const FormOperateur: React.FC = () => {
                 رقم التعريف الوطني NIN <span className="text-red-500">*</span>
               </label>
               <Input
-                type="number"
+                type="text"
+                maxLength={18}
                 required
-                maxLength={19}
                 value={operateur.num_didentification_national_NIN ?? ""}
                 onChange={(e) => handleNinChange(e.target.value)}
                 className={`

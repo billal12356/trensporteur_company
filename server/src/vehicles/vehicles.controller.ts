@@ -14,7 +14,9 @@ import {
   HttpException,
   UploadedFile,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from 'src/common/gaurds/auth.guard';
 import { VehiclesService } from './vehicles.service';
 import { CreateVihicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
@@ -25,6 +27,7 @@ import * as vihicules from '../seed/data/vihicule.json';
 import { ExportLineDto } from './dto/line.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 
+@UseGuards(AuthGuard)
 @Controller('vehicles')
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) { }

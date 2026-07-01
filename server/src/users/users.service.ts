@@ -43,7 +43,7 @@ export class UsersService {
   }
 
   async findAll() {
-    return await this.usersModel.find();
+    return await this.usersModel.find().lean().exec();
   }
 
   async findOne(id: string) {
@@ -57,7 +57,7 @@ export class UsersService {
       );
     }
 
-    const user = await this.usersModel.findOne({ _id: id });
+    const user = await this.usersModel.findOne({ _id: id }).lean().exec();
 
     if (!user) {
       throw new NotFoundException(
@@ -68,7 +68,7 @@ export class UsersService {
           .build(),
       );
     }
-    return user
+    return user;
   }
 
   async update(id: string, updateChauffeurDto: UpdateUserDto) {
@@ -110,13 +110,38 @@ export class UsersService {
       .build();
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException(
+        new ResponseBuilder()
+          .setStatus(400)
+          .setMessage(`المعرف ${id} غير صالح`)
+          .setErrors({ _id: 'Invalid ObjectId format' })
+          .build(),
+      );
+    }
+
+    const deletedUser = await this.usersModel.findByIdAndDelete(id).exec();
+
+    if (!deletedUser) {
+      throw new NotFoundException(
+        new ResponseBuilder()
+          .setStatus(404)
+          .setMessage(`لم يتم العثور على المستخدم ذو المعرف #${id}`)
+          .setErrors({ _id: 'User not found' })
+          .build(),
+      );
+    }
+
+    return new ResponseBuilder()
+      .setStatus(200)
+      .setMessage('تم حذف المستخدم بنجاح')
+      .build();
   }
 
   async emailValidator(email: string) {
     console.log(email);
-    const em = await this.usersModel.findOne({ email }).exec()
+    const em = await this.usersModel.findOne({ email }).lean().exec()
     console.log(em);
 
     return em

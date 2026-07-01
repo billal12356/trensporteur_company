@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 import { ChangeRessetPassword, LoginDto } from './dto/login.dto';
@@ -151,5 +152,28 @@ export class AuthService {
       .setStatus(200)
       .setMessage('تم تغيير كلمة السر بنجاح.')
       .build();
+  }
+
+  async updateRefreshToken(userId: string, refreshToken: string | null) {
+    let hashedToken = null;
+    if (refreshToken) {
+      hashedToken = await bcrypt.hash(refreshToken, 10);
+    }
+    await this.usersModel.findByIdAndUpdate(userId, {
+      refreshToken: hashedToken,
+    });
+  }
+
+  async validateRefreshToken(userId: string, refreshToken: string) {
+    const user = await this.usersModel.findById(userId);
+    if (!user || !user.refreshToken) {
+      throw new UnauthorizedException('Access Denied');
+    }
+
+    const isMatch = await bcrypt.compare(refreshToken, user.refreshToken);
+    if (!isMatch) {
+      throw new UnauthorizedException('Access Denied');
+    }
+    return user;
   }
 }

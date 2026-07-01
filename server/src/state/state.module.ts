@@ -8,6 +8,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Operateur, OperateurSchema } from 'src/operateur-dtw/operateur-dtw.schema';
 import { Chauffeur, ChauffeurSchema } from 'src/chauffeurs/chauffeurs.schema';
 import { Vihicles, VihiclesSchema } from 'src/vehicles/vihicles.schema';
+import { CacheProvider } from 'src/common/providers/cache.provider';
 
 @Module({
   imports: [
@@ -18,6 +19,6 @@ import { Vihicles, VihiclesSchema } from 'src/vehicles/vihicles.schema';
     ]),
   ],
   controllers: [StateController],
-  providers: [StateService],
+  providers: [StateService, CacheProvider],
 })
 export class StateModule { }

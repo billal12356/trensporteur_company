@@ -119,10 +119,6 @@
   }
 }
 
-body{
-  background: rgb(255, 255, 255);
-}
-
 @layer base {
   :root {
     --sidebar-background: 0 0% 98%;
@@ -146,3 +142,152 @@ body{
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
+
+/* FlexLayout Dark Mode Overrides */
+.dark .flexlayout__layout {
+  background-color: var(--background) !important;
+}
+.dark .flexlayout__tabset {
+  background-color: var(--card) !important;
+}
+.dark .flexlayout__tab_button {
+  background-color: var(--card) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+}
+.dark .flexlayout__tab_button--selected {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+}
+.dark .flexlayout__tabset_header {
+  background-color: var(--card) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+.dark .flexlayout__tabset_tabbar_outer {
+  background-color: var(--card) !important;
+}
+.dark .flexlayout__tabset_tabbar_inner {
+  background-color: var(--card) !important;
+}
+.dark .flexlayout__tab {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+}
+
+/* Global Application Utility Overrides for Dark Mode */
+.dark {
+  /* Background Overrides */
+  .bg-white, 
+  .bg-white\/80, 
+  .bg-white\/95 {
+    background-color: var(--card) !important;
+  }
+  
+  .bg-slate-50, 
+  .bg-gray-50,
+  .bg-gray-25 {
+    background-color: var(--background) !important;
+  }
+
+  /* Override gradients to clean dark backgrounds */
+  .bg-gradient-to-br {
+    background-image: none !important;
+    background-color: var(--background) !important;
+  }
+
+  .bg-gradient-to-r.from-blue-50.to-purple-50 {
+    background-image: none !important;
+    background-color: var(--muted) !important;
+  }
+
+  .bg-blue-50,
+  .bg-green-50,
+  .bg-gray-100,
+  .bg-gray-200 {
+    background-color: var(--muted) !important;
+  }
+
+  /* Text Color Overrides */
+  .text-gray-900, 
+  .text-gray-800,
+  .text-blue-800 {
+    color: var(--foreground) !important;
+  }
+  
+  .text-gray-700, 
+  .text-gray-600, 
+  .text-blue-600 {
+    color: var(--muted-foreground) !important;
+  }
+  
+  .text-gray-500, 
+  .text-gray-400 {
+    color: var(--muted-foreground) !important;
+    opacity: 0.85;
+  }
+
+  /* Border Overrides */
+  .border-gray-100, 
+  .border-gray-200, 
+  .border-gray-300,
+  .border-b,
+  .border-t,
+  .border-l,
+  .border-r,
+  .border {
+    border-color: var(--border) !important;
+  }
+
+  /* Table and List overrides */
+  table {
+    background-color: var(--card) !important;
+    color: var(--foreground) !important;
+  }
+
+  tr:nth-child(even) {
+    background-color: var(--background) !important;
+  }
+
+  th {
+    background-color: var(--muted) !important;
+    color: var(--foreground) !important;
+    border-color: var(--border) !important;
+  }
+
+  td {
+    border-color: var(--border) !important;
+  }
+
+  /* Interactive Form Fields */
+  input, 
+  select, 
+  textarea,
+  .input {
+    background-color: var(--background) !important;
+    color: var(--foreground) !important;
+    border-color: var(--border) !important;
+  }
+
+  input::placeholder {
+    color: var(--muted-foreground) !important;
+    opacity: 0.6;
+  }
+
+  /* Cards and elevated layout elements */
+  .card, 
+  .rounded-xl.shadow-lg,
+  .rounded-xl.shadow-2xl {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Dialog / Modals overlays */
+  [role="dialog"],
+  .dialog-content {
+    background-color: var(--card) !important;
+    color: var(--foreground) !important;
+    border-color: var(--border) !important;
+  }
+}
+
+

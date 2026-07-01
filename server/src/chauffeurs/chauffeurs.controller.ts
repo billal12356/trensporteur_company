@@ -3,7 +3,9 @@ import {
   UseInterceptors,
   HttpException,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from 'src/common/gaurds/auth.guard';
 import { ChauffeursService } from './chauffeurs.service';
 import { CreateChauffeurDto } from './dto/create-chauffeur.dto';
 import { UpdateChauffeurDto } from './dto/update-chauffeur.dto';
@@ -13,6 +15,7 @@ import * as ExcelJS from 'exceljs';
 import * as chauffeurs from '../seed/data/chauffeur.json';
 import { FileInterceptor } from '@nestjs/platform-express';
 
+@UseGuards(AuthGuard)
 @Controller('chauffeurs')
 export class ChauffeursController {
   constructor(private readonly chauffeursService: ChauffeursService) { }
