@@ -13,6 +13,7 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/common/gaurds/auth.guard';
+import { RolesGuard } from 'src/common/gaurds/roles.guard';
 import { OperateurDtwService } from './operateur-dtw.service';
 import { CreateOperateurDto } from './dto/create-operateur-dtw.dto';
 import { UpdateOperateurDtwDto } from './dto/update-operateur-dtw.dto';
@@ -23,7 +24,7 @@ import * as ExcelJS from 'exceljs';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('operateur-dtw')
 export class OperateurDtwController {
   constructor(private readonly operateurDtwService: OperateurDtwService) { }

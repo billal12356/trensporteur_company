@@ -1,11 +1,13 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/common/gaurds/auth.guard';
+import { RolesGuard } from 'src/common/gaurds/roles.guard';
 import { StateService } from './state.service';
 import { CreateStateDto } from './dto/create-state.dto';
 import { UpdateStateDto } from './dto/update-state.dto';
 import { Response } from 'express';
+import * as fs from 'fs';
 
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('state')
 export class StateController {
   constructor(private readonly stateService: StateService) { }

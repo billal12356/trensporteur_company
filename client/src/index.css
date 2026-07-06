@@ -39,24 +39,24 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #020617; /* slate-950 */
+  --foreground: #f8fafc; /* slate-50 */
+  --card: #0f172a; /* slate-900 */
+  --card-foreground: #f8fafc;
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+  --primary: #3b82f6; /* blue-500, a nice primary color for dark mode instead of pure white */
+  --primary-foreground: #f8fafc;
+  --secondary: #1e293b; /* slate-800 */
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b; /* slate-800 */
+  --muted-foreground: #94a3b8; /* slate-400 */
+  --accent: #1e293b; /* slate-800 */
+  --accent-foreground: #f8fafc;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: #1e293b; /* slate-800 */
+  --input: #1e293b; /* slate-800 */
+  --ring: #3b82f6; /* blue-500 */
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -174,120 +174,4 @@
   color: var(--foreground) !important;
 }
 
-/* Global Application Utility Overrides for Dark Mode */
-.dark {
-  /* Background Overrides */
-  .bg-white, 
-  .bg-white\/80, 
-  .bg-white\/95 {
-    background-color: var(--card) !important;
-  }
-  
-  .bg-slate-50, 
-  .bg-gray-50,
-  .bg-gray-25 {
-    background-color: var(--background) !important;
-  }
-
-  /* Override gradients to clean dark backgrounds */
-  .bg-gradient-to-br {
-    background-image: none !important;
-    background-color: var(--background) !important;
-  }
-
-  .bg-gradient-to-r.from-blue-50.to-purple-50 {
-    background-image: none !important;
-    background-color: var(--muted) !important;
-  }
-
-  .bg-blue-50,
-  .bg-green-50,
-  .bg-gray-100,
-  .bg-gray-200 {
-    background-color: var(--muted) !important;
-  }
-
-  /* Text Color Overrides */
-  .text-gray-900, 
-  .text-gray-800,
-  .text-blue-800 {
-    color: var(--foreground) !important;
-  }
-  
-  .text-gray-700, 
-  .text-gray-600, 
-  .text-blue-600 {
-    color: var(--muted-foreground) !important;
-  }
-  
-  .text-gray-500, 
-  .text-gray-400 {
-    color: var(--muted-foreground) !important;
-    opacity: 0.85;
-  }
-
-  /* Border Overrides */
-  .border-gray-100, 
-  .border-gray-200, 
-  .border-gray-300,
-  .border-b,
-  .border-t,
-  .border-l,
-  .border-r,
-  .border {
-    border-color: var(--border) !important;
-  }
-
-  /* Table and List overrides */
-  table {
-    background-color: var(--card) !important;
-    color: var(--foreground) !important;
-  }
-
-  tr:nth-child(even) {
-    background-color: var(--background) !important;
-  }
-
-  th {
-    background-color: var(--muted) !important;
-    color: var(--foreground) !important;
-    border-color: var(--border) !important;
-  }
-
-  td {
-    border-color: var(--border) !important;
-  }
-
-  /* Interactive Form Fields */
-  input, 
-  select, 
-  textarea,
-  .input {
-    background-color: var(--background) !important;
-    color: var(--foreground) !important;
-    border-color: var(--border) !important;
-  }
-
-  input::placeholder {
-    color: var(--muted-foreground) !important;
-    opacity: 0.6;
-  }
-
-  /* Cards and elevated layout elements */
-  .card, 
-  .rounded-xl.shadow-lg,
-  .rounded-xl.shadow-2xl {
-    background-color: var(--card) !important;
-    border-color: var(--border) !important;
-  }
-
-  /* Dialog / Modals overlays */
-  [role="dialog"],
-  .dialog-content {
-    background-color: var(--card) !important;
-    color: var(--foreground) !important;
-    border-color: var(--border) !important;
-  }
-}
-
-
+@import "./dark-fallbacks.css";
