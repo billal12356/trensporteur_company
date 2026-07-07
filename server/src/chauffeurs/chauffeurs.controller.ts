@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/common/gaurds/auth.guard';
 import { RolesGuard } from 'src/common/gaurds/roles.guard';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { ChauffeursService } from './chauffeurs.service';
 import { CreateChauffeurDto } from './dto/create-chauffeur.dto';
 import { UpdateChauffeurDto } from './dto/update-chauffeur.dto';
@@ -22,18 +23,21 @@ export class ChauffeursController {
   constructor(private readonly chauffeursService: ChauffeursService) { }
 
   @Post("create")
-  async create(@Body() createChauffeurDto: CreateChauffeurDto) {
-    return await this.chauffeursService.create(createChauffeurDto);
+  async create(
+    @Body() createChauffeurDto: CreateChauffeurDto,
+    @CurrentUser() user: any,
+  ) {
+    return await this.chauffeursService.create(createChauffeurDto, user?.sub);
   }
 
   @Get("find-all")
-  async findAll(@Query() query) {
-    return await this.chauffeursService.findAll(query);
+  async findAll(@Query() query, @CurrentUser() user: any) {
+    return await this.chauffeursService.findAll(query, user);
   }
 
   @Get('/find/:id')
-  async findOne(@Param('id') id: string) {
-    return await this.chauffeursService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentUser() user: any) {
+    return await this.chauffeursService.findOne(id, user);
   }
 
   @Patch('/update/:id')

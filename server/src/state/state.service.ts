@@ -6,6 +6,7 @@ import { Model } from 'mongoose';
 import { Operateur } from 'src/operateur-dtw/operateur-dtw.schema';
 import { Chauffeur } from 'src/chauffeurs/chauffeurs.schema';
 import { Vihicles } from 'src/vehicles/vihicles.schema';
+import { Users } from 'src/users/users.schema';
 import { ICacheManager } from 'src/common/providers/cache.provider';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class StateService {
     @InjectModel(Operateur.name) private operateurModel: Model<Operateur>,
     @InjectModel(Chauffeur.name) private chauffeurModel: Model<Chauffeur>,
     @InjectModel(Vihicles.name) private vehiculeModel: Model<Vihicles>,
+    @InjectModel(Users.name) private usersModel: Model<Users>,
     @Inject('CACHE_MANAGER') private cacheManager: ICacheManager,
   ) { }
   async getAllStats() {
@@ -51,6 +53,89 @@ export class StateService {
     const result = { operateurs, chauffeurs, vehicules };
     this.cacheManager.set(cacheKey, result, 30000); // Cache for 30 seconds
     return result;
+  }
+
+  async getUserContributions() {
+    const cacheKey = 'user_contributions';
+    const cachedData = this.cacheManager.get<any>(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
+    const users = await this.usersModel.find({}, '_id fullName email role').lean();
+    
+    const stats = await Promise.all(users.map(async (user) => {
+      const operateurCount = await this.operateurModel.countDocuments({ createdBy: user._id });
+      const chauffeurCount = await this.chauffeurModel.countDocuments({ createdBy: user._id });
+      const vehicleCount = await this.vehiculeModel.countDocuments({ createdBy: user._id });
+      
+      return {
+        userId: user._id,
+        fullName: user.fullName || 'بدون اسم',
+        email: user.email,
+        role: user.role,
+        operateurCount,
+        chauffeurCount,
+        vehicleCount,
+        totalCount: operateurCount + chauffeurCount + vehicleCount
+      };
+    }));
+
+    // Filter out users with 0 contributions if desired, or just sort them
+    const sortedStats = stats.sort((a, b) => b.totalCount - a.totalCount);
+    
+    this.cacheManager.set(cacheKey, sortedStats, 60000); // Cache for 60 seconds
+    return sortedStats;
+  }
+
+  async getAdvancedUserStats(userId?: string, startDate?: string, endDate?: string, wilaya?: string) {
+    const filterOperateur: any = {};
+    const filterChauffeur: any = {};
+    const filterVehicle: any = {};
+
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setUTCHours(23, 59, 59, 999);
+      
+      const dateFilter = { $gte: start, $lte: end };
+      filterOperateur.createdAt = dateFilter;
+      filterChauffeur.createdAt = dateFilter;
+      filterVehicle.createdAt = dateFilter;
+    }
+
+    if (wilaya) {
+      filterOperateur.num_wilaya = wilaya;
+      filterVehicle.num_wilaya = wilaya;
+      filterChauffeur.wilaya = wilaya;
+    }
+
+    const usersQuery = userId ? { _id: userId } : {};
+    const users = await this.usersModel.find(usersQuery, '_id fullName email role').lean();
+    
+    const stats = await Promise.all(users.map(async (user) => {
+      const opQuery = { ...filterOperateur, createdBy: user._id };
+      const chQuery = { ...filterChauffeur, createdBy: user._id };
+      const vcQuery = { ...filterVehicle, createdBy: user._id };
+      
+      const operateurCount = await this.operateurModel.countDocuments(opQuery);
+      const chauffeurCount = await this.chauffeurModel.countDocuments(chQuery);
+      const vehicleCount = await this.vehiculeModel.countDocuments(vcQuery);
+      
+      return {
+        userId: user._id,
+        fullName: user.fullName || 'بدون اسم',
+        email: user.email,
+        role: user.role,
+        operateurCount,
+        chauffeurCount,
+        vehicleCount,
+        totalCount: operateurCount + chauffeurCount + vehicleCount
+      };
+    }));
+
+    return stats.sort((a, b) => b.totalCount - a.totalCount);
   }
 
   //inter communal

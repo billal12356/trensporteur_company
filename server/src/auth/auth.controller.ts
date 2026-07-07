@@ -38,12 +38,12 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     const user = await this.authService.login(loginDto);
-    const payload = { sub: user.data.id, role: user.data.role };
+    const payload = { sub: user.data._id.toString(), role: user.data.role };
 
     const access_token = await this.jwtService.signAsync(payload, { expiresIn: '15m' });
     const refresh_token = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
 
-    await this.authService.updateRefreshToken(user.data.id, refresh_token);
+    await this.authService.updateRefreshToken(user.data._id.toString(), refresh_token);
 
     const isSecure = request.secure || request.headers['x-forwarded-proto'] === 'https';
 
@@ -77,7 +77,7 @@ export class AuthController {
       const payload = await this.jwtService.verifyAsync(refreshToken);
       const user = await this.authService.validateRefreshToken(payload.sub, refreshToken);
       
-      const newPayload = { sub: user.id, role: user.role };
+      const newPayload = { sub: user._id.toString(), role: user.role };
       const access_token = await this.jwtService.signAsync(newPayload, { expiresIn: '15m' });
       
       const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';

@@ -69,8 +69,11 @@ function App() {
             <Route path="users/:id/change-password" element={<ChangePasswordPage />} />
             <Route path="update-user/:id" element={<UpdateUser />} /> */}
             {/* يمكنك إضافة صفحات أخرى مثل forms, profile إلخ */}
-          {/* </Route> */}
-          <Route path='/dashboard' element={<FlexDashboardLayout/>}/>
+          <Route path='/dashboard' element={
+            userData && (userData.role === 'admin' || userData.role === 'manager') 
+              ? <FlexDashboardLayout/> 
+              : <Login />
+          }/>
 
         </Routes>
       </Suspense>

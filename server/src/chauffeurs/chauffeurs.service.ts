@@ -27,7 +27,7 @@ export class ChauffeursService {
     private readonly vehiclesService: VehiclesService,
   ) { }
 
-  async create(createChauffeurDto: CreateChauffeurDto) {
+  async create(createChauffeurDto: CreateChauffeurDto, createdBy?: string) {
     const fullName_arabe = createChauffeurDto.operateur
     const num_vehicule = createChauffeurDto.num_vehicule
     const operateur = await this.operateurService.findByVihicilesandChauffer({ fullName_arabe })
@@ -51,15 +51,19 @@ export class ChauffeursService {
           .build(),
       );
     }
-    const chauffeur = await this.ChauffeurModel.create(createChauffeurDto)
+    const chauffeur = await this.ChauffeurModel.create({ ...createChauffeurDto, createdBy })
+    let finalChauffeur: any = chauffeur;
+    if (chauffeur && createdBy) {
+      finalChauffeur = await this.ChauffeurModel.findById(chauffeur._id).populate('createdBy', 'fullName email role').lean();
+    }
     return new ResponseBuilder()
       .setStatus(201)
       .setMessage('تم تسجيل السائق بنجاح')
-      .setData(chauffeur)
-      .build()
+      .setData(finalChauffeur)
+      .build();
   }
 
-  async findAll(params: any) {
+  async findAll(params: any, user?: any) {
     const page = Number(params.page) || 1;
     const limit = Number(params.limit) || 10;
 
@@ -71,12 +75,17 @@ export class ChauffeursService {
 
     const { query, limit: finalLimit, skip, sort } = queryBuilder.build();
 
-    const data = await this.ChauffeurModel.find(query)
+    let queryObj = this.ChauffeurModel.find(query)
       .limit(finalLimit)
       .skip(skip)
       .sort(sort)
-      .lean()
-      .exec();
+      .lean();
+      
+    if (user?.role === 'admin' || user?.role === 'manager') {
+      queryObj = queryObj.populate('createdBy', 'fullName email role');
+    }
+
+    const data = await queryObj.exec();
 
     const total = await this.ChauffeurModel.countDocuments(query).exec();
 
@@ -88,7 +97,7 @@ export class ChauffeursService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, user?: any) {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(
         new ResponseBuilder()
@@ -99,7 +108,12 @@ export class ChauffeursService {
       );
     }
 
-    const vihicile = await this.ChauffeurModel.findOne({ _id: id }).lean().exec();
+    let queryObj = this.ChauffeurModel.findOne({ _id: id }).lean();
+    if (user?.role === 'admin' || user?.role === 'manager') {
+      queryObj = queryObj.populate('createdBy', 'fullName email role');
+    }
+
+    const vihicile = await queryObj.exec();
 
     if (!vihicile) {
       throw new NotFoundException(

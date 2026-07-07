@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/common/gaurds/auth.guard';
 import { RolesGuard } from 'src/common/gaurds/roles.guard';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { OperateurDtwService } from './operateur-dtw.service';
 import { CreateOperateurDto } from './dto/create-operateur-dtw.dto';
 import { UpdateOperateurDtwDto } from './dto/update-operateur-dtw.dto';
@@ -33,22 +34,24 @@ export class OperateurDtwController {
   async create(
     @Body() createOperateurDtwDto: CreateOperateurDto,
     @Res() res: Response,
+    @CurrentUser() user: any,
   ) {
     const operateur = await this.operateurDtwService.create(
       createOperateurDtwDto,
       res,
+      user?.sub,
     );
     return operateur;
   }
 
   @Get('find-all')
-  findAll(@Query() query) {
-    return this.operateurDtwService.findAll(query);
+  findAll(@Query() query, @CurrentUser() user: any) {
+    return this.operateurDtwService.findAll(query, user);
   }
 
   @Get('find/:id')
-  findOne(@Param('id') id: string) {
-    return this.operateurDtwService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.operateurDtwService.findOne(id, user);
   }
 
   @Get(':id/pdf')

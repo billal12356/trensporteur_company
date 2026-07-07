@@ -40,7 +40,7 @@ export class VehiclesService {
     return undefined;
   }
 
-  async create(createVehicleDto: CreateVihicleDto) {
+  async create(createVehicleDto: CreateVihicleDto, createdBy?: string) {
     const {
       num_docier_client,
       fullName_arabe,
@@ -119,17 +119,21 @@ export class VehiclesService {
     createVehicleDto.colonne3 = operateurNum.colonne3;
 
     // 🔹 Create new vehicle
-    const vehicle = await this.VihicileModel.create(createVehicleDto);
+    const vehicle = await this.VihicileModel.create({ ...createVehicleDto, createdBy });
+    let finalVehicle: any = vehicle;
+    if (vehicle && createdBy) {
+      finalVehicle = await this.VihicileModel.findById(vehicle._id).populate('createdBy', 'fullName email role').lean();
+    }
 
     return new ResponseBuilder()
       .setStatus(201)
       .setMessage('تم تسجيل المركبة بنجاح')
-      .setData(vehicle)
+      .setData(finalVehicle)
       .build();
   }
 
 
-  async findAll(params: any) {
+  async findAll(params: any, user?: any) {
     const page = Number(params.page) || 1;
     const limit = Number(params.limit) || 10;
 
@@ -144,7 +148,6 @@ export class VehiclesService {
     // ✅ دمج شروط البحث مع شروط الإيقاف
     const finalQuery: any = {
       $and: [
-        // شرط 1: المركبة غير موقوفة أو موقوفة مؤقتاً
         {
           $or: [
             { vihicile_parked: "لا" },
@@ -159,12 +162,17 @@ export class VehiclesService {
       finalQuery.$and.push({ $or: query.$or });
     }
 
-    const data = await this.VihicileModel.find(finalQuery)
+    let queryObj = this.VihicileModel.find(finalQuery)
       .limit(finalLimit)
       .skip(skip)
       .sort(sort)
-      .lean()
-      .exec();
+      .lean();
+
+    if (user?.role === 'admin' || user?.role === 'manager') {
+      queryObj = queryObj.populate('createdBy', 'fullName email role');
+    }
+
+    const data = await queryObj.exec();
 
     const total = await this.VihicileModel.countDocuments(finalQuery).exec();
 
@@ -176,7 +184,7 @@ export class VehiclesService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, user?: any) {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(
         new ResponseBuilder()
@@ -187,7 +195,11 @@ export class VehiclesService {
       );
     }
 
-    const vihicile = await this.VihicileModel.findOne({ _id: id }).lean().exec();
+    let queryObj = this.VihicileModel.findOne({ _id: id }).lean();
+    if (user?.role === 'admin' || user?.role === 'manager') {
+      queryObj = queryObj.populate('createdBy', 'fullName email role');
+    }
+    const vihicile = await queryObj.exec();
 
     if (!vihicile) {
       throw new NotFoundException(

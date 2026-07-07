@@ -2,7 +2,7 @@ export class ChauffeurQueryBuilder {
   private query: any = {};
   private limit = 10;
   private skip = 0;
-  private sort: 'asc' | 'desc' = 'asc';
+  private sort: 'asc' | 'desc' = 'desc';
 
   setLimit(limit: number): this {
     if (!Number.isNaN(limit) && limit > 0) this.limit = limit;

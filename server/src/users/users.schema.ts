@@ -31,7 +31,7 @@ export class Users {
 
   @Prop({
     type: String,
-    default: 'admin',
+    default: 'user',
   })
   role: string;
 

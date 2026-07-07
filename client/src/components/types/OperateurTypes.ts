@@ -47,6 +47,8 @@ export interface Operateur {
   num_telephone_client?: string,
   soccupe?: string,
   note_chef_departement?: string,
+  createdAt?: string,
+  createdBy?: any,
 }
 
 export interface Vihicles {
@@ -152,7 +154,9 @@ export interface Vihicles {
 
   note_chef_departement?: string;
 
-  path: string
+  path: string,
+  createdAt?: string,
+  createdBy?: any,
 }
 
 export interface Chauffeur {
@@ -183,4 +187,6 @@ export interface Chauffeur {
   vihicile_parked: string;
   type_parked: string;
   comments?: string;
+  createdAt?: string;
+  createdBy?: any;
 }

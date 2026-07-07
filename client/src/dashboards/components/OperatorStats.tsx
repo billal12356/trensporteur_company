@@ -145,6 +145,7 @@ export default function EnhancedOperatorStats() {
       alert("يرجى تحديد الفترة أولاً")
       return
     }
+    console.log('dddddddddd ')
     dispatch(
       downloadRegistrationStats({
         startDate: moment(startDate).format("YYYY-MM-DD"),

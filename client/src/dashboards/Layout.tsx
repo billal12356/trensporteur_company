@@ -31,6 +31,7 @@ import DriverStats from "./pages/DriverStats"
 import ChangePassword from "./pages/ChangePassword"
 import { EditProfile } from "./pages/EditProfile"
 import { CreateAdmin } from "./pages/CreateAdmin"
+import { UserActivityStats } from "./pages/UserActivityStats"
 import { useUser } from "@/hooks/context/userContext/UserProvider"
 import { useTheme } from "@/hooks/context/ThemeContext"
 import { Helmet } from "react-helmet-async"
@@ -78,6 +79,13 @@ const tabItems: TabItem[] = [
     icon: UserCheck,
     description: "تتبع وإدارة السائقين",
   },
+  {
+    id: "user-activity",
+    label: "نشاط المستخدمين",
+    component: "user-activity",
+    icon: User,
+    description: "تتبع نشاط المستخدمين حسب الوقت والمكان",
+  },
 ]
 
 const layoutConfig: IJsonModel = {
@@ -94,6 +102,7 @@ const layoutConfig: IJsonModel = {
           createTab("Dashboard", "dashboard"),
           createTab("Operators", "operators"),
           createTab("Vehicles", "vehicles"),
+          createTab("User Activity", "user-activity"),
           createTab("Change Password", "change-password"),
           createTab("Edit profile", "edit-profile"),
         ],
@@ -121,6 +130,8 @@ const FlexDashboardLayout = () => {
         return <VehicleStats />
       case "drivers":
         return <DriverStats />
+      case "user-activity":
+        return <UserActivityStats />
       case "change-password":
         return <ChangePassword />
       case "edit-profile":

@@ -17,9 +17,11 @@ import { useListPage } from "@/hooks/useListPage"
 import { ListTable, useTableColumns, useTableActions } from "@/components"
 import { deleteChauffeurs, exportChauffeurs, fetchChauffeurs } from "@/redux/slice/chauffeurSlice"
 import { formatters } from "@/lib/formatters"
+import { useUser } from "@/hooks/context/userContext/UserProvider"
 
 const EnhancedChauffeur = React.memo((): ReactElement => {
   const navigate = useNavigate()
+  const { userData } = useUser()
 
   const {
     page,
@@ -80,17 +82,31 @@ const EnhancedChauffeur = React.memo((): ReactElement => {
     ["vihicile_parked", "المركبة (موقفة او لا)"],
     ["type_parked", "نوع التوقف"],
     ["comments", "ملاحظة"],
+    ["createdAt", "تاريخ الإنشاء"],
+    ["createdBy", "أنشئ بواسطة"],
   ]
 
-  const columns = columnDefinitions.map(([key, label]) => {
+  let filteredColumnDefinitions = columnDefinitions
+  if (userData?.role !== "admin" && userData?.role !== "manager") {
+    filteredColumnDefinitions = filteredColumnDefinitions.filter(([key]) => key !== "createdBy")
+  }
+
+  const columns = filteredColumnDefinitions.map(([key, label]) => {
     const keyStr = String(key)
     // Special-case: treat request history field as a date
     if (keyStr === 'hestoire_demende' || keyStr.includes('hestoire') || keyStr.includes('histoire')) {
       return colsBuilder.date(key, label, true)
     }
 
-    if (keyStr.toLowerCase().includes("date")) {
+    if (keyStr.toLowerCase().includes("date") || keyStr === "createdAt" || keyStr === "updatedAt") {
       return colsBuilder.date(key, label, true)
+    }
+    if (keyStr === "createdBy") {
+      return colsBuilder.custom(key, label, (val: any) => {
+        if (!val) return <span className="text-gray-400">-</span>
+        const name = typeof val === "object" ? val.fullName || val.email : val
+        return <span className="text-blue-600 font-medium">{name}</span>
+      })
     }
     if (keyStr.includes("vihicile_parked") || keyStr.includes("parked")) {
       return colsBuilder.custom(key, label, (val: any) => {

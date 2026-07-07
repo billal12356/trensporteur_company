@@ -27,6 +27,17 @@ interface VehicleGlobalStats {
   changedLineVehicles: number;
 }
 
+export interface UserContribution {
+  userId: string;
+  fullName: string;
+  email: string;
+  role: string;
+  operateurCount: number;
+  chauffeurCount: number;
+  vehicleCount: number;
+  totalCount: number;
+}
+
 interface StatsState {
   data: {
     operateurs: TimeStats;
@@ -41,6 +52,8 @@ interface StatsState {
   travailleur: TransportStats | null;
   anneeStats: AnneeStats | null;
   vehicleGlobalStats: VehicleGlobalStats | null;
+  userContributions: UserContribution[] | null;
+  advancedUserStats: UserContribution[] | null;
   loading: boolean;
   error: string | null;
 }
@@ -59,6 +72,8 @@ const initialState: StatsState = {
   travailleur: null,
   anneeStats: null,
   vehicleGlobalStats: null,
+  userContributions: null,
+  advancedUserStats: null,
   loading: false,
   error: null,
 };
@@ -166,6 +181,40 @@ export const fetchVehicleGlobalStats = createAsyncThunk<
     } catch (err: any) {
       return rejectWithValue(
         err.response?.data?.message || "Failed to fetch vehicle stats"
+      );
+    }
+  }
+);
+
+export const fetchUserContributions = createAsyncThunk(
+  "stats/fetchUserContributions",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_URL}/api/v1/state/user-contributions`);
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch user contributions"
+      );
+    }
+  }
+);
+
+export const fetchAdvancedUserStats = createAsyncThunk(
+  "stats/fetchAdvancedUserStats",
+  async ({ userId, startDate, endDate, wilaya }: { userId?: string, startDate?: string, endDate?: string, wilaya?: string }, { rejectWithValue }) => {
+    try {
+      let url = `${API_URL}/api/v1/state/advanced-user-stats?`;
+      if (userId) url += `userId=${userId}&`;
+      if (startDate) url += `startDate=${startDate}&`;
+      if (endDate) url += `endDate=${endDate}&`;
+      if (wilaya) url += `wilaya=${wilaya}&`;
+      
+      const response = await axios.get(url);
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch advanced user stats"
       );
     }
   }
@@ -303,6 +352,34 @@ const statsSlice = createSlice({
         state.vehicleGlobalStats = action.payload;
       })
       .addCase(fetchVehicleGlobalStats.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // User Contributions
+      .addCase(fetchUserContributions.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserContributions.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userContributions = action.payload;
+      })
+      .addCase(fetchUserContributions.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // Advanced User Stats
+      .addCase(fetchAdvancedUserStats.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAdvancedUserStats.fulfilled, (state, action) => {
+        state.loading = false;
+        state.advancedUserStats = action.payload;
+      })
+      .addCase(fetchAdvancedUserStats.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

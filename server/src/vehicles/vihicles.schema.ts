@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import mongoose from 'mongoose';
 
 export type VihiclesDocument = HydratedDocument<Vihicles>;
 
@@ -175,6 +176,9 @@ export class Vihicles {
 
   @Prop({ type: String,default:null })
   old_font_symbol: string;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Users' })
+  createdBy: mongoose.Types.ObjectId;
 }
 
 export const VihiclesSchema = SchemaFactory.createForClass(Vihicles);

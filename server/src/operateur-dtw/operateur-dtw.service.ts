@@ -22,7 +22,7 @@ const fontkit = require('@pdf-lib/fontkit');
 const bidiFactory = require('bidi-js');
 const bidi = bidiFactory();
 const getVisualString = (text: string) => {
-  const txt = text.split("").reverse().join("");
+  const txt = text.split('').reverse().join('');
   if (!txt) return '';
   const levels = bidi.getEmbeddingLevels(txt, 'rtl');
   return bidi.getReorderedString(txt, levels);
@@ -33,7 +33,12 @@ import * as XLSX from 'xlsx';
 import { OperateurQueryBuilder } from 'src/common/builder/OperateurQueryBuilder';
 import { Response } from 'express';
 
-import { convertToArabicWords, drawAlignedText, drawRetiredLinesTable, drawArabicReversed } from 'src/common/utils/pdf-utils';
+import {
+  convertToArabicWords,
+  drawAlignedText,
+  drawRetiredLinesTable,
+  drawArabicReversed,
+} from 'src/common/utils/pdf-utils';
 
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { promisify } from 'util';
@@ -48,18 +53,32 @@ export class OperateurDtwService {
     private readonly vihiculeService: VehiclesService,
     @Inject(forwardRef(() => ChauffeursService))
     private readonly chauffeursService: ChauffeursService,
-  ) { }
+  ) {}
 
-  async create(createOperateurDtwDto: CreateOperateurDto, res: Response) {
+  async create(
+    createOperateurDtwDto: CreateOperateurDto,
+    res: Response,
+    createdBy?: string,
+  ) {
     try {
       // ✅ Validate input (NestJS ValidationPipe should already handle this)
       // If DTO validation fails, this won't even run.
 
       // Create the operateur in DB
-      const operateur = await this.OperateurModel.create(createOperateurDtwDto);
+      console.log('createdBy', createdBy);
+      const operateur = await this.OperateurModel.create({
+        ...createOperateurDtwDto,
+        createdBy,
+      });
+      let finalOperateur: any = operateur;
+      if (operateur && createdBy) {
+        finalOperateur = await this.OperateurModel.findById(operateur._id)
+          .populate('createdBy', 'fullName email role')
+          .lean();
+      }
 
-      console.log("operateur", operateur)
-      if (!operateur) {
+      console.log('operateur', finalOperateur);
+      if (!finalOperateur) {
         return res.status(404).json({
           message: 'لم يتم إنشاء المتعامل. يرجى التحقق من البيانات.',
         });
@@ -82,9 +101,9 @@ export class OperateurDtwService {
       const result = new ResponseBuilder()
         .setStatus(201)
         .setMessage('تم تسجيل المتعامل بنجاح')
-        .setData(operateur)
+        .setData(finalOperateur)
         .build();
-      console.log("result", result)
+      console.log('result', result);
       return res.status(201).json(result);
     } catch (error) {
       console.error('❌ Validation or Server Error:', error);
@@ -104,7 +123,7 @@ export class OperateurDtwService {
     }
   }
 
-  async findAll(params: any) {
+  async findAll(params: any, user?: any) {
     const page = Number(params.page) || 1;
     const limit = Number(params.limit) || 10;
 
@@ -116,12 +135,17 @@ export class OperateurDtwService {
 
     const { query, limit: finalLimit, skip, sort } = queryBuilder.build();
 
-    const data = await this.OperateurModel.find(query)
+    let queryObj = this.OperateurModel.find(query)
       .limit(finalLimit)
       .skip(skip)
       .sort(sort)
-      .lean()
-      .exec();
+      .lean();
+
+    if (user?.role === 'admin' || user?.role === 'manager') {
+      queryObj = queryObj.populate('createdBy', 'fullName email role');
+    }
+
+    const data = await queryObj.exec();
 
     const total = await this.OperateurModel.countDocuments(query).exec();
 
@@ -133,27 +157,31 @@ export class OperateurDtwService {
     };
   }
 
-  async findOne(id: string) {
-    const operateur = await this.OperateurModel.findById(id).lean().exec();
+  async findOne(id: string, user?: any) {
+    let queryObj = this.OperateurModel.findById(id).lean();
+    if (user?.role === 'admin' || user?.role === 'manager') {
+      queryObj = queryObj.populate('createdBy', 'fullName email role');
+    }
+    const operateur = await queryObj.exec();
     const allVehicles = [];
     const chauffeurs = [];
     const num_docier_client = operateur?.num_docier_client;
     const fullName_arabe = operateur?.fullName_arabe;
-    console.log("fullName_arabe", fullName_arabe)
+    console.log('fullName_arabe', fullName_arabe);
     const vihicle =
       await this.vihiculeService.findVihiculeByOperateur(num_docier_client);
     allVehicles.push(...vihicle);
     const chauffeur =
       await this.chauffeursService.findChauffeurByOperateur(fullName_arabe);
-    console.log("chauffeur", chauffeur)
+    console.log('chauffeur', chauffeur);
     chauffeurs.push(...chauffeur);
     console.log(chauffeurs);
 
     const activeVihicules = allVehicles.filter(
-      (v) => !(v.vihicile_parked === 'نعم' && v.type_parked === 'نهائي')
+      (v) => !(v.vihicile_parked === 'نعم' && v.type_parked === 'نهائي'),
     );
     const historiqueOperateur = allVehicles.filter(
-      (v) => v.vihicile_parked === 'نعم' && v.type_parked === 'نهائي'
+      (v) => v.vihicile_parked === 'نعم' && v.type_parked === 'نهائي',
     );
 
     return {
@@ -182,7 +210,7 @@ export class OperateurDtwService {
       vihicules = vihicules.filter((v) =>
         vehicleIds.includes(v._id.toString()),
       );
-      console.log("vihicules", vihicules)
+      console.log('vihicules', vihicules);
     }
 
     if (!vihicules || vihicules.length === 0) {
@@ -256,8 +284,8 @@ export class OperateurDtwService {
       });
     };
 
-    const firstVehicule = vihicules.filter((v) =>
-      v.font_type !== 'نقل مدرسي' && v.font_type !== 'نقل العمال'
+    const firstVehicule = vihicules.filter(
+      (v) => v.font_type !== 'نقل مدرسي' && v.font_type !== 'نقل العمال',
     )[0];
     if (
       firstVehicule.font_type === 'بين البلديات' ||
@@ -308,12 +336,11 @@ export class OperateurDtwService {
     ) {
       const v = vihicules[0];
 
-      drawArabic(page1, v.num_bus_registration ?? "", 420, 620);  // رقم التسجيل
-      drawArabic(page1, v.category ?? "", 325, 620);              // الصنف
-      drawArabic(page1, v.Style ?? "", 240, 620);                 // الطراز
-      drawArabic(page1, v.type ?? "", 173, 620);                  // النوع
-      drawArabic(page1, v.Number_of_seats?.toString() ?? "", 90, 620); // عدد المقاعد
-
+      drawArabic(page1, v.num_bus_registration ?? '', 420, 620); // رقم التسجيل
+      drawArabic(page1, v.category ?? '', 325, 620); // الصنف
+      drawArabic(page1, v.Style ?? '', 240, 620); // الطراز
+      drawArabic(page1, v.type ?? '', 173, 620); // النوع
+      drawArabic(page1, v.Number_of_seats?.toString() ?? '', 90, 620); // عدد المقاعد
     }
     if (
       firstVehicule.font_type === 'بين البلديات' ||
@@ -322,13 +349,11 @@ export class OperateurDtwService {
       const v = vihicules[0];
 
       // Always draw to keep layout stable
-      drawArabic(page1, v.num_bus_registration ?? "", 420, 630);  // رقم التسجيل
-      drawArabic(page1, v.category ?? "", 335, 630);              // الصنف
-      drawArabic(page1, v.Style ?? "", 250, 630);                 // الطراز
-      drawArabic(page1, v.type ?? "", 175, 630);                  // النوع
-      drawArabic(page1, v.Number_of_seats?.toString() ?? "", 80, 630); // عدد المقاعد
-
-
+      drawArabic(page1, v.num_bus_registration ?? '', 420, 630); // رقم التسجيل
+      drawArabic(page1, v.category ?? '', 335, 630); // الصنف
+      drawArabic(page1, v.Style ?? '', 250, 630); // الطراز
+      drawArabic(page1, v.type ?? '', 175, 630); // النوع
+      drawArabic(page1, v.Number_of_seats?.toString() ?? '', 80, 630); // عدد المقاعد
     }
 
     if (
@@ -419,7 +444,7 @@ export class OperateurDtwService {
 
     /** 🔹 Remove undefined values */
     const updateData = { ...updateOperateurDtwDto };
-    Object.keys(updateData).forEach(key => {
+    Object.keys(updateData).forEach((key) => {
       if (updateData[key] === undefined) {
         delete updateData[key];
       }
@@ -490,7 +515,7 @@ export class OperateurDtwService {
   async exportUsersToExcel(filterDto: any): Promise<string> {
     const query: any = {};
 
-    console.log("filterDto", filterDto)
+    console.log('filterDto', filterDto);
     if (filterDto.search && filterDto.search.trim()) {
       // Use the same robust search logic as findAll
       const orConditions: any[] = [
@@ -516,22 +541,22 @@ export class OperateurDtwService {
         orConditions.push({ num_dhoraire: Number(filterDto.search) });
         orConditions.push({ num_wilaya: Number(filterDto.search) });
         orConditions.push({ num_dacte_naissance: Number(filterDto.search) });
-        orConditions.push({ num_didentification_national_NIN: Number(filterDto.search) });
+        orConditions.push({
+          num_didentification_national_NIN: Number(filterDto.search),
+        });
       }
 
       query.$or = orConditions;
     }
-    console.log("query", query)
+    console.log('query', query);
     const operateurs = await this.OperateurModel.find(query).lean();
 
-    console.log("operateurs", operateurs)
+    console.log('operateurs', operateurs);
     const workbook = new Workbook();
     const worksheet = workbook.addWorksheet('المتعاملين');
 
     // Set the worksheet to display from right to left
-    worksheet.views = [
-      { rightToLeft: true },
-    ];
+    worksheet.views = [{ rightToLeft: true }];
 
     const exportDir = join(__dirname, '..', 'exports/operateurs');
     if (!existsSync(exportDir)) {
@@ -704,11 +729,9 @@ export class OperateurDtwService {
 
   // احصائيات بعدد المسجلين في كل يوم بين تاريخين
   async getRegistrationStats(start: string, end: string) {
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    endDate.setHours(23, 59, 59);
-    console.log('Start Date:', startDate.toISOString());
-    console.log('End Date:', endDate.toISOString());
+    const startDate = new Date(`${start}T00:00:00.000Z`);
+    const endDate = new Date(`${end}T23:59:59.999Z`);
+
     const data = await this.OperateurModel.aggregate([
       {
         $match: {
@@ -718,17 +741,17 @@ export class OperateurDtwService {
       {
         $group: {
           _id: {
-            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
+            $dateToString: {
+              format: '%Y-%m-%d',
+              date: '$createdAt',
+              timezone: 'UTC',
+            },
           },
           count: { $sum: 1 },
         },
       },
-      {
-        $sort: { _id: 1 },
-      },
+      { $sort: { _id: 1 } },
     ]);
-
-    console.log(data);
 
     return data.map((item) => ({
       date: item._id,
@@ -862,12 +885,31 @@ export class OperateurDtwService {
     const infoLeft = 40;
     const infoRight = width - 40;
 
-    console.log("operateur.num_registre_commerce", operateur.num_registre_commerce)
+    console.log(
+      'operateur.num_registre_commerce',
+      operateur.num_registre_commerce,
+    );
     // Draw info section border
-    page.drawLine({ start: { x: infoLeft, y: infoTop }, end: { x: infoRight, y: infoTop }, thickness: 1 });
-    page.drawLine({ start: { x: infoLeft, y: infoBottom }, end: { x: infoRight, y: infoBottom }, thickness: 1 });
-    page.drawLine({ start: { x: infoLeft, y: infoTop }, end: { x: infoLeft, y: infoBottom }, thickness: 1 });
-    page.drawLine({ start: { x: infoRight, y: infoTop }, end: { x: infoRight, y: infoBottom }, thickness: 1 });
+    page.drawLine({
+      start: { x: infoLeft, y: infoTop },
+      end: { x: infoRight, y: infoTop },
+      thickness: 1,
+    });
+    page.drawLine({
+      start: { x: infoLeft, y: infoBottom },
+      end: { x: infoRight, y: infoBottom },
+      thickness: 1,
+    });
+    page.drawLine({
+      start: { x: infoLeft, y: infoTop },
+      end: { x: infoLeft, y: infoBottom },
+      thickness: 1,
+    });
+    page.drawLine({
+      start: { x: infoRight, y: infoTop },
+      end: { x: infoRight, y: infoBottom },
+      thickness: 1,
+    });
 
     drawAlignedText({
       page,
@@ -994,13 +1036,12 @@ export class OperateurDtwService {
       align: 'left',
     });
 
-
     //please add ملاحظة here with another text in flex
 
     // Adding ملاحظة with another text in a flex layout
     drawAlignedText({
       page,
-      text: `ملاحظة: ${('إعلان رقم 01 بتاريخ 07/12/2022')}`,
+      text: `ملاحظة: ${'إعلان رقم 01 بتاريخ 07/12/2022'}`,
       y: height - 430,
       font: cairoSemiBoldFont,
       fontSize: 16,
@@ -1008,8 +1049,8 @@ export class OperateurDtwService {
     });
 
     // TABLES - Filter vehicles by type
-    const schoolVehicles = vihicles.filter(v => v.font_type === 'نقل مدرسي');
-    const workerVehicles = vihicles.filter(v => v.font_type === 'نقل العمال');
+    const schoolVehicles = vihicles.filter((v) => v.font_type === 'نقل مدرسي');
+    const workerVehicles = vihicles.filter((v) => v.font_type === 'نقل العمال');
 
     // TABLE HEADERS
     const tableHeaderWithObservation = [
@@ -1070,7 +1111,6 @@ export class OperateurDtwService {
       fontSize: number,
       columnWidths: number[],
     ): { page: PDFPage; y: number } => {
-
       // ===== PAGE SETUP =====
       const pageWidth = page.getWidth();
       const leftMargin = 40;
@@ -1086,7 +1126,7 @@ export class OperateurDtwService {
       // ===== SCALE COLUMNS =====
       const originalTotal = columnWidths.reduce((s, w) => s + w, 0);
       const scaledWidths = columnWidths.map(
-        w => (w / originalTotal) * usableWidth
+        (w) => (w / originalTotal) * usableWidth,
       );
       const tableTotalWidth = usableWidth;
 
@@ -1111,7 +1151,6 @@ export class OperateurDtwService {
 
       // ===== TABLE LOOP =====
       while (rowIndex < totalRows) {
-
         const extraFontSize = fontSize - 4;
 
         // Calculate dynamic row height based on content
@@ -1121,7 +1160,12 @@ export class OperateurDtwService {
           for (let colIndex = 0; colIndex < scaledWidths.length; colIndex++) {
             const text = dataRow[header.length - 1 - colIndex] || '';
             const textSize = fontSize - 2;
-            const lines = wrapText(text, font, textSize, scaledWidths[colIndex] - 10);
+            const lines = wrapText(
+              text,
+              font,
+              textSize,
+              scaledWidths[colIndex] - 10,
+            );
             maxLines = Math.max(maxLines, lines.length);
           }
         }
@@ -1130,9 +1174,15 @@ export class OperateurDtwService {
         const lineSpacing = 3; // Reduced from 4
         const topPadding = rowIndex === 0 ? 15 : 8; // Reduced padding
         const bottomPadding = 8; // Reduced padding
-        const baseHeight = rowIndex === 0
-          ? rowHeight
-          : Math.max(45, maxLines * (fontSize - 2 + lineSpacing) + topPadding + bottomPadding);
+        const baseHeight =
+          rowIndex === 0
+            ? rowHeight
+            : Math.max(
+                45,
+                maxLines * (fontSize - 2 + lineSpacing) +
+                  topPadding +
+                  bottomPadding,
+              );
         const actualRowHeight = rowIndex === 0 ? baseHeight : baseHeight + 25; // Reduced from 30
 
         // ===== PAGE BREAK =====
@@ -1144,16 +1194,30 @@ export class OperateurDtwService {
 
         // ===== DRAW ROW BORDERS (Top, Right, Left, Bottom) =====
         const drawLine = (x1, y1, x2, y2) =>
-          page.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, thickness: 0.5 });
+          page.drawLine({
+            start: { x: x1, y: y1 },
+            end: { x: x2, y: y2 },
+            thickness: 0.5,
+          });
 
         // Top border
         drawLine(tableStartX, tableY, tableStartX + tableTotalWidth, tableY);
         // Bottom border
-        drawLine(tableStartX, tableY - actualRowHeight, tableStartX + tableTotalWidth, tableY - actualRowHeight);
+        drawLine(
+          tableStartX,
+          tableY - actualRowHeight,
+          tableStartX + tableTotalWidth,
+          tableY - actualRowHeight,
+        );
         // Left border
         drawLine(tableStartX, tableY, tableStartX, tableY - actualRowHeight);
         // Right border
-        drawLine(tableStartX + tableTotalWidth, tableY, tableStartX + tableTotalWidth, tableY - actualRowHeight);
+        drawLine(
+          tableStartX + tableTotalWidth,
+          tableY,
+          tableStartX + tableTotalWidth,
+          tableY - actualRowHeight,
+        );
 
         // ===== CELLS =====
         let x = tableStartX;
@@ -1172,7 +1236,8 @@ export class OperateurDtwService {
           // Center text vertically in the cell
           const lineSpacing = 3;
           const totalTextHeight = lines.length * (textSize + lineSpacing);
-          const cellContentHeight = rowIndex === 0 ? (rowHeight - 30) : (baseHeight - 25);
+          const cellContentHeight =
+            rowIndex === 0 ? rowHeight - 30 : baseHeight - 25;
           const verticalOffset = (cellContentHeight - totalTextHeight) / 2;
 
           let textY =
@@ -1180,7 +1245,7 @@ export class OperateurDtwService {
               ? tableY - 15 - verticalOffset
               : tableY - textSize - 8 - verticalOffset;
 
-          lines.forEach(line => {
+          lines.forEach((line) => {
             const textX =
               x + colWidth - font.widthOfTextAtSize(line, textSize) - 5;
 
@@ -1240,9 +1305,6 @@ export class OperateurDtwService {
       return { page, y: tableY - 30 };
     };
 
-
-
-
     let nextY = height - 450;
 
     // helper to safely get the first existing date-like field from a list of candidate keys
@@ -1256,17 +1318,16 @@ export class OperateurDtwService {
 
     // Table 1: All vehicles. 'ملاحظة' column filled ONLY for school transport (font_type === 'نقل مدرسي')
 
-
     if (vihicles && vihicles.length > 0) {
       // Relative widths (auto-scaled to page) - RTL order
       const columnWidthsWithObservation = [
-        50,  // ملاحظة
-        70,  // المقاعد
-        90,  // الرقم التسلسلي
+        50, // ملاحظة
+        70, // المقاعد
+        90, // الرقم التسلسلي
         120, // رقم تسجيل المركبة
         100, // تاريخ الرخصة
         200, // الخط المستغل
-        40,  // الرقم
+        40, // الرقم
       ];
 
       const allLines = vihicles.map((v, i) => [
@@ -1276,33 +1337,32 @@ export class OperateurDtwService {
         String(v.num_bus_registration || ''),
         String(v.font_symbol || ''),
         String(v.Number_of_seats ?? ''),
-        v.font_type === 'نقل مدرسي'
-          ? String(v.vihicile_parked || '/')
-          : '/',
+        v.font_type === 'نقل مدرسي' ? String(v.vihicile_parked || '/') : '/',
       ]);
 
       ({ page, y: nextY } = drawTable(
         pdfDoc,
         page,
         'الخطوط المستغلة',
-        0,          // ignored
+        0, // ignored
         nextY,
-        65,         // IMPORTANT: header height
+        65, // IMPORTANT: header height
         tableHeaderWithObservation,
         allLines,
         cairoSemiBoldFont,
         12,
-        columnWidthsWithObservation
+        columnWidthsWithObservation,
       ));
     }
-
-
 
     // Worker Transport Table (without observation column)
     if (workerVehicles.length > 0) {
       // widths must match header length (6) - RTL order
       const columnWidthsWithoutObservation = [60, 70, 100, 80, 120, 40];
-      const tableTotalWidth = columnWidthsWithoutObservation.reduce((sum, w) => sum + w, 0);
+      const tableTotalWidth = columnWidthsWithoutObservation.reduce(
+        (sum, w) => sum + w,
+        0,
+      );
       const startX = (page.getWidth() - tableTotalWidth) / 2;
 
       const workerLines = workerVehicles.map((v, i) => [
@@ -1452,11 +1512,10 @@ export class OperateurDtwService {
 
     // 🔁 دالة لعكس ترتيب الكلمات فقط (مش الحروف)
     const reverseWords = (text: string) => {
-      return text
-    }
+      return text;
+    };
 
-
-    page.drawText(reverseWords("2022/06/19"), {
+    page.drawText(reverseWords('2022/06/19'), {
       x: 30,
       y: 630,
       size: 14,
@@ -1464,7 +1523,7 @@ export class OperateurDtwService {
       color: rgb(0, 0, 0),
     });
 
-    page.drawText(reverseWords("سليم فرحات"), {
+    page.drawText(reverseWords('سليم فرحات'), {
       x: 70,
       y: 610,
       size: 14,
@@ -1581,12 +1640,11 @@ export class OperateurDtwService {
    * Generate the "رخصة استغلال خدمة ظرفية لنقل الأشخاص" PDF
    * Official occasional transport permit for passengers
    */
-  async generatePermitPdf(
-    res: Response,
-    dto: GeneratePermitPdfDto,
-  ) {
+  async generatePermitPdf(res: Response, dto: GeneratePermitPdfDto) {
     // 1. Fetch data from DB
-    const operateur = await this.OperateurModel.findById(dto.operateurId).lean();
+    const operateur = await this.OperateurModel.findById(
+      dto.operateurId,
+    ).lean();
     if (!operateur) {
       throw new NotFoundException('لم يتم العثور على المتعامل');
     }
@@ -1598,24 +1656,43 @@ export class OperateurDtwService {
     }
 
     const fullName_arabe = operateur.fullName_arabe;
-    const chauffeurs = await this.chauffeursService.findChauffeurByOperateur(fullName_arabe);
+    const chauffeurs =
+      await this.chauffeursService.findChauffeurByOperateur(fullName_arabe);
 
     let selectedChauffeurs = chauffeurs;
     if (dto.chauffeurIds && dto.chauffeurIds.length > 0) {
-      selectedChauffeurs = chauffeurs.filter(c => dto.chauffeurIds.includes(c._id.toString()));
+      selectedChauffeurs = chauffeurs.filter((c) =>
+        dto.chauffeurIds.includes(c._id.toString()),
+      );
     }
 
-    console.log("selectedChauffeurs", selectedChauffeurs);
+    console.log('selectedChauffeurs', selectedChauffeurs);
     // 2. Create PDF
     const pdfDoc = await PDFDocument.create();
     pdfDoc.registerFontkit(fontkit);
 
     // Load Arabic fonts
-    const cairoBoldPath = path.join(__dirname, '..', 'assets', 'fonts', 'Cairo-Bold.ttf');
-    const cairoSemiBoldPath = path.join(__dirname, '..', 'assets', 'fonts', 'Cairo-SemiBold.ttf');
+    const cairoBoldPath = path.join(
+      __dirname,
+      '..',
+      'assets',
+      'fonts',
+      'Cairo-Bold.ttf',
+    );
+    const cairoSemiBoldPath = path.join(
+      __dirname,
+      '..',
+      'assets',
+      'fonts',
+      'Cairo-SemiBold.ttf',
+    );
 
-    const cairoBoldFont = await pdfDoc.embedFont(fs.readFileSync(cairoBoldPath));
-    const cairoSemiBoldFont = await pdfDoc.embedFont(fs.readFileSync(cairoSemiBoldPath));
+    const cairoBoldFont = await pdfDoc.embedFont(
+      fs.readFileSync(cairoBoldPath),
+    );
+    const cairoSemiBoldFont = await pdfDoc.embedFont(
+      fs.readFileSync(cairoSemiBoldPath),
+    );
 
     const page = pdfDoc.addPage([595, 842]);
     const { width, height } = page.getSize();
@@ -1626,9 +1703,16 @@ export class OperateurDtwService {
     const darkBlue = rgb(0, 0.1, 0.4);
     const dynamicColor = rgb(0.1, 0.1, 0.1);
 
-
     // Helper functions
-    const drawArabicTextInCol = (txt: string, x: number, y: number, font: any, size: number, color = black, bold = false) => {
+    const drawArabicTextInCol = (
+      txt: string,
+      x: number,
+      y: number,
+      font: any,
+      size: number,
+      color = black,
+      bold = false,
+    ) => {
       const visual = getVisualString(txt);
       const xPos = x - font.widthOfTextAtSize(visual, size);
 
@@ -1641,7 +1725,15 @@ export class OperateurDtwService {
       }
     };
 
-    const drawCenteredArabicText = (txt: string, y: number, font: any, size: number, color = black, limitX1?: number, limitX2?: number) => {
+    const drawCenteredArabicText = (
+      txt: string,
+      y: number,
+      font: any,
+      size: number,
+      color = black,
+      limitX1?: number,
+      limitX2?: number,
+    ) => {
       const visual = getVisualString(txt);
       const textWidth = font.widthOfTextAtSize(visual, size);
       let xPos;
@@ -1653,7 +1745,12 @@ export class OperateurDtwService {
       page.drawText(visual, { x: xPos, y, font, size, color });
     };
 
-    const wrapText = (text: string, font: any, fontSize: number, maxWidth: number): string[] => {
+    const wrapText = (
+      text: string,
+      font: any,
+      fontSize: number,
+      maxWidth: number,
+    ): string[] => {
       const words = text.split(' ');
       const lines: string[] = [];
       let currentLine = words[0] || '';
@@ -1681,18 +1778,56 @@ export class OperateurDtwService {
     const currentDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
 
     // ===== HEADER SECTION =====
-    drawCenteredArabicText('الجمهورية الجزائرية الديمقراطية الشعبية', height - 40, cairoBoldFont, 16, black);
-    drawCenteredArabicText('وزارة الداخلية والجماعات المحلية والنقل', height - 65, cairoBoldFont, 14, black);
-    drawArabicTextInCol('مديرية النقل لولاية عين الدفلى', width - 40, height - 90, cairoBoldFont, 13, black);
+    drawCenteredArabicText(
+      'الجمهورية الجزائرية الديمقراطية الشعبية',
+      height - 40,
+      cairoBoldFont,
+      16,
+      black,
+    );
+    drawCenteredArabicText(
+      'وزارة الداخلية والجماعات المحلية والنقل',
+      height - 65,
+      cairoBoldFont,
+      14,
+      black,
+    );
+    drawArabicTextInCol(
+      'مديرية النقل لولاية عين الدفلى',
+      width - 40,
+      height - 90,
+      cairoBoldFont,
+      13,
+      black,
+    );
 
     const refY = height - 120;
-    drawArabicTextInCol('رقم: ...................................................../م ن/2026 .', width - 40, refY, cairoSemiBoldFont, 11, black);
+    drawArabicTextInCol(
+      'رقم: ...................................................../م ن/2026 .',
+      width - 40,
+      refY,
+      cairoSemiBoldFont,
+      11,
+      black,
+    );
 
     const decreeY = height - 160;
-    drawCenteredArabicText('مقرر مؤرخ في: .....................................................', decreeY, cairoBoldFont, 12, black);
+    drawCenteredArabicText(
+      'مقرر مؤرخ في: .....................................................',
+      decreeY,
+      cairoBoldFont,
+      12,
+      black,
+    );
 
     const titleY = height - 190;
-    drawCenteredArabicText('يتضمن رخصة استغلال خدمة ظرفية لنقل الأشخاص عبر الطرقات', titleY, cairoBoldFont, 15, darkBlue);
+    drawCenteredArabicText(
+      'يتضمن رخصة استغلال خدمة ظرفية لنقل الأشخاص عبر الطرقات',
+      titleY,
+      cairoBoldFont,
+      15,
+      darkBlue,
+    );
 
     // ===== COLUMN SEPARATOR =====
     const colSplitX = 290;
@@ -1710,7 +1845,13 @@ export class OperateurDtwService {
     const rightColEdge = width - 30;
 
     // Helper to draw label and value on same line or wrap to next line centered
-    const drawField = (label: string, value: string, font: any, size: number, boldValue = true) => {
+    const drawField = (
+      label: string,
+      value: string,
+      font: any,
+      size: number,
+      boldValue = true,
+    ) => {
       const labelVisual = getVisualString(label);
       const valVisual = getVisualString(value);
 
@@ -1718,21 +1859,43 @@ export class OperateurDtwService {
       const valWidth = font.widthOfTextAtSize(valVisual, size);
       const colWidth = rightColEdge - colSplitX;
 
-      const fitsOnSameLine = (labelWidth + valWidth + 15) < colWidth;
+      const fitsOnSameLine = labelWidth + valWidth + 15 < colWidth;
 
       if (fitsOnSameLine) {
         drawArabicTextInCol(label, rightColEdge, rightY, font, size);
-        drawArabicTextInCol(value, rightColEdge - labelWidth - 10, rightY, font, size, dynamicColor, boldValue);
+        drawArabicTextInCol(
+          value,
+          rightColEdge - labelWidth - 10,
+          rightY,
+          font,
+          size,
+          dynamicColor,
+          boldValue,
+        );
         rightY -= 24;
       } else {
         drawArabicTextInCol(label, rightColEdge, rightY, font, size);
         rightY -= 18;
-        drawCenteredArabicText(value, rightY, font, size, dynamicColor, colSplitX, rightColEdge);
+        drawCenteredArabicText(
+          value,
+          rightY,
+          font,
+          size,
+          dynamicColor,
+          colSplitX,
+          rightColEdge,
+        );
         rightY -= 24;
       }
     };
 
-    drawArabicTextInCol('أن مدير النقل،', rightColEdge, rightY, cairoBoldFont, 12);
+    drawArabicTextInCol(
+      'أن مدير النقل،',
+      rightColEdge,
+      rightY,
+      cairoBoldFont,
+      12,
+    );
     rightY -= 22;
 
     const legalRefs = [
@@ -1743,62 +1906,165 @@ export class OperateurDtwService {
       'بمقتضى المرسوم التنفيذي المؤرخ في 19 يونيو سنة 2022، المتضمن تعيين السيد/ سليم فرحات مديرا للنقل في ولاية عين الدفلى.',
       'بمقتضى القرار المؤرخ في 22 يوليو سنة 2006 الذي يحدد نماذج الوثائق المتعلقـة بممارسة نشاطات نقل الأشخاص والبضائع عبر الطرقات،',
       'بناءا على التعليمة الوزارية رقم328المؤرخة في 01/02/2017',
-      `و بناءا على طلب المعني المؤرخ في : ${dto.dateConcerned} .`
+      `و بناءا على طلب المعني المؤرخ في : ${dto.dateConcerned} .`,
     ];
 
     const rightColWidth = rightColEdge - colSplitX - 15;
 
-    legalRefs.forEach(ref => {
+    legalRefs.forEach((ref) => {
       const lines = wrapText(ref, cairoSemiBoldFont, 9, rightColWidth);
-      lines.forEach(line => {
-        drawArabicTextInCol(`- ${line}`, rightColEdge, rightY, cairoSemiBoldFont, 9);
+      lines.forEach((line) => {
+        drawArabicTextInCol(
+          `- ${line}`,
+          rightColEdge,
+          rightY,
+          cairoSemiBoldFont,
+          9,
+        );
         rightY -= 13;
       });
       rightY -= 4;
     });
 
     rightY -= 10;
-    drawCenteredArabicText('يقـــــرر مـا يـلــــي :', rightY, cairoBoldFont, 13, darkBlue, colSplitX, width);
+    drawCenteredArabicText(
+      'يقـــــرر مـا يـلــــي :',
+      rightY,
+      cairoBoldFont,
+      13,
+      darkBlue,
+      colSplitX,
+      width,
+    );
     rightY -= 28;
 
     // Article 1 Right
-    drawField('المادة الأولى : يرخص للسيد (ة) أو الشركة :', operateur.fullName_arabe || '/', cairoBoldFont, 11, true);
+    drawField(
+      'المادة الأولى : يرخص للسيد (ة) أو الشركة :',
+      operateur.fullName_arabe || '/',
+      cairoBoldFont,
+      11,
+      true,
+    );
 
-    drawField('رقم القيد :', String(operateur.num_cate_enregistement || '/'), cairoBoldFont, 11, true);
+    drawField(
+      'رقم القيد :',
+      String(operateur.num_cate_enregistement || '/'),
+      cairoBoldFont,
+      11,
+      true,
+    );
 
-    drawField('العنوان أو المقر الاجتماعي :', operateur.address_arabe || '/', cairoBoldFont, 11, true);
-    drawArabicTextInCol('ملاحظـــــــة : - عدم الوقوف والتوقف بمحطة نقل المسافرين .', rightColEdge, rightY, cairoBoldFont, 10);
+    drawField(
+      'العنوان أو المقر الاجتماعي :',
+      operateur.address_arabe || '/',
+      cairoBoldFont,
+      11,
+      true,
+    );
+    drawArabicTextInCol(
+      'ملاحظـــــــة : - عدم الوقوف والتوقف بمحطة نقل المسافرين .',
+      rightColEdge,
+      rightY,
+      cairoBoldFont,
+      10,
+    );
     rightY -= 16;
-    drawArabicTextInCol('- قائمة المسافرين مرفقة على ظهر هذه الرخصة .', rightColEdge, rightY, cairoSemiBoldFont, 10);
+    drawArabicTextInCol(
+      '- قائمة المسافرين مرفقة على ظهر هذه الرخصة .',
+      rightColEdge,
+      rightY,
+      cairoSemiBoldFont,
+      10,
+    );
 
     // ===== LEFT COLUMN CONTENT =====
     let leftY = startColsY - 20;
     const leftColEdge = colSplitX - 15;
 
-    const linesLeft = wrapText('لاستغلال خدمة أو عدة خدمات منتظمة للنقل العمومي للأشخاص عبر الطرقات على المسار الآتي :', cairoSemiBoldFont, 10, colSplitX - 40);
-    linesLeft.forEach(line => {
+    const linesLeft = wrapText(
+      'لاستغلال خدمة أو عدة خدمات منتظمة للنقل العمومي للأشخاص عبر الطرقات على المسار الآتي :',
+      cairoSemiBoldFont,
+      10,
+      colSplitX - 40,
+    );
+    linesLeft.forEach((line) => {
       drawArabicTextInCol(line, leftColEdge, leftY, cairoSemiBoldFont, 10);
       leftY -= 14;
     });
 
     leftY -= 10;
     const route = dto.path;
-    drawCenteredArabicText(route, leftY, cairoBoldFont, 13, dynamicColor, 30, colSplitX);
+    drawCenteredArabicText(
+      route,
+      leftY,
+      cairoBoldFont,
+      13,
+      dynamicColor,
+      30,
+      colSplitX,
+    );
     leftY -= 24;
 
-    drawArabicTextInCol(`لفائــــــــــدة : ${dto.benifit} .`, leftColEdge, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+    drawArabicTextInCol(
+      `لفائــــــــــدة : ${dto.benifit} .`,
+      leftColEdge,
+      leftY,
+      cairoSemiBoldFont,
+      11,
+      dynamicColor,
+      true,
+    );
     leftY -= 24;
 
-    drawArabicTextInCol('بواسطة العربة الآتية :', leftColEdge, leftY, cairoBoldFont, 11);
+    drawArabicTextInCol(
+      'بواسطة العربة الآتية :',
+      leftColEdge,
+      leftY,
+      cairoBoldFont,
+      11,
+    );
     leftY -= 20;
 
-    drawArabicTextInCol(`– رقــــم التسجيــــــــل : ${vehicleData?.num_bus_registration?.split('/').reverse().join('/') || '/'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+    drawArabicTextInCol(
+      `– رقــــم التسجيــــــــل : ${vehicleData?.num_bus_registration?.split('/').reverse().join('/') || '/'}`,
+      leftColEdge - 10,
+      leftY,
+      cairoSemiBoldFont,
+      11,
+      dynamicColor,
+      true,
+    );
     leftY -= 17;
-    drawArabicTextInCol(`- الصنـــــف : ${vehicleData?.category || '/'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+    drawArabicTextInCol(
+      `- الصنـــــف : ${vehicleData?.category || '/'}`,
+      leftColEdge - 10,
+      leftY,
+      cairoSemiBoldFont,
+      11,
+      dynamicColor,
+      true,
+    );
     leftY -= 17;
-    drawArabicTextInCol(`- النـــــــــوع: ${vehicleData?.type || '/'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+    drawArabicTextInCol(
+      `- النـــــــــوع: ${vehicleData?.type || '/'}`,
+      leftColEdge - 10,
+      leftY,
+      cairoSemiBoldFont,
+      11,
+      dynamicColor,
+      true,
+    );
     leftY -= 17;
-    drawArabicTextInCol(`- عدد مقاعد الجـــلوس : ${vehicleData?.Number_of_seats || '/'}`, leftColEdge - 10, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+    drawArabicTextInCol(
+      `- عدد مقاعد الجـــلوس : ${vehicleData?.Number_of_seats || '/'}`,
+      leftColEdge - 10,
+      leftY,
+      cairoSemiBoldFont,
+      11,
+      dynamicColor,
+      true,
+    );
     leftY -= 24;
 
     // Dynamically render all selected chauffeurs
@@ -1806,53 +2072,123 @@ export class OperateurDtwService {
       for (let i = 0; i < selectedChauffeurs.length; i++) {
         const name = selectedChauffeurs[i].nom_prenom_chauffeur || '/';
         if (i === 0) {
-          drawArabicTextInCol(`- السائق (ون) : 1 – ${name}`, leftColEdge, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+          drawArabicTextInCol(
+            `- السائق (ون) : 1 – ${name}`,
+            leftColEdge,
+            leftY,
+            cairoSemiBoldFont,
+            11,
+            dynamicColor,
+            true,
+          );
         } else {
-          drawArabicTextInCol(`${i + 1} - ${name}`, leftColEdge - 68, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+          drawArabicTextInCol(
+            `${i + 1} - ${name}`,
+            leftColEdge - 68,
+            leftY,
+            cairoSemiBoldFont,
+            11,
+            dynamicColor,
+            true,
+          );
         }
         leftY -= 17;
       }
     } else {
-      drawArabicTextInCol('- السائق (ون) : /', leftColEdge, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+      drawArabicTextInCol(
+        '- السائق (ون) : /',
+        leftColEdge,
+        leftY,
+        cairoSemiBoldFont,
+        11,
+        dynamicColor,
+        true,
+      );
       leftY -= 17;
     }
     leftY -= 9;
 
     const leftColWidth = leftColEdge - 20;
-    const article2Lines = wrapText('المادة 2 : لا يرخص للناقلين في إطار استغلال خدمته، القيام بالتقاط المسافرين غير الذين صعدوا في نقطة الذهاب .', cairoSemiBoldFont, 9, leftColWidth);
-    article2Lines.forEach(line => {
+    const article2Lines = wrapText(
+      'المادة 2 : لا يرخص للناقلين في إطار استغلال خدمته، القيام بالتقاط المسافرين غير الذين صعدوا في نقطة الذهاب .',
+      cairoSemiBoldFont,
+      9,
+      leftColWidth,
+    );
+    article2Lines.forEach((line) => {
       drawArabicTextInCol(line, leftColEdge, leftY, cairoSemiBoldFont, 9);
       leftY -= 13;
     });
     leftY -= 10;
 
-    drawArabicTextInCol('المادة 3: هذا المقــــرر صالح للأيـــــام :', leftColEdge, leftY, cairoBoldFont, 11);
+    drawArabicTextInCol(
+      'المادة 3: هذا المقــــرر صالح للأيـــــام :',
+      leftColEdge,
+      leftY,
+      cairoBoldFont,
+      11,
+    );
     leftY -= 20;
-    drawArabicTextInCol(`تاريـخ الذهــــاب : ${dto.dep_date}`, leftColEdge - 20, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+    drawArabicTextInCol(
+      `تاريـخ الذهــــاب : ${dto.dep_date}`,
+      leftColEdge - 20,
+      leftY,
+      cairoSemiBoldFont,
+      11,
+      dynamicColor,
+      true,
+    );
     leftY -= 18;
-    drawArabicTextInCol(`تاريـخ الإيـــــاب : ${dto.return_date}`, leftColEdge - 20, leftY, cairoSemiBoldFont, 11, dynamicColor, true);
+    drawArabicTextInCol(
+      `تاريـخ الإيـــــاب : ${dto.return_date}`,
+      leftColEdge - 20,
+      leftY,
+      cairoSemiBoldFont,
+      11,
+      dynamicColor,
+      true,
+    );
     leftY -= 22;
 
-    const article4Lines = wrapText('المادة 4: يجب أن تكون هذه الرخصة موجودة على متن العربة ويجب استظهارها عند كل طلب الاعوان المؤهلين .', cairoSemiBoldFont, 9, leftColWidth);
-    article4Lines.forEach(line => {
+    const article4Lines = wrapText(
+      'المادة 4: يجب أن تكون هذه الرخصة موجودة على متن العربة ويجب استظهارها عند كل طلب الاعوان المؤهلين .',
+      cairoSemiBoldFont,
+      9,
+      leftColWidth,
+    );
+    article4Lines.forEach((line) => {
       drawArabicTextInCol(line, leftColEdge, leftY, cairoSemiBoldFont, 9);
       leftY -= 13;
     });
-
 
     leftY -= 25;
     const chauffeurCount = selectedChauffeurs?.length || 0;
     const shift = Math.max(0, chauffeurCount - 4) * 17;
     const signY = Math.max(90, 160 - shift);
 
-    drawArabicTextInCol(`حرر بــعين الدفلى في :`, leftColEdge, leftY, cairoSemiBoldFont, 12);
-    drawArabicTextInCol('مديـــــر النقـــــل', colSplitX - 80, signY, cairoBoldFont, 13, black);
-
+    drawArabicTextInCol(
+      `حرر بــعين الدفلى في :`,
+      leftColEdge,
+      leftY,
+      cairoSemiBoldFont,
+      12,
+    );
+    drawArabicTextInCol(
+      'مديـــــر النقـــــل',
+      colSplitX - 80,
+      signY,
+      cairoBoldFont,
+      13,
+      black,
+    );
 
     // 3. Save and send PDF
     const pdfBytes = await pdfDoc.save();
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline; filename=Permit_Transport.pdf');
+    res.setHeader(
+      'Content-Disposition',
+      'inline; filename=Permit_Transport.pdf',
+    );
     res.send(Buffer.from(pdfBytes));
   }
 

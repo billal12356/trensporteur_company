@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import mongoose from 'mongoose';
 
 export type OperateurDocument = HydratedDocument<Operateur>;
 
@@ -145,6 +146,9 @@ export class Operateur {
 
   @Prop({ type: String })
   note_chef_departement: string;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Users' })
+  createdBy: mongoose.Types.ObjectId;
 }
 
 export const OperateurSchema = SchemaFactory.createForClass(Operateur);

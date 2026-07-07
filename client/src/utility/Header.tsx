@@ -173,6 +173,14 @@ const EnhancedNavbar = () => {
     setActiveDropdown(activeDropdown === label ? null : label)
   }
 
+  // Filter navigation items based on user role
+  const filteredNavItems = navigationItems.filter((item) => {
+    if (item.href === "/dashboard") {
+      return userData && (userData.role === "admin" || userData.role === "manager");
+    }
+    return true;
+  });
+
   return (
     <motion.nav
       initial={{ y: -100 }}
@@ -206,7 +214,7 @@ const EnhancedNavbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-1">
-            {navigationItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const Icon = item.icon
               const hasChildren = item.children && item.children.length > 0
 
@@ -394,7 +402,7 @@ const EnhancedNavbar = () => {
                   {/* Mobile Navigation */}
                   <div className="flex-1 overflow-y-auto p-4">
                     <div className="space-y-2">
-                      {navigationItems.map((item) => {
+                      {filteredNavItems.map((item) => {
                         const Icon = item.icon
                         const hasChildren = item.children && item.children.length > 0
 

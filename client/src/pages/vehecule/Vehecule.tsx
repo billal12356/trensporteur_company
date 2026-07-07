@@ -35,9 +35,11 @@ import MainContainer from "@/components/MainContainer";
 import { useListPage } from "@/hooks/useListPage";
 import { ListTable, useTableColumns, useTableActions } from "@/components";
 import { formatters } from "@/lib/formatters";
+import { useUser } from "@/hooks/context/userContext/UserProvider";
 
 const EnhancedVehicle = React.memo((): ReactElement => {
   const navigate = useNavigate();
+  const { userData } = useUser();
   const [searchQueryLine, setSearchQueryLine] = React.useState("");
   const [isExportingLine, setIsExportingLine] = React.useState(false);
 
@@ -140,9 +142,16 @@ const EnhancedVehicle = React.memo((): ReactElement => {
     ["person_concerned", "المعني بالتحديث"],
     ["note_chef_departement", "ملاحظات رئيس المصلحة"],
     ["path", "المسار"],
+    ["createdAt", "تاريخ الإنشاء"],
+    ["createdBy", "أنشئ بواسطة"],
   ];
 
-  const columns = columnDefinitions.map(([key, label]) => {
+  let filteredColumnDefinitions = columnDefinitions;
+  if (userData?.role !== "admin" && userData?.role !== "manager") {
+    filteredColumnDefinitions = filteredColumnDefinitions.filter(([key]) => key !== "createdBy");
+  }
+
+  const columns = filteredColumnDefinitions.map(([key, label]) => {
     const keyStr = String(key);
     if (
       keyStr.toLowerCase().includes("date") ||
@@ -150,9 +159,18 @@ const EnhancedVehicle = React.memo((): ReactElement => {
       keyStr.toLowerCase().includes("_start_") ||
       keyStr.toLowerCase().includes("_end_") ||
       keyStr.toLowerCase().includes("depart") ||
-      keyStr.toLowerCase().includes("dure")
+      keyStr.toLowerCase().includes("dure") ||
+      keyStr === "createdAt" ||
+      keyStr === "updatedAt"
     ) {
       return colsBuilder.date(key, label, true);
+    }
+    if (keyStr === "createdBy") {
+      return colsBuilder.custom(key, label, (val: any) => {
+        if (!val) return <span className="text-gray-400">-</span>;
+        const name = typeof val === "object" ? val.fullName || val.email : val;
+        return <span className="text-blue-600 font-medium">{name}</span>;
+      });
     }
     if (keyStr.includes("status_activite") || keyStr.includes("vihicile_parked")) {
       return colsBuilder.custom(key, label, (val: any) => {

@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { StringDecoder } from 'string_decoder';
+import mongoose from 'mongoose';
 
 export type ChauffeurDocument = HydratedDocument<Chauffeur>;
 
@@ -122,6 +123,9 @@ export class Chauffeur {
 
   @Prop({ type: String })
   comments: string;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Users' })
+  createdBy: mongoose.Types.ObjectId;
 }
 
 

@@ -17,6 +17,21 @@ export class StateController {
     return this.stateService.getAllStats();
   }
 
+  @Get('user-contributions')
+  getUserContributions() {
+    return this.stateService.getUserContributions();
+  }
+
+  @Get('advanced-user-stats')
+  async getAdvancedUserStats(
+    @Query('userId') userId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('wilaya') wilaya?: string,
+  ) {
+    return this.stateService.getAdvancedUserStats(userId, startDate, endDate, wilaya);
+  }
+
   @Get('statsInterCommunal')
   async getInterCommunal(
     @Query('startDate') startDate?: string,

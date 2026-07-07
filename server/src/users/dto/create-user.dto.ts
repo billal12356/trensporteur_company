@@ -1,5 +1,5 @@
-import { IsEmail, IsMobilePhone, IsNotEmpty, IsOptional, IsString, MinLength } from "class-validator";
-
+import { IsEmail, IsEnum, IsMobilePhone, IsNotEmpty, IsOptional, IsString, MinLength } from "class-validator";
+import { Role } from "src/common/enums/role.enum";
 export class CreateUserDto {
     @IsNotEmpty({message:"FullName is required."})
     @IsString({message:"FullName must be string."})
@@ -21,4 +21,8 @@ export class CreateUserDto {
     @IsOptional()
     @IsMobilePhone("ar-DZ")
     phone:string
+
+    @IsOptional()
+    @IsEnum(Role, { message: 'Role must be a valid enum value' })
+    role: Role;
 }

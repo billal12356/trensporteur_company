@@ -18,6 +18,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/common/gaurds/auth.guard';
 import { RolesGuard } from 'src/common/gaurds/roles.guard';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { VehiclesService } from './vehicles.service';
 import { CreateVihicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
@@ -34,18 +35,21 @@ export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) { }
 
   @Post('create')
-  async create(@Body() createVehicleDto: CreateVihicleDto) {
-    return await this.vehiclesService.create(createVehicleDto);
+  async create(
+    @Body() createVehicleDto: CreateVihicleDto,
+    @CurrentUser() user: any,
+  ) {
+    return await this.vehiclesService.create(createVehicleDto, user?.sub);
   }
 
   @Get('find-all')
-  async findAll(@Query() query) {
-    return await this.vehiclesService.findAll(query);
+  async findAll(@Query() query, @CurrentUser() user: any) {
+    return await this.vehiclesService.findAll(query, user);
   }
 
   @Get('find/:id')
-  async findOne(@Param('id') id: string) {
-    return await this.vehiclesService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentUser() user: any) {
+    return await this.vehiclesService.findOne(id, user);
   }
 
   @Patch(':id')
