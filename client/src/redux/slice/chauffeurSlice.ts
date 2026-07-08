@@ -92,15 +92,17 @@ export const downloadRegistrationStats = createAsyncThunk<
     'chauffeur/downloadRegistrationStats',
     async ({ startDate, endDate }, { rejectWithValue }) => {
         try {
-            const response = await fetch(
-                `${API_URL}/api/v1/chauffeurs/export-stats?startDate=${startDate}&endDate=${endDate}`
+            const response = await axios.get(
+                `${API_URL}/api/v1/chauffeurs/export-stats?startDate=${startDate}&endDate=${endDate}`,
+                {
+                    responseType: 'blob',
+                    withCredentials: true,
+                }
             );
 
-            if (!response.ok) {
-                return rejectWithValue('فشل في تحميل الملف');
-            }
-
-            const blob = await response.blob();
+            const blob = new Blob([response.data], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            });
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;

@@ -44,10 +44,11 @@ export class ChauffeursService {
     const vihicule = await this.vehiclesService.findVihiculeByNumBus({ num_vehicule })
 
     if (!vihicule) {
-      throw new NotFoundException(!
+      throw new NotFoundException(
         new ResponseBuilder()
           .setStatus(404)
           .setMessage(`لم يتم العثور على المركبة  ${num_vehicule}`)
+          .setErrors({ _id: 'VEHICLE not found' })
           .build(),
       );
     }
