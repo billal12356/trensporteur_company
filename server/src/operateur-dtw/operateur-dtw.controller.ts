@@ -116,14 +116,108 @@ export class OperateurDtwController {
     );
 
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('إحصائيات المسجلين');
+    workbook.creator = 'Registration System';
+    workbook.created = new Date();
 
+    const worksheet = workbook.addWorksheet('إحصائيات المسجلين', {
+      views: [{ rightToLeft: true }], // RTL layout for Arabic
+    });
+
+    // ===== Title row =====
+    worksheet.mergeCells('A1:B1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = `إحصائيات التسجيل من ${startDate} إلى ${endDate}`;
+    titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF2E5395' }, // dark blue
+    };
+    worksheet.getRow(1).height = 28;
+
+    // Empty spacer row
+    worksheet.getRow(2).height = 6;
+
+    // ===== Header row =====
     worksheet.columns = [
-      { header: 'التاريخ', key: 'date', width: 20 },
-      { header: 'عدد المسجلين', key: 'count', width: 20 },
+      { key: 'date', width: 22 },
+      { key: 'count', width: 22 },
     ];
 
-    worksheet.addRows(stats);
+    const headerRow = worksheet.getRow(3);
+    headerRow.values = ['التاريخ', 'عدد المسجلين'];
+    headerRow.eachCell((cell) => {
+      cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4472C4' }, // medium blue
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+        left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+        bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+        right: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+      };
+    });
+    headerRow.height = 22;
+
+    // ===== Data rows =====
+    let totalCount = 0;
+    stats.forEach((item, index) => {
+      const rowIndex = 4 + index;
+      const row = worksheet.getRow(rowIndex);
+      row.values = [item.date, item.count];
+      totalCount += item.count;
+
+      const isEven = index % 2 === 0;
+      row.eachCell((cell, colNumber) => {
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        cell.font = { name: 'Calibri', size: 11 };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: isEven ? 'FFF2F6FC' : 'FFFFFFFF' },
+        };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFD9D9D9' } },
+          left: { style: 'thin', color: { argb: 'FFD9D9D9' } },
+          bottom: { style: 'thin', color: { argb: 'FFD9D9D9' } },
+          right: { style: 'thin', color: { argb: 'FFD9D9D9' } },
+        };
+        if (colNumber === 2) {
+          cell.font = { ...cell.font, bold: true, color: { argb: 'FF2E5395' } };
+        }
+      });
+    });
+
+    // ===== Total row =====
+    const totalRowIndex = 4 + stats.length;
+    const totalRow = worksheet.getRow(totalRowIndex);
+    totalRow.values = ['الإجمالي', totalCount];
+    totalRow.eachCell((cell) => {
+      cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF2E5395' },
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+        left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+        bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+        right: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+      };
+    });
+    totalRow.height = 22;
+
+    // Freeze header rows when scrolling
+    worksheet.views = [
+      { rightToLeft: true, state: 'frozen', ySplit: 3 },
+    ];
 
     res.setHeader(
       'Content-Type',

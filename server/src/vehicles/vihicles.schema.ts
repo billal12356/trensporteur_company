@@ -12,10 +12,10 @@ export class Vihicles {
   @Prop({ type: Number, index: true })
   num_docier_client: number;
 
-  @Prop({ type: String })
+  @Prop({ type: String, index: true })
   fullName_arabe: string;
 
-  @Prop({ type: String })
+  @Prop({ type: String, index: true })
   fullName_francais: string;
 
   @Prop({ type: String })

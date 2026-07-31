@@ -140,7 +140,7 @@ export class VehiclesService {
     const queryBuilder = new VihiclesQueryBuilder()
       .setLimit(limit)
       .setSkip(page)
-      .setSort(params.sort || 'asc')
+      .setSort(params.sort || 'desc')
       .setSearch(params.search);
 
     const { query, limit: finalLimit, skip, sort } = queryBuilder.build();

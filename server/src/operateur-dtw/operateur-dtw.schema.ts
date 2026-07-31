@@ -6,16 +6,16 @@ export type OperateurDocument = HydratedDocument<Operateur>;
 
 @Schema({timestamps:true})
 export class Operateur {
-  @Prop({ type: Number })
+  @Prop({ type: Number, index: true  })
   num_wilaya: number;
 
-  @Prop({ type: Number })
+  @Prop({ type: Number, index: true })
   num_docier_client: number;
 
-  @Prop({ type: String })
+  @Prop({ type: String, index: true })
   fullName_arabe: string;
 
-  @Prop({ type: String })
+  @Prop({ type: String, index: true })
   fullName_francais: string;
 
   @Prop({ type: Date })
